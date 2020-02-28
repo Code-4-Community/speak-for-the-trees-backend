@@ -70,6 +70,13 @@
         <version>3.7.1</version>
       </dependency>
 
+      <!-- Used for making HTTP requests -->
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-web-client</artifactId>
+        <version>3.8.5</version>
+      </dependency>
+
       <!-- Used for general jOOQ SQL query building -->
       <dependency>
         <groupId>org.jooq</groupId>

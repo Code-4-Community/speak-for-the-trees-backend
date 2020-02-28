@@ -102,6 +102,25 @@
                   <value>lower</value>
                 </property>
               </properties>
+
+              <forcedTypes>
+                <forcedType>
+                  <userType>com.codeforcommunity.enums.BlockStatus</userType>
+                  <enumConverter>true</enumConverter>
+
+                  <includeExpression>.*\.status</includeExpression>
+                  <includeTypes>.*</includeTypes>
+                  <nullability>NOT_NULL</nullability>
+                </forcedType>
+                <forcedType>
+                  <userType>com.codeforcommunity.enums.PrivilegeLevel</userType>
+                  <enumConverter>true</enumConverter>
+
+                  <includeExpression>.*\.privilege_level</includeExpression>
+                  <includeTypes>.*</includeTypes>
+                  <nullability>NOT_NULL</nullability>
+                </forcedType>
+              </forcedTypes>
             </database>
           </generator>
         </configuration>
@@ -142,6 +161,12 @@
   </build>
 
   <dependencies>
+    <dependency>
+      <groupId>com.codeforcommunity</groupId>
+      <artifactId>common</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+
     <dependency>
       <groupId>org.jooq</groupId>
       <artifactId>jooq-meta-extensions</artifactId>

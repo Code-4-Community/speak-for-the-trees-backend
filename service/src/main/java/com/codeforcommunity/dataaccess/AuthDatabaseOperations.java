@@ -5,14 +5,14 @@ import com.codeforcommunity.exceptions.CreateUserException;
 import com.codeforcommunity.processor.AuthProcessorImpl;
 import org.jooq.DSLContext;
 import org.jooq.generated.Tables;
-import org.jooq.generated.tables.pojos.NoteUser;
-import org.jooq.generated.tables.records.NoteUserRecord;
+import org.jooq.generated.tables.pojos.Users;
+import org.jooq.generated.tables.records.UsersRecord;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Optional;
 
-import static org.jooq.generated.Tables.NOTE_USER;
+import static org.jooq.generated.Tables.USERS;
 
 /**
  * Encapsulates all the database operations that are required for {@link AuthProcessorImpl}.
@@ -32,13 +32,13 @@ public class AuthDatabaseOperations {
      * false otherwise.
      */
     public boolean isValidLogin(String username, String pass) {
-        Optional<NoteUser> maybeUser = Optional.ofNullable(db
-            .selectFrom(NOTE_USER)
-            .where(NOTE_USER.USER_NAME.eq(username))
-            .fetchOneInto(NoteUser.class));
+        Optional<Users> maybeUser = Optional.ofNullable(db
+            .selectFrom(USERS)
+            .where(USERS.USER_NAME.eq(username))
+            .fetchOneInto(Users.class));
 
         return maybeUser
-            .filter(noteUser -> sha.hash(pass).equals(noteUser.getPassHash()))
+            .filter(userAccount -> sha.hash(pass).equals(userAccount.getPassHash()))
             .isPresent();
     }
 
@@ -50,8 +50,8 @@ public class AuthDatabaseOperations {
      */
     public void createNewUser(String username, String email, String password, String firstName, String lastName) {
 
-        boolean emailUsed = db.fetchExists(db.selectFrom(NOTE_USER).where(NOTE_USER.EMAIL.eq(email)));
-        boolean usernameUsed = db.fetchExists(db.selectFrom(NOTE_USER).where(NOTE_USER.USER_NAME.eq(username)));
+        boolean emailUsed = db.fetchExists(db.selectFrom(USERS).where(USERS.EMAIL.eq(email)));
+        boolean usernameUsed = db.fetchExists(db.selectFrom(USERS).where(USERS.USER_NAME.eq(username)));
         if (emailUsed || usernameUsed) {
             if (emailUsed && usernameUsed) {
                 throw new CreateUserException(CreateUserException.UsedField.BOTH);
@@ -63,7 +63,7 @@ public class AuthDatabaseOperations {
         }
 
         String pass_hash = sha.hash(password);
-        NoteUserRecord newUser = db.newRecord(NOTE_USER);
+        UsersRecord newUser = db.newRecord(USERS);
         newUser.setUserName(username);
         newUser.setEmail(email);
         newUser.setPassHash(pass_hash);

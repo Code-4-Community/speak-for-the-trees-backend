@@ -4,6 +4,7 @@ import com.codeforcommunity.api.IAuthProcessor;
 import com.codeforcommunity.auth.JWTAuthorizer;
 
 import com.codeforcommunity.rest.subrouter.AuthRouter;
+import com.codeforcommunity.rest.subrouter.BlocksRouter;
 import com.codeforcommunity.rest.subrouter.CommonRouter;
 import io.vertx.core.Vertx;
 
@@ -13,11 +14,13 @@ import io.vertx.ext.web.Router;
 
 public class ApiRouter implements IRouter {
     private final CommonRouter commonRouter;
+    private final BlocksRouter blocksRouter;
     private final AuthRouter authRouter;
 
     public ApiRouter(IAuthProcessor authProcessor, JWTAuthorizer jwtAuthorizer) {
         this.commonRouter = new CommonRouter(jwtAuthorizer);
         this.authRouter = new AuthRouter(authProcessor);
+        this.blocksRouter = null; //TODO
     }
 
     /**
@@ -27,6 +30,7 @@ public class ApiRouter implements IRouter {
         Router router = commonRouter.initializeRouter(vertx);
 
         router.mountSubRouter("/user", authRouter.initializeRouter(vertx));
+        router.mountSubRouter("/blocks", blocksRouter.initializeRouter(vertx));
 
         return router;
     }

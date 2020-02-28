@@ -2,12 +2,14 @@ package com.codeforcommunity.processor;
 
 import com.codeforcommunity.api.IAuthProcessor;
 import com.codeforcommunity.auth.JWTCreator;
+import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dataaccess.AuthDatabaseOperations;
 import com.codeforcommunity.dto.auth.SessionResponse;
 import com.codeforcommunity.dto.auth.LoginRequest;
 import com.codeforcommunity.dto.auth.NewUserRequest;
 import com.codeforcommunity.dto.auth.RefreshSessionRequest;
 import com.codeforcommunity.dto.auth.RefreshSessionResponse;
+import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.exceptions.AuthException;
 import org.jooq.DSLContext;
 
@@ -33,11 +35,12 @@ public class AuthProcessorImpl implements IAuthProcessor {
      */
     @Override
     public SessionResponse signUp(NewUserRequest request) {
-        String refreshToken = jwtCreator.createNewRefreshToken(request.getUsername());
-        String accessToken = jwtCreator.getNewAccessToken(refreshToken);
-
         authDatabaseOperations.createNewUser(request.getUsername(), request.getEmail(), request.getPassword(),
             request.getFirstName(), request.getLastName());
+
+        // TODO: Use call above to get a users object to make JWT data
+        String refreshToken = jwtCreator.createNewRefreshToken(new JWTData(0, PrivilegeLevel.NONE));
+        String accessToken = jwtCreator.getNewAccessToken(refreshToken);
 
         return new SessionResponse() {{
             setRefreshToken(refreshToken);
@@ -56,7 +59,9 @@ public class AuthProcessorImpl implements IAuthProcessor {
     @Override
     public SessionResponse login(LoginRequest loginRequest) throws AuthException {
         if (authDatabaseOperations.isValidLogin(loginRequest.getUsername(), loginRequest.getPassword())) {
-            String refreshToken = jwtCreator.createNewRefreshToken(loginRequest.getUsername());
+
+            // TODO: Get database users data to make JWT data
+            String refreshToken = jwtCreator.createNewRefreshToken(new JWTData(0, PrivilegeLevel.NONE));
             String accessToken = jwtCreator.getNewAccessToken(refreshToken);
 
             return new SessionResponse() {{
