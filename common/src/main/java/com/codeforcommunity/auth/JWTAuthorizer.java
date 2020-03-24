@@ -1,5 +1,7 @@
 package com.codeforcommunity.auth;
 
+import java.util.Optional;
+
 public class JWTAuthorizer {
   private final JWTHandler handler;
 
@@ -7,8 +9,8 @@ public class JWTAuthorizer {
     this.handler = handler;
   }
 
-  public boolean isAuthorized(String accessToken) {
-    return handler.isAuthorized(accessToken);
+  public Optional<JWTData> checkTokenAndGetData(String accessToken) {
+    return handler.checkTokenAndGetData(accessToken);
   }
 
 }

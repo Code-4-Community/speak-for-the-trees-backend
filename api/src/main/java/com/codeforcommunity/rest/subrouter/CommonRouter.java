@@ -1,6 +1,7 @@
 package com.codeforcommunity.rest.subrouter;
 
 import com.codeforcommunity.auth.JWTAuthorizer;
+import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.exceptions.AuthException;
 import com.codeforcommunity.exceptions.MissingHeaderException;
 import com.codeforcommunity.rest.IRouter;
@@ -11,6 +12,8 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+
+import java.util.Optional;
 
 public class CommonRouter implements IRouter {
   private final JWTAuthorizer jwtAuthorizer;
@@ -42,15 +45,13 @@ public class CommonRouter implements IRouter {
    * @param ctx routing context to handle.
    */
   private void handleAuthorizeUser(RoutingContext ctx) {
-    if (authorized(ctx.request())) {
+    String accessToken = RestFunctions.getRequestHeader(ctx.request(), "access_token");
+    Optional<JWTData> jwtData = jwtAuthorizer.checkTokenAndGetData(accessToken);
+    if (jwtData.isPresent()) {
+      ctx.put("jwt_data", jwtData.get());
       ctx.next();
     } else {
-      ctx.fail(new AuthException("Unauthorized user"));
+      throw new AuthException("Given access token is invalid");
     }
-  }
-
-  private boolean authorized(HttpServerRequest req) {
-    String accessToken = RestFunctions.getRequestHeader(req, "access_token");
-    return jwtAuthorizer.isAuthorized(accessToken);
   }
 }
