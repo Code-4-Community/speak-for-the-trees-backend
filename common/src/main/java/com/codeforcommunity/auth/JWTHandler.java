@@ -6,6 +6,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.Verification;
 import com.codeforcommunity.enums.PrivilegeLevel;
+import com.codeforcommunity.propertiesLoader.PropertiesLoader;
 
 import java.time.Instant;
 import java.util.Date;
@@ -16,11 +17,18 @@ public class JWTHandler {
   private static final String C4C_ISSUER = "c4c";
 
   private final Algorithm algorithm;
-  private Verification verification;
+  private final Verification verification;
+  private final Long MS_REFRESH_EXPIRATION;
+  private final Long MS_ACCESS_EXPIRATION;
 
   public JWTHandler(String secretKey) {
     this.algorithm = Algorithm.HMAC256(secretKey);
     this.verification = getDefaultClaimVerification(this.algorithm);
+
+    this.MS_REFRESH_EXPIRATION = Long.valueOf(PropertiesLoader.getExpirationProperties()
+        .getProperty("ms_refresh_expiration"));
+    this.MS_ACCESS_EXPIRATION = Long.valueOf(PropertiesLoader.getExpirationProperties()
+        .getProperty("ms_access_expiration"));
   }
 
   /**
@@ -45,12 +53,12 @@ public class JWTHandler {
   /**
    * Create a new access token from the given refresh token.
    */
-  public String getNewAccessToken(String refreshToken) {
+  public Optional<String> getNewAccessToken(String refreshToken) {
     if (isAuthorized(refreshToken)) {
       JWTData refreshTokenData = getJWTDataFromToken(refreshToken);
-      return createToken(false, refreshTokenData);
+      return Optional.of(createToken(false, refreshTokenData));
     } else {
-      throw new IllegalArgumentException("invalid refresh token"); //TODO make auth exception
+      return Optional.empty();
     }
   }
 
@@ -87,7 +95,7 @@ public class JWTHandler {
   }
 
   private Date getTokenExpiration(boolean isRefresh) {
-    long exp = isRefresh ? AuthUtils.refresh_exp : AuthUtils.access_exp;
+    long exp = isRefresh ? MS_REFRESH_EXPIRATION : MS_ACCESS_EXPIRATION;
     return Date.from(Instant.now().plusMillis(exp));
   }
 
@@ -102,7 +110,8 @@ public class JWTHandler {
   }
 
   /**
-   * Create verification object that ensures all default claims we have decided should be in every token are present.
+   * Create verification object that ensures all default claims we have decided should be
+   * in every token are present.
    * @return verification object.
    */
   private static Verification getDefaultClaimVerification(Algorithm algorithm) {

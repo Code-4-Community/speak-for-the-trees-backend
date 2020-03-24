@@ -1,6 +1,7 @@
 package com.codeforcommunity.rest.subrouter;
 
 import com.codeforcommunity.exceptions.CreateUserException;
+import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
 import com.codeforcommunity.exceptions.HandledException;
 import com.codeforcommunity.exceptions.MalformedParameterException;
 import com.codeforcommunity.exceptions.MissingHeaderException;
@@ -10,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import io.vertx.ext.web.RoutingContext;
 
 public class FailureHandler {
@@ -64,6 +66,16 @@ public class FailureHandler {
      end(ctx, message, 400);
   }
 
+  public void handleEmailAlreadyInUse(RoutingContext ctx, EmailAlreadyInUseException exception) {
+    String message = String.format("Error creating new user, given email %s already used", exception.getEmail());
+
+    end(ctx, message, 409);
+  }
+
+  public void handleUserDoesNotExist(RoutingContext ctx, UserDoesNotExistException exception) {
+    String message = String.format("No user with property <%s> exists", exception.getIdentifierMessage());
+    end(ctx, message, 400);
+  }
 
   private void handleUncaughtError(RoutingContext ctx, Throwable throwable){
     String message = String.format("Internal server error caused by: %s", throwable.getMessage());

@@ -1,8 +1,12 @@
 package com.codeforcommunity.dataaccess;
 
-import com.codeforcommunity.auth.AuthUtils;
-import com.codeforcommunity.exceptions.CreateUserException;
+import com.codeforcommunity.auth.JWTData;
+import com.codeforcommunity.auth.Passwords;
+import com.codeforcommunity.enums.PrivilegeLevel;
+import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
+import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.processor.AuthProcessorImpl;
+import com.codeforcommunity.propertiesLoader.PropertiesLoader;
 import org.jooq.DSLContext;
 import org.jooq.generated.Tables;
 import org.jooq.generated.tables.pojos.Users;
@@ -20,25 +24,46 @@ import static org.jooq.generated.Tables.USERS;
 public class AuthDatabaseOperations {
 
     private final DSLContext db;
-    private AuthUtils sha;
+
+    public final int MS_REFRESH_EXPIRATION;
 
     public AuthDatabaseOperations(DSLContext db) {
-        this.sha = new AuthUtils();
         this.db = db;
+
+        this.MS_REFRESH_EXPIRATION = Integer.parseInt(PropertiesLoader
+            .getExpirationProperties().getProperty("ms_refresh_expiration"));
+    }
+
+    /**
+     * Creates a JWTData object for the user with the given email if they exist.
+     *
+     * @throws UserDoesNotExistException if given email does not match a user.
+     */
+    public JWTData getUserJWTData(String email) {
+        Optional<Users> maybeUser = Optional.ofNullable(db.selectFrom(USERS)
+            .where(USERS.EMAIL.eq(email))
+            .fetchOneInto(Users.class));
+
+        if (maybeUser.isPresent()) {
+            Users user = maybeUser.get();
+            return new JWTData(user.getId(), user.getPrivilegeLevel());
+        } else {
+            throw new UserDoesNotExistException(email);
+        }
     }
 
     /**
      * Returns true if the given username and password correspond to a user in the USER table and
      * false otherwise.
      */
-    public boolean isValidLogin(String username, String pass) {
+    public boolean isValidLogin(String email, String pass) {
         Optional<Users> maybeUser = Optional.ofNullable(db
             .selectFrom(USERS)
-            .where(USERS.USER_NAME.eq(username))
+            .where(USERS.EMAIL.eq(email))
             .fetchOneInto(Users.class));
 
         return maybeUser
-            .filter(userAccount -> sha.hash(pass).equals(userAccount.getPassHash()))
+            .filter(user -> Passwords.isExpectedPassword(pass, user.getPassHash()))
             .isPresent();
     }
 
@@ -46,37 +71,30 @@ public class AuthDatabaseOperations {
      * TODO: Refactor this method to take in a DTO / POJO instance
      * Creates a new row in the USER table with the given values.
      *
-     * @throws CreateUserException if the given username and email are already used in the USER table.
+     * @throws EmailAlreadyInUseException if the given username and email are already used in the USER table.
      */
-    public void createNewUser(String username, String email, String password, String firstName, String lastName) {
-
+    public void createNewUser(String email, String password, String firstName, String lastName) {
         boolean emailUsed = db.fetchExists(db.selectFrom(USERS).where(USERS.EMAIL.eq(email)));
-        boolean usernameUsed = db.fetchExists(db.selectFrom(USERS).where(USERS.USER_NAME.eq(username)));
-        if (emailUsed || usernameUsed) {
-            if (emailUsed && usernameUsed) {
-                throw new CreateUserException(CreateUserException.UsedField.BOTH);
-            } else if (emailUsed) {
-                throw new CreateUserException(CreateUserException.UsedField.EMAIL);
-            } else {
-                throw new CreateUserException(CreateUserException.UsedField.USERNAME);
-            }
+        if (emailUsed) {
+            throw new EmailAlreadyInUseException(email);
         }
 
-        String pass_hash = sha.hash(password);
         UsersRecord newUser = db.newRecord(USERS);
-        newUser.setUserName(username);
         newUser.setEmail(email);
-        newUser.setPassHash(pass_hash);
+        newUser.setPassHash(Passwords.createHash(password));
         newUser.setFirstName(firstName);
         newUser.setLastName(lastName);
+        newUser.setPrivilegeLevel(PrivilegeLevel.STANDARD);
         newUser.store();
+
+        // TODO: Send verification email
     }
 
     /**
      * Given a JWT signature, store it in the BLACKLISTED_REFRESHES table.
      */
     public void addToBlackList(String signature) {
-        Timestamp expirationTimestamp = Timestamp.from(Instant.now().plusMillis(AuthUtils.refresh_exp));
+        Timestamp expirationTimestamp = Timestamp.from(Instant.now().plusMillis(MS_REFRESH_EXPIRATION));
         db.newRecord(Tables.BLACKLISTED_REFRESHES)
             .values(signature, expirationTimestamp)
             .store();

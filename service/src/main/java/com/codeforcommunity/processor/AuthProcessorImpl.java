@@ -9,9 +9,11 @@ import com.codeforcommunity.dto.auth.LoginRequest;
 import com.codeforcommunity.dto.auth.NewUserRequest;
 import com.codeforcommunity.dto.auth.RefreshSessionRequest;
 import com.codeforcommunity.dto.auth.RefreshSessionResponse;
-import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.exceptions.AuthException;
+import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
 import org.jooq.DSLContext;
+
+import java.util.Optional;
 
 public class AuthProcessorImpl implements IAuthProcessor {
 
@@ -30,22 +32,15 @@ public class AuthProcessorImpl implements IAuthProcessor {
      * Creates a new user database row
      * Return the new jwts
      *
-     * @throws com.codeforcommunity.exceptions.CreateUserException if the given username or email
+     * @throws EmailAlreadyInUseException if the given username or email
      *   are already used.
      */
     @Override
     public SessionResponse signUp(NewUserRequest request) {
-        authDatabaseOperations.createNewUser(request.getUsername(), request.getEmail(), request.getPassword(),
+        authDatabaseOperations.createNewUser(request.getEmail(), request.getPassword(),
             request.getFirstName(), request.getLastName());
 
-        // TODO: Use call above to get a users object to make JWT data
-        String refreshToken = jwtCreator.createNewRefreshToken(new JWTData(0, PrivilegeLevel.NONE));
-        String accessToken = jwtCreator.getNewAccessToken(refreshToken);
-
-        return new SessionResponse() {{
-            setRefreshToken(refreshToken);
-            setAccessToken(accessToken);
-        }};
+        return setupSessionResponse(request.getEmail());
     }
 
     /**
@@ -58,16 +53,8 @@ public class AuthProcessorImpl implements IAuthProcessor {
      */
     @Override
     public SessionResponse login(LoginRequest loginRequest) throws AuthException {
-        if (authDatabaseOperations.isValidLogin(loginRequest.getUsername(), loginRequest.getPassword())) {
-
-            // TODO: Get database users data to make JWT data
-            String refreshToken = jwtCreator.createNewRefreshToken(new JWTData(0, PrivilegeLevel.NONE));
-            String accessToken = jwtCreator.getNewAccessToken(refreshToken);
-
-            return new SessionResponse() {{
-                setAccessToken(accessToken);
-                setRefreshToken(refreshToken);
-            }};
+        if (authDatabaseOperations.isValidLogin(loginRequest.getEmail(), loginRequest.getPassword())) {
+            return setupSessionResponse(loginRequest.getEmail());
         } else {
             throw new AuthException("Could not validate username password combination");
         }
@@ -95,11 +82,35 @@ public class AuthProcessorImpl implements IAuthProcessor {
             throw new AuthException("The refresh token has been invalidated by a previous logout");
         }
 
-        String accessToken = jwtCreator.getNewAccessToken(request.getRefreshToken());
+        Optional<String> accessToken = jwtCreator.getNewAccessToken(request.getRefreshToken());
 
-        return new RefreshSessionResponse() {{
-            setFreshAccessToken(accessToken);
-        }};
+        if (accessToken.isPresent()) {
+            return new RefreshSessionResponse() {{
+                setFreshAccessToken(accessToken.get());
+            }};
+        } else {
+            throw new AuthException("The given refresh token is invalid");
+        }
+    }
+
+    /**
+     * Given a valid user's email, get a corresponding refresh and access token
+     * and return them as a SessionResponse object.
+     */
+    private SessionResponse setupSessionResponse(String email) {
+        JWTData userData = authDatabaseOperations.getUserJWTData(email);
+        String refreshToken = jwtCreator.createNewRefreshToken(userData);
+        Optional<String> accessToken = jwtCreator.getNewAccessToken(refreshToken);
+
+        if (accessToken.isPresent()) {
+            return new SessionResponse() {{
+                setAccessToken(accessToken.get());
+                setRefreshToken(refreshToken);
+            }};
+        } else {
+            // If this is thrown there is probably an error in our JWT creation / validation logic
+            throw new IllegalStateException("Newly created refresh token was deemed invalid");
+        }
     }
 
     /**
