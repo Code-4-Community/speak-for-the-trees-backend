@@ -1,6 +1,6 @@
 package com.codeforcommunity.exceptions;
 
-import com.codeforcommunity.rest.subrouter.FailureHandler;
+import com.codeforcommunity.rest.FailureHandler;
 import io.vertx.ext.web.RoutingContext;
 
 public class EmailAlreadyInUseException extends RuntimeException implements HandledException {

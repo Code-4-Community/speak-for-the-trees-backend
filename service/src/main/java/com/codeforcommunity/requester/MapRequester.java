@@ -11,7 +11,7 @@ import io.vertx.ext.web.client.WebClient;
 
 import java.util.List;
 
-public class Requester {
+public class MapRequester {
   private WebClient client;
 
   private void startThings() {
@@ -20,8 +20,16 @@ public class Requester {
 
   }
 
+  /**
+   * TODO
+   *
+   * Makes a request to the ArcGIS mapping service to change the status of the all of the blocks
+   * in the given list to the specified new block status.
+   *
+   * @param streetIds a list of block FIDs.
+   * @param updateTo The block status all blocks should be updated to.
+   */
   public void updateStreets(List<String> streetIds, BlockStatus updateTo) {
-    // TODO
   }
 
   private void updateLayers() {

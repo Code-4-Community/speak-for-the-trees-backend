@@ -1,4 +1,4 @@
-package com.codeforcommunity.rest.subrouter;
+package com.codeforcommunity.rest;
 
 import com.codeforcommunity.exceptions.CreateUserException;
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
@@ -77,6 +77,15 @@ public class FailureHandler {
     end(ctx, message, 400);
   }
 
+  public void handleAdminOnlyRoute(RoutingContext ctx) {
+    String message = "This route is only available to admin users";
+    end(ctx, message, 401);
+  }
+
+
+  /**
+   * A general handler for all exceptions not explicitly handled above.
+   */
   private void handleUncaughtError(RoutingContext ctx, Throwable throwable){
     String message = String.format("Internal server error caused by: %s", throwable.getMessage());
     end(ctx, message, 500);
@@ -85,5 +94,4 @@ public class FailureHandler {
   private void end(RoutingContext ctx, String message, int statusCode) {
     ctx.response().setStatusCode(statusCode).end(message);
   }
-
 }

@@ -3,12 +3,11 @@ package com.codeforcommunity.rest.subrouter;
 import com.codeforcommunity.auth.JWTAuthorizer;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.exceptions.AuthException;
-import com.codeforcommunity.exceptions.MissingHeaderException;
+import com.codeforcommunity.rest.FailureHandler;
 import com.codeforcommunity.rest.IRouter;
 import com.codeforcommunity.rest.RestFunctions;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
