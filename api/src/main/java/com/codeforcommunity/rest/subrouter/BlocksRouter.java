@@ -2,11 +2,13 @@ package com.codeforcommunity.rest.subrouter;
 
 import com.codeforcommunity.api.IBlockProcessor;
 import com.codeforcommunity.auth.JWTData;
+import com.codeforcommunity.dto.blocks.BlockResponse;
 import com.codeforcommunity.dto.blocks.StandardBlockRequest;
 import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.rest.IRouter;
 import com.codeforcommunity.rest.RestFunctions;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -15,15 +17,20 @@ import static com.codeforcommunity.rest.ApiRouter.end;
 
 public class BlocksRouter implements IRouter {
 
-  private IBlockProcessor processor;
+  private final IBlockProcessor processor;
 
-  // TODO: Make constructor and pass in processor properly
+  public BlocksRouter(IBlockProcessor processor) {
+    this.processor = processor;
+  }
 
   @Override
   public Router initializeRouter(Vertx vertx) {
     Router router = Router.router(vertx);
 
     registerReserve(router);
+    registerFinish(router);
+    registerRelease(router);
+    registerReset(router);
 
     return router;
   }
@@ -33,12 +40,54 @@ public class BlocksRouter implements IRouter {
     reserveRoute.handler(this::handleReserveRoute);
   }
 
+  private void registerFinish(Router router) {
+    Route reserveRoute = router.post("/finish");
+    reserveRoute.handler(this::handleFinishRoute);
+  }
+
+  private void registerRelease(Router router) {
+    Route reserveRoute = router.post("/release");
+    reserveRoute.handler(this::handleReleaseRoute);
+  }
+
+  private void registerReset(Router router) {
+    Route reserveRoute = router.post("/reset");
+    reserveRoute.handler(this::handleResetRoute);
+  }
+
   private void handleReserveRoute(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
     StandardBlockRequest blockRequest = RestFunctions.getJsonBodyAsClass(ctx, StandardBlockRequest.class);
 
-    // TODO: Figure out how to get a JWT data out of routing context
-    processor.reserveBlocks(new JWTData(1, PrivilegeLevel.NONE), blockRequest.getBlocks());
+    BlockResponse response = processor.reserveBlocks(userData, blockRequest.getBlocks());
 
-    end(ctx.response(), 200);
+    end(ctx.response(), 200, JsonObject.mapFrom(response).encode());
+  }
+
+  private void handleFinishRoute(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+    StandardBlockRequest blockRequest = RestFunctions.getJsonBodyAsClass(ctx, StandardBlockRequest.class);
+
+    BlockResponse response = processor.finishBlocks(userData, blockRequest.getBlocks());
+
+    end(ctx.response(), 200, JsonObject.mapFrom(response).encode());
+  }
+
+  private void handleReleaseRoute(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+    StandardBlockRequest blockRequest = RestFunctions.getJsonBodyAsClass(ctx, StandardBlockRequest.class);
+
+    BlockResponse response = processor.releaseBlocks(userData, blockRequest.getBlocks());
+
+    end(ctx.response(), 200, JsonObject.mapFrom(response).encode());
+  }
+
+  private void handleResetRoute(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+    StandardBlockRequest blockRequest = RestFunctions.getJsonBodyAsClass(ctx, StandardBlockRequest.class);
+
+    BlockResponse response = processor.resetBlocks(userData, blockRequest.getBlocks());
+
+    end(ctx.response(), 200, JsonObject.mapFrom(response).encode());
   }
 }

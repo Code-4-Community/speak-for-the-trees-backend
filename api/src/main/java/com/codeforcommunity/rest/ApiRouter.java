@@ -1,6 +1,7 @@
 package com.codeforcommunity.rest;
 
 import com.codeforcommunity.api.IAuthProcessor;
+import com.codeforcommunity.api.IBlockProcessor;
 import com.codeforcommunity.auth.JWTAuthorizer;
 
 import com.codeforcommunity.rest.subrouter.AuthRouter;
@@ -17,10 +18,10 @@ public class ApiRouter implements IRouter {
     private final BlocksRouter blocksRouter;
     private final AuthRouter authRouter;
 
-    public ApiRouter(IAuthProcessor authProcessor, JWTAuthorizer jwtAuthorizer) {
+    public ApiRouter(IAuthProcessor authProcessor, IBlockProcessor blockProcessor, JWTAuthorizer jwtAuthorizer) {
         this.commonRouter = new CommonRouter(jwtAuthorizer);
         this.authRouter = new AuthRouter(authProcessor);
-        this.blocksRouter = null; //TODO
+        this.blocksRouter = new BlocksRouter(blockProcessor);
     }
 
     /**

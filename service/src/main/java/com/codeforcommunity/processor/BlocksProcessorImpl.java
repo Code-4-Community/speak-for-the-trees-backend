@@ -11,7 +11,6 @@ import org.jooq.Result;
 import org.jooq.generated.tables.records.BlockRecord;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -20,12 +19,12 @@ import static org.jooq.generated.Tables.BLOCK;
 
 public class BlocksProcessorImpl implements IBlockProcessor {
 
-  private MapRequester mapRequester;
   private DSLContext db;
+  private MapRequester mapRequester;
 
-  public BlocksProcessorImpl(MapRequester mapRequester, DSLContext db) {
-    this.mapRequester = mapRequester;
+  public BlocksProcessorImpl(DSLContext db, MapRequester mapRequester) {
     this.db = db;
+    this.mapRequester = mapRequester;
   }
 
   @Override
