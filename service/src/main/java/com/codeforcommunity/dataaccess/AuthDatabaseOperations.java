@@ -73,13 +73,14 @@ public class AuthDatabaseOperations {
      *
      * @throws EmailAlreadyInUseException if the given username and email are already used in the USER table.
      */
-    public void createNewUser(String email, String password, String firstName, String lastName) {
+    public void createNewUser(String username, String email, String password, String firstName, String lastName) {
         boolean emailUsed = db.fetchExists(db.selectFrom(USERS).where(USERS.EMAIL.eq(email)));
         if (emailUsed) {
             throw new EmailAlreadyInUseException(email);
         }
 
         UsersRecord newUser = db.newRecord(USERS);
+        newUser.setUsername(username);
         newUser.setEmail(email);
         newUser.setPassHash(Passwords.createHash(password));
         newUser.setFirstName(firstName);

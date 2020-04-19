@@ -32,12 +32,11 @@ public class AuthProcessorImpl implements IAuthProcessor {
      * Creates a new user database row
      * Return the new jwts
      *
-     * @throws EmailAlreadyInUseException if the given username or email
-     *   are already used.
+     * @throws EmailAlreadyInUseException if the given email is already used.
      */
     @Override
     public SessionResponse signUp(NewUserRequest request) {
-        authDatabaseOperations.createNewUser(request.getEmail(), request.getPassword(),
+        authDatabaseOperations.createNewUser(request.getUsername(), request.getEmail(), request.getPassword(),
             request.getFirstName(), request.getLastName());
 
         return setupSessionResponse(request.getEmail());
