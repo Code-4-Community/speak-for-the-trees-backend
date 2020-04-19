@@ -120,6 +120,14 @@
                   <includeTypes>.*</includeTypes>
                   <nullability>NOT_NULL</nullability>
                 </forcedType>
+                <forcedType>
+                  <userType>com.codeforcommunity.enums.TeamRole</userType>
+                  <enumConverter>true</enumConverter>
+
+                  <includeExpression>.*\.team_role</includeExpression>
+                  <includeTypes>.*</includeTypes>
+                  <nullability>NOT_NULL</nullability>
+                </forcedType>
               </forcedTypes>
             </database>
           </generator>

@@ -7,9 +7,10 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     first_name VARCHAR(36),
     last_name VARCHAR(36),
+    username VARCHAR(36),
     email VARCHAR(36) UNIQUE NOT NULL,
     pass_hash BYTEA NOT NULL,
-    privilege_level INTEGER NOT NULL
+    privilege_level INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS team (
@@ -19,12 +20,13 @@ CREATE TABLE IF NOT EXISTS team (
 
 CREATE TABLE IF NOT EXISTS user_team (
     user_id INTEGER REFERENCES users(id),
-    team_id INTEGER REFERENCES team(id)
+    team_id INTEGER REFERENCES team(id),
+    team_role INTEGER NOT NULL DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS block (
     fid VARCHAR(36) PRIMARY KEY,
-    status INTEGER NOT NULL,
+    status INTEGER NOT NULL DEFAULT 0,
     assigned_to INTEGER REFERENCES users(id)
-)
+);
 
