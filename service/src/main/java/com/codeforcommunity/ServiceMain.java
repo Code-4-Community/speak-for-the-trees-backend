@@ -2,11 +2,13 @@ package com.codeforcommunity;
 
 import com.codeforcommunity.api.IAuthProcessor;
 import com.codeforcommunity.api.IBlockProcessor;
+import com.codeforcommunity.api.ITeamsProcessor;
 import com.codeforcommunity.auth.JWTAuthorizer;
 import com.codeforcommunity.auth.JWTCreator;
 import com.codeforcommunity.auth.JWTHandler;
 import com.codeforcommunity.processor.AuthProcessorImpl;
 import com.codeforcommunity.processor.BlocksProcessorImpl;
+import com.codeforcommunity.processor.TeamsProcessorImpl;
 import com.codeforcommunity.propertiesLoader.PropertiesLoader;
 import com.codeforcommunity.requester.MapRequester;
 import com.codeforcommunity.rest.ApiRouter;
@@ -61,9 +63,12 @@ public class ServiceMain {
     JWTAuthorizer jwtAuthorizer = new JWTAuthorizer(jwtHandler);
     JWTCreator jwtCreator = new JWTCreator(jwtHandler);
 
+    MapRequester mapRequester = new MapRequester();
+
     IAuthProcessor authProcessor = new AuthProcessorImpl(this.db, jwtCreator);
-    IBlockProcessor blockProcessor = new BlocksProcessorImpl(this.db, new MapRequester());
-    ApiRouter router = new ApiRouter(authProcessor, blockProcessor, jwtAuthorizer);
+    IBlockProcessor blockProcessor = new BlocksProcessorImpl(this.db, mapRequester);
+    ITeamsProcessor teamsProcessor = new TeamsProcessorImpl(this.db);
+    ApiRouter router = new ApiRouter(authProcessor, blockProcessor, teamsProcessor, jwtAuthorizer);
     startApiServer(router);
   }
 
