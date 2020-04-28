@@ -56,18 +56,30 @@
 
   <dependencyManagement>
     <dependencies>
+      <!-- Used to log events -->
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
+        <version>2.13.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-core</artifactId>
+        <version>2.13.0</version>
+      </dependency>
+
       <!-- Used for general Vertx utilities in API server stuff -->
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-core</artifactId>
-        <version>3.7.1</version>
+        <version>3.8.5</version>
       </dependency>
 
       <!-- Used for API routing -->
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-web</artifactId>
-        <version>3.7.1</version>
+        <version>3.8.5</version>
       </dependency>
 
       <!-- Used for making HTTP requests -->

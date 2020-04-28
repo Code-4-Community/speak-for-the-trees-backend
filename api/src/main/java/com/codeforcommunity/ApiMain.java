@@ -18,8 +18,7 @@ public class ApiMain {
   /**
    * Start the API to start listening on a port.
    */
-  public void startApi() {
-    Vertx vertx = Vertx.vertx();
+  public void startApi(Vertx vertx) {
     HttpServer server = vertx.createHttpServer();
 
     Router router = Router.router(vertx);

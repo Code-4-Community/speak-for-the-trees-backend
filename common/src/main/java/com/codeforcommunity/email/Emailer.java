@@ -1,6 +1,5 @@
 package com.codeforcommunity.email;
 
-import com.codeforcommunity.logger.Logger;
 import com.codeforcommunity.propertiesLoader.PropertiesLoader;
 
 import javax.mail.*;
@@ -57,7 +56,6 @@ public class Emailer {
       msg.setText(body);
       Transport.send(msg, user, password);
     } catch (MessagingException mex) {
-      Logger.log("send failed, exception: " + mex);
     }
   }
 

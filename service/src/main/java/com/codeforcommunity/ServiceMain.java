@@ -13,6 +13,7 @@ import com.codeforcommunity.propertiesLoader.PropertiesLoader;
 import com.codeforcommunity.requester.MapRequester;
 import com.codeforcommunity.rest.ApiRouter;
 
+import io.vertx.core.Vertx;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
@@ -63,20 +64,21 @@ public class ServiceMain {
     JWTAuthorizer jwtAuthorizer = new JWTAuthorizer(jwtHandler);
     JWTCreator jwtCreator = new JWTCreator(jwtHandler);
 
-    MapRequester mapRequester = new MapRequester();
+    Vertx vertx = Vertx.vertx();
+    MapRequester mapRequester = new MapRequester(vertx);
 
     IAuthProcessor authProcessor = new AuthProcessorImpl(this.db, jwtCreator);
     IBlockProcessor blockProcessor = new BlocksProcessorImpl(this.db, mapRequester);
     ITeamsProcessor teamsProcessor = new TeamsProcessorImpl(this.db);
     ApiRouter router = new ApiRouter(authProcessor, blockProcessor, teamsProcessor, jwtAuthorizer);
-    startApiServer(router);
+    startApiServer(router, vertx);
   }
 
   /**
    * Start up the actual API server that will listen for requests.
    */
-  private void startApiServer(ApiRouter router) {
+  private void startApiServer(ApiRouter router, Vertx vertx) {
     ApiMain apiMain = new ApiMain(router);
-    apiMain.startApi();
+    apiMain.startApi(vertx);
   }
 }
