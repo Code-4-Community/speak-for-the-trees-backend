@@ -7,6 +7,8 @@ public class CreateTeamRequest {
     this.name = name;
   }
 
+  private CreateTeamRequest() {}
+
   public String getName() {
     return name;
   }
