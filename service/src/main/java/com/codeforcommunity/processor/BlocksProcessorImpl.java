@@ -35,11 +35,11 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
     List<String> failures = getInvalidBlockStatusIds(brs, BlockStatus.OPEN);
 
-    List<BlockRecord> eligibleBlocks = brs.get(BlockStatus.OPEN).into(BlockRecord.class);
+    List<BlockRecord> eligibleBlocks = brs.getOrDefault(BlockStatus.OPEN, db.newResult(BLOCK)).into(BlockRecord.class);
 
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.RESERVED, jwtData.getUserId());
 
-    List<String> successfulBlockIds = brs.get(BlockStatus.OPEN).map(BlockRecord::getFid);
+    List<String> successfulBlockIds = brs.getOrDefault(BlockStatus.OPEN, db.newResult(BLOCK)).map(BlockRecord::getFid);
     mapRequester.updateStreets(successfulBlockIds, BlockStatus.RESERVED);
 
     return new BlockResponse(successfulBlockIds, failures);
@@ -51,7 +51,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
     List<String> failures = getInvalidBlockStatusIds(brs, BlockStatus.RESERVED);
 
-    List<BlockRecord> eligibleBlocks = getBlocksEditableByUser(brs.get(BlockStatus.RESERVED), jwtData, failures);
+    List<BlockRecord> eligibleBlocks = getBlocksEditableByUser(brs.getOrDefault(BlockStatus.RESERVED, db.newResult(BLOCK)), jwtData, failures);
 
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.DONE, jwtData.getUserId());
 
@@ -67,7 +67,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
     List<String> failures = getInvalidBlockStatusIds(brs, BlockStatus.RESERVED);
 
-    List<BlockRecord> eligibleBlocks = getBlocksEditableByUser(brs.get(BlockStatus.RESERVED), jwtData, failures);
+    List<BlockRecord> eligibleBlocks = getBlocksEditableByUser(brs.getOrDefault(BlockStatus.RESERVED, db.newResult(BLOCK)), jwtData, failures);
 
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.OPEN, jwtData.getUserId());
 
@@ -83,7 +83,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
     List<String> failures = getInvalidBlockStatusIds(brs, BlockStatus.DONE);
 
-    List<BlockRecord> eligibleBlocks = getBlocksEditableByUser(brs.get(BlockStatus.DONE), jwtData, failures);
+    List<BlockRecord> eligibleBlocks = getBlocksEditableByUser(brs.getOrDefault(BlockStatus.DONE, db.newResult(BLOCK)), jwtData, failures);
 
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.OPEN, jwtData.getUserId());
 

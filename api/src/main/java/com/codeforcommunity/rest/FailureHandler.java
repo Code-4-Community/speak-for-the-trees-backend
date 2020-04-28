@@ -11,7 +11,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import com.codeforcommunity.exceptions.NoSuchTeamException;
+import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
+import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
+import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
+import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import io.vertx.ext.web.RoutingContext;
 
 public class FailureHandler {
@@ -80,6 +85,31 @@ public class FailureHandler {
   public void handleAdminOnlyRoute(RoutingContext ctx) {
     String message = "This route is only available to admin users";
     end(ctx, message, 401);
+  }
+
+  public void handleTeamLeaderOnlyRoute(RoutingContext ctx, TeamLeaderOnlyRouteException e) {
+     String message = String.format("This route is only available to the leader of team %d", e.getTeamId());
+     end(ctx, message, 401);
+  }
+
+  public void handleTeamLeaderExcludedRoute(RoutingContext ctx, TeamLeaderExcludedRouteException e) {
+    String message = String.format("This route is not callable by the leader of team %d", e.getTeamId());
+    end(ctx, message, 401);
+  }
+
+  public void handleUserAlreadyOnTeam(RoutingContext ctx, UserAlreadyOnTeamException e) {
+     String message = String.format("User <%d> is already on a team", e.getUserId());
+     end(ctx, message, 400);
+  }
+
+  public void handleNoSuchTeam(RoutingContext ctx, NoSuchTeamException e) {
+     String message = String.format("There is no team with the id <%d>", e.getTeamId());
+     end(ctx, message, 400);
+  }
+
+  public void handleUserNotOnTeam(RoutingContext ctx, UserNotOnTeamException e) {
+    String message = String.format("The user <%d> is not on a team with the id <%d>", e.getUserId(), e.getTeamId());
+    end(ctx, message, 400);
   }
 
 
