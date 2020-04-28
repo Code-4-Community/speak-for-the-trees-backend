@@ -88,7 +88,9 @@ public class MapRequester {
                   if (responseBody.containsKey("error") && responseBody.getJsonObject("error").getInteger("code") == 498) {
                     // The API token is invalid, reset it and make this call again.
                     this.tokenFuture = updateToken();
-                    updateStreets(streetIds, updateTo);
+                    updateLayers(streetIds, updateTo, this.tokenFuture)
+                        .onSuccess((V) -> promise.complete())
+                        .onFailure(promise::fail);
                   } else if (responseBody.containsKey("updateResults")) {
                     // Check successes
                     promise.complete();
