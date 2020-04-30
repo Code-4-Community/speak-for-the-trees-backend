@@ -2,7 +2,7 @@ package com.codeforcommunity.rest.subrouter;
 
 import com.codeforcommunity.auth.JWTAuthorizer;
 import com.codeforcommunity.auth.JWTData;
-import com.codeforcommunity.exceptions.AuthException;
+import com.codeforcommunity.exceptions.TokenInvalidException;
 import com.codeforcommunity.rest.FailureHandler;
 import com.codeforcommunity.rest.IRouter;
 import com.codeforcommunity.rest.RestFunctions;
@@ -44,13 +44,13 @@ public class CommonRouter implements IRouter {
    * @param ctx routing context to handle.
    */
   private void handleAuthorizeUser(RoutingContext ctx) {
-    String accessToken = RestFunctions.getRequestHeader(ctx.request(), "access_token");
+    String accessToken = RestFunctions.getRequestHeader(ctx.request(), "X-Access-Token");
     Optional<JWTData> jwtData = jwtAuthorizer.checkTokenAndGetData(accessToken);
     if (jwtData.isPresent()) {
       ctx.put("jwt_data", jwtData.get());
       ctx.next();
     } else {
-      throw new AuthException("Given access token is invalid");
+      throw new TokenInvalidException("access");
     }
   }
 }

@@ -14,6 +14,7 @@ import java.util.Map;
 import com.codeforcommunity.exceptions.NoSuchTeamException;
 import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
 import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
+import com.codeforcommunity.exceptions.TokenInvalidException;
 import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
@@ -33,6 +34,11 @@ public class FailureHandler {
 
   public void handleAuth(RoutingContext ctx) {
     end(ctx, "Unauthorized user", 401);
+  }
+
+  public void handleTokenInvalid(RoutingContext ctx, TokenInvalidException e) {
+    String message = String.format("Given %s token is expired or invalid", e.getTokenType());
+    end(ctx, message, 401);
   }
 
   public void handleMissingParameter(RoutingContext ctx, MissingParameterException e) {

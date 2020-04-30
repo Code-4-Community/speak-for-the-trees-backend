@@ -11,6 +11,7 @@ import com.codeforcommunity.dto.auth.RefreshSessionRequest;
 import com.codeforcommunity.dto.auth.RefreshSessionResponse;
 import com.codeforcommunity.exceptions.AuthException;
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
+import com.codeforcommunity.exceptions.TokenInvalidException;
 import org.jooq.DSLContext;
 
 import java.util.Optional;
@@ -88,7 +89,7 @@ public class AuthProcessorImpl implements IAuthProcessor {
                 setFreshAccessToken(accessToken.get());
             }};
         } else {
-            throw new AuthException("The given refresh token is invalid");
+            throw new TokenInvalidException("refresh");
         }
     }
 
