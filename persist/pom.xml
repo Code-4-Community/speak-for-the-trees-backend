@@ -30,7 +30,7 @@
             </goals>
             <configuration>
               <files>
-                <file>..\common\src\main\resources\db.properties</file>
+                <file>..\common\src\main\resources\properties\db.properties</file>
               </files>
             </configuration>
           </execution>

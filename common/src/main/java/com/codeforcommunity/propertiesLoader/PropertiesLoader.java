@@ -5,16 +5,18 @@ import java.io.InputStream;
 import java.util.Properties;
 
 public class PropertiesLoader {
+  private static final String basePath = "properties/";
 
   private static Properties getProperties(String file) {
+    String path = basePath + file;
 
     try (InputStream input = PropertiesLoader.class.getClassLoader().
-            getResourceAsStream(file)) {
+            getResourceAsStream(path)) {
       Properties prop = new Properties();
       prop.load(input);
       return prop;
     } catch (IOException ex) {
-      throw new IllegalArgumentException("Cannot find file: " + file, ex);
+      throw new IllegalArgumentException("Cannot find file: " + path, ex);
     }
   }
 
