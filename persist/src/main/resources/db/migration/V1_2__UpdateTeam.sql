@@ -1,0 +1,6 @@
+ALTER TABLE team
+    ADD COLUMN bio TEXT NOT NULL;
+ALTER TABLE team
+    ADD COLUMN goal INT;
+ALTER TABLE team
+    ADD COLUMN goal_completion_date TIMESTAMP;
