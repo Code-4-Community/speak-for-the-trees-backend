@@ -44,6 +44,7 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
             .leftJoin(reserved).on(USER_TEAM.USER_ID.eq(reserved.ASSIGNED_TO).and(reserved.STATUS.eq(BlockStatus.RESERVED)))
             .leftJoin(completed).on(USER_TEAM.USER_ID.eq(completed.ASSIGNED_TO).and(completed.STATUS.eq(BlockStatus.DONE)))
             .groupBy(TEAM.ID)
+            .limit(10)
             .fetchInto(Team.class);
 
     List<Individual> individuals =
@@ -52,6 +53,7 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
             .leftJoin(reserved).on(USERS.ID.eq(reserved.ASSIGNED_TO).and(reserved.STATUS.eq(BlockStatus.RESERVED)))
             .leftJoin(completed).on(USERS.ID.eq(completed.ASSIGNED_TO).and(completed.STATUS.eq(BlockStatus.DONE)))
             .groupBy(USERS.ID)
+            .limit(10)
             .fetchInto(Individual.class);
 
     return new BlockLeaderboardResponse(teams, individuals);
