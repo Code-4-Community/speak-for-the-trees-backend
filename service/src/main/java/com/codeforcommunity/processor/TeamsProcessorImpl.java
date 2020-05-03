@@ -28,6 +28,8 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
   @Override
   public TeamResponse createTeam(JWTData userData, CreateTeamRequest teamRequest) {
+    teamRequest.validate();
+
     boolean userOnTeam = db.fetchExists(USER_TEAM, USER_TEAM.USER_ID.eq(userData.getUserId()));
     if (userOnTeam) {
       throw new UserAlreadyOnTeamException(userData.getUserId());
@@ -35,7 +37,13 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
     TeamRecord teamRecord = db.newRecord(TEAM);
     teamRecord.setName(teamRequest.getName());
+    teamRecord.setBio(teamRequest.getBio());
+    teamRecord.setGoal(teamRequest.getGoal());
+    teamRecord.setGoalCompletionDate(teamRequest.getGoalCompletionDate());
     teamRecord.store();
+
+    // TODO: Call the invite link with the given emails
+    //  teamRequest.getInviteEmails();
 
     db.insertInto(USER_TEAM).columns(USER_TEAM.fields())
         .values(userData.getUserId(), teamRecord.getId(), TeamRole.LEADER)
