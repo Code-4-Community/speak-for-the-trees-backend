@@ -2,11 +2,7 @@ package com.codeforcommunity.requester;
 
 import com.codeforcommunity.email.EmailOperations;
 import com.codeforcommunity.propertiesLoader.PropertiesLoader;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-import java.io.File;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -26,7 +22,7 @@ public class Emailer {
   }
 
   public void sendWelcomeEmail(String sendToEmail, String sendToName, String verificationLink) {
-    String filePath = "emails/WelcomeEmail.html";
+    String filePath = "/emails/WelcomeEmail.html";
     String subjectLine = "Welcome to Speak For The Trees Boston";
 
     Map<String, String> templateValues = new HashMap<>();

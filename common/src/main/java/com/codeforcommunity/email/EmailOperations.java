@@ -2,6 +2,7 @@ package com.codeforcommunity.email;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.simplejavamail.MailException;
 import org.simplejavamail.api.email.Email;
 import org.simplejavamail.api.mailer.AsyncResponse;
 import org.simplejavamail.api.mailer.Mailer;
@@ -102,16 +103,19 @@ public class EmailOperations {
         .from("Speak For The Trees Boston", sendEmail)
         .to(sendToName, sendToEmail)
         .withSubject(subject)
-        .withPlainText(emailBody)
+        .withHTMLText(emailBody)
         .buildEmail();
 
-    AsyncResponse mailResponse = mailer.sendMail(email, true);
-
-    mailResponse.onException((e) -> {
-      logger.atError().withThrowable(e).log("Threw exception while sending email subject " + subject);
-    });
-    mailResponse.onSuccess(() -> {
-      logger.info("Successfully sent email subject " + subject);
-    });
+    try {
+      AsyncResponse mailResponse = mailer.sendMail(email, true);
+      mailResponse.onException((e) -> {
+        logger.atError().withThrowable(e).log("Threw exception while sending email subject " + subject);
+      });
+      mailResponse.onSuccess(() -> {
+        logger.info("Successfully sent email subject " + subject);
+      });
+    } catch (MailException e) {
+      logger.atError().withThrowable(e).log("Threw exception while sending email subject" + subject);
+    }
   }
 }

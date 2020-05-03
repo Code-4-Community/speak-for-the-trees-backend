@@ -1,4 +1,4 @@
-sendEmail="some@gmail.com"
-sendPassword="gmail App Password"
-emailHost="smtp.gmail.com"
-emailPort="465"
+sendEmail=some@gmail.com
+sendPassword=gmail-App-Password
+emailHost=smtp.gmail.com
+emailPort=465

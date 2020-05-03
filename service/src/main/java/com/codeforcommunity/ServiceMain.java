@@ -10,6 +10,7 @@ import com.codeforcommunity.processor.AuthProcessorImpl;
 import com.codeforcommunity.processor.BlocksProcessorImpl;
 import com.codeforcommunity.processor.TeamsProcessorImpl;
 import com.codeforcommunity.propertiesLoader.PropertiesLoader;
+import com.codeforcommunity.requester.Emailer;
 import com.codeforcommunity.requester.MapRequester;
 import com.codeforcommunity.rest.ApiRouter;
 
@@ -66,6 +67,7 @@ public class ServiceMain {
 
     Vertx vertx = Vertx.vertx();
     MapRequester mapRequester = new MapRequester(vertx);
+    Emailer emailer = new Emailer(); // TODO: Utilize this
 
     IAuthProcessor authProcessor = new AuthProcessorImpl(this.db, jwtCreator);
     IBlockProcessor blockProcessor = new BlocksProcessorImpl(this.db, mapRequester);
