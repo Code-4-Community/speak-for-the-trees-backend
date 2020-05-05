@@ -6,6 +6,7 @@ import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blocks.BlockResponse;
 import com.codeforcommunity.dto.blocks.StandardBlockRequest;
 import com.codeforcommunity.dto.team.CreateTeamRequest;
+import com.codeforcommunity.dto.team.InviteMembersRequest;
 import com.codeforcommunity.dto.team.TeamResponse;
 import com.codeforcommunity.rest.IRouter;
 import com.codeforcommunity.rest.RestFunctions;
@@ -34,6 +35,7 @@ public class TeamsRouter implements IRouter {
     registerLeave(router);
     registerDisband(router);
     registerKick(router);
+    registerInvite(router);
 
     return router;
   }
@@ -61,6 +63,11 @@ public class TeamsRouter implements IRouter {
   private void registerKick(Router router) {
     Route kickRoute = router.post("/:team_id/members/:member_id/kick");
     kickRoute.handler(this::handleKickRoute);
+  }
+
+  private void registerInvite(Router router) {
+    Route inviteRoute = router.post("/:team_id/invite");
+    inviteRoute.handler(this::handleInviteRoute);
   }
 
 
@@ -108,6 +115,17 @@ public class TeamsRouter implements IRouter {
     int kickUserId = RestFunctions.getRequestParameterAsInt(ctx.request(), "member_id");
 
     processor.kickFromTeam(userData, teamId, kickUserId);
+
+    end(ctx.response(), 200);
+  }
+
+  private void handleInviteRoute(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+    int teamId = RestFunctions.getRequestParameterAsInt(ctx.request(), "team_id");
+    InviteMembersRequest inviteMembersRequest = RestFunctions.getJsonBodyAsClass(ctx, InviteMembersRequest.class);
+    inviteMembersRequest.setTeamId(teamId);
+
+    processor.inviteToTeam(userData, inviteMembersRequest);
 
     end(ctx.response(), 200);
   }

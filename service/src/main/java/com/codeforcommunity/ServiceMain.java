@@ -45,7 +45,7 @@ public class ServiceMain {
    * Connect to the database and create a DSLContext so jOOQ can interact with it.
    */
   private void connectDb() {
-    //This block ensures that the MySQL driver is loaded in the classpath
+    //This block ensures that the Postgres driver is loaded in the classpath
     try {
       Class.forName(dbProperties.getProperty("database.driver"));
     } catch (ClassNotFoundException e) {
@@ -67,11 +67,11 @@ public class ServiceMain {
 
     Vertx vertx = Vertx.vertx();
     MapRequester mapRequester = new MapRequester(vertx);
-    Emailer emailer = new Emailer(); // TODO: Utilize this
+    Emailer emailer = new Emailer();
 
     IAuthProcessor authProcessor = new AuthProcessorImpl(this.db, jwtCreator);
     IBlockProcessor blockProcessor = new BlocksProcessorImpl(this.db, mapRequester);
-    ITeamsProcessor teamsProcessor = new TeamsProcessorImpl(this.db);
+    ITeamsProcessor teamsProcessor = new TeamsProcessorImpl(this.db, emailer);
     ApiRouter router = new ApiRouter(authProcessor, blockProcessor, teamsProcessor, jwtAuthorizer);
     startApiServer(router, vertx);
   }

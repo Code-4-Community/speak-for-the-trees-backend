@@ -32,4 +32,7 @@ public class PropertiesLoader {
   public static Properties getJwtProperties() {
     return getProperties("jwt.properties");
   }
+  public static Properties getFrontendProperties() {
+    return getProperties("frontend.properties");
+  }
 }
