@@ -13,6 +13,7 @@ import static org.jooq.generated.Tables.TEAM;
 import static org.jooq.generated.Tables.USERS;
 import static org.jooq.generated.Tables.USER_TEAM;
 import static org.jooq.impl.DSL.count;
+import static org.jooq.impl.DSL.inline;
 
 public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
   private final DSLContext db;
@@ -44,6 +45,7 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
             .leftJoin(reserved).on(USER_TEAM.USER_ID.eq(reserved.ASSIGNED_TO).and(reserved.STATUS.eq(BlockStatus.RESERVED)))
             .leftJoin(completed).on(USER_TEAM.USER_ID.eq(completed.ASSIGNED_TO).and(completed.STATUS.eq(BlockStatus.DONE)))
             .groupBy(TEAM.ID)
+            .orderBy(inline(3).desc())
             .limit(10)
             .fetchInto(Team.class);
 
@@ -53,6 +55,7 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
             .leftJoin(reserved).on(USERS.ID.eq(reserved.ASSIGNED_TO).and(reserved.STATUS.eq(BlockStatus.RESERVED)))
             .leftJoin(completed).on(USERS.ID.eq(completed.ASSIGNED_TO).and(completed.STATUS.eq(BlockStatus.DONE)))
             .groupBy(USERS.ID)
+            .orderBy(inline(3).desc())
             .limit(10)
             .fetchInto(Individual.class);
 
