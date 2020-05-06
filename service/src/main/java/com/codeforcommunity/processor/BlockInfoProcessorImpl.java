@@ -11,14 +11,11 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record4;
 import org.jooq.Select;
-import org.jooq.Table;
-import org.jooq.impl.DSL;
 
 import static org.jooq.generated.Tables.BLOCK;
 import static org.jooq.generated.Tables.TEAM;
 import static org.jooq.generated.Tables.USERS;
 import static org.jooq.generated.Tables.USER_TEAM;
-import static org.jooq.impl.DSL.all;
 import static org.jooq.impl.DSL.count;
 import static org.jooq.impl.DSL.inline;
 import static org.jooq.impl.DSL.select;
@@ -45,8 +42,6 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
   public BlockLeaderboardResponse getBlockLeaderboards() {
     org.jooq.generated.tables.Block reserved = BLOCK.as("reserved");
     org.jooq.generated.tables.Block completed = BLOCK.as("completed");
-    org.jooq.generated.tables.Users cUsers = USERS.as("cUsers");
-    org.jooq.generated.tables.Users rUsers = USERS.as("rUsers");
 
     /* The query below is trying to do this:
      * select id, username, count(completed_raw) as completed, count(reserved_raw) as reserved
@@ -64,16 +59,16 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
 
 
     Select<Record4<Integer, String, String, String>> userSub =
-        select(cUsers.ID, cUsers.USERNAME, completed.FID.as("isCompleted"),
+        select(USERS.ID, USERS.USERNAME, completed.FID.as("isCompleted"),
             inline(null, completed.FID).as("isReserved"))
-            .from(cUsers)
-            .join(completed).on(cUsers.ID.eq(completed.ASSIGNED_TO)
+            .from(USERS)
+            .join(completed).on(USERS.ID.eq(completed.ASSIGNED_TO)
             .and(completed.STATUS.eq(BlockStatus.DONE)))
             .union(
-                select(rUsers.ID, rUsers.USERNAME, inline(null, reserved.FID)
-                    .as("blocksCompleted"), reserved.FID.as("blocksReserved"))
-                    .from(rUsers)
-                    .join(reserved).on(rUsers.ID.eq(reserved.ASSIGNED_TO)
+                select(USERS.ID, USERS.USERNAME, inline(null, reserved.FID)
+                    .as("isCompleted"), reserved.FID.as("isReserved"))
+                    .from(USERS)
+                    .join(reserved).on(USERS.ID.eq(reserved.ASSIGNED_TO)
                     .and(reserved.STATUS.eq(BlockStatus.RESERVED))));
 
     Field<?> userId = userSub.field("id").as("id");
@@ -85,23 +80,23 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
         db.select(userId, username, userCompleted, userReserved)
             .from(userSub)
             .groupBy(userId, username)
-            .orderBy(userCompleted.desc(), userReserved.desc())
+            .orderBy(userCompleted.desc(), userReserved.desc(), userId.asc())
             .limit(10)
             .fetchInto(Individual.class);
 
     Select<Record4<Integer, String, String, String>> teamSub =
         select(TEAM.ID, TEAM.NAME, completed.FID.as("isCompleted"),
-            inline(null, reserved.FID).as("isReserved"))
+            inline(null, completed.FID).as("isReserved"))
             .from(TEAM)
             .join(USER_TEAM).on(USER_TEAM.TEAM_ID.eq(TEAM.ID))
-            .leftJoin(completed).on(USER_TEAM.USER_ID.eq(completed.ASSIGNED_TO)
+            .join(completed).on(USER_TEAM.USER_ID.eq(completed.ASSIGNED_TO)
             .and(completed.STATUS.eq(BlockStatus.DONE)))
             .union(
-                select(TEAM.ID, TEAM.NAME, inline(null, completed.FID).as("blocksCompleted"),
-                    reserved.FID.as("blocksReserved"))
+                select(TEAM.ID, TEAM.NAME, inline(null, reserved.FID).as("isCompleted"),
+                    reserved.FID.as("isReserved"))
                     .from(TEAM)
                     .join(USER_TEAM).on(USER_TEAM.TEAM_ID.eq(TEAM.ID))
-                    .leftJoin(reserved).on(USER_TEAM.USER_ID.eq(TEAM.ID)
+                    .join(reserved).on(USER_TEAM.USER_ID.eq(reserved.ASSIGNED_TO)
                     .and(reserved.STATUS.eq(BlockStatus.RESERVED))));
 
     Field<?> teamId = teamSub.field("id").as("id");
@@ -113,7 +108,7 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
         db.select(teamId, teamName, teamCompleted, teamReserved)
         .from(teamSub)
         .groupBy(teamId, teamName)
-        .orderBy(teamCompleted.desc(), teamReserved.desc())
+        .orderBy(teamCompleted.desc(), teamReserved.desc(), teamId.asc())
         .limit(10)
         .fetchInto(Team.class);
 

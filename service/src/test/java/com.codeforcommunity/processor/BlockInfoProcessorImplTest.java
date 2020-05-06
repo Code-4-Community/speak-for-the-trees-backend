@@ -1,12 +1,10 @@
 package com.codeforcommunity.processor;
 
-import static com.sun.javaws.JnlpxArgs.verify;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.codeforcommunity.JooqMock;
 import com.codeforcommunity.dto.blockInfo.BlockInfoResponse;
 import com.codeforcommunity.dto.blockInfo.BlockLeaderboardResponse;
-import com.codeforcommunity.enums.BlockStatus;
 import java.util.Arrays;
 import java.util.List;
 import org.jooq.Field;
@@ -17,10 +15,8 @@ import org.jooq.Result;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.jooq.generated.Tables.BLOCK;
 import static org.jooq.generated.Tables.TEAM;
 import static org.jooq.generated.Tables.USERS;
-import static org.jooq.generated.Tables.USER_TEAM;
 
 class BlockInfoProcessorImplTest {
   private JooqMock mock;
@@ -32,6 +28,7 @@ class BlockInfoProcessorImplTest {
     processor = new BlockInfoProcessorImpl(mock.getContext());
   }
 
+  // this test is basically useless at this point since it only tests that expected db calls are made
   @Test
   void testGetBlocks() {
     Record1<Integer> open = mock.getContext().newRecord(DSL.field("COUNT", Integer.class));
@@ -64,6 +61,7 @@ class BlockInfoProcessorImplTest {
     assertEquals(3, res.getBlocksReserved());
   }
 
+  // this test is basically useless at this point since it only tests that expected db calls are made
   @Test
   void testGetBlockLeaderboards() {
     // create aggregate fields for use
@@ -99,8 +97,8 @@ class BlockInfoProcessorImplTest {
     Result<Record> userRes = mock.getContext().newResult(user1.fields());
     userRes.addAll(Arrays.asList(user1, user2, user3));
 
-    mock.addReturn("SELECT", teamRes);
     mock.addReturn("SELECT", userRes);
+    mock.addReturn("SELECT", teamRes);
 
     BlockLeaderboardResponse res = processor.getBlockLeaderboards();
 
