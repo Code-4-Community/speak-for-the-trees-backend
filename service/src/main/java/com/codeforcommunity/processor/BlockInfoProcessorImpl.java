@@ -12,11 +12,13 @@ import org.jooq.Field;
 import org.jooq.Record4;
 import org.jooq.Select;
 import org.jooq.Table;
+import org.jooq.impl.DSL;
 
 import static org.jooq.generated.Tables.BLOCK;
 import static org.jooq.generated.Tables.TEAM;
 import static org.jooq.generated.Tables.USERS;
 import static org.jooq.generated.Tables.USER_TEAM;
+import static org.jooq.impl.DSL.all;
 import static org.jooq.impl.DSL.count;
 import static org.jooq.impl.DSL.inline;
 import static org.jooq.impl.DSL.select;
@@ -43,52 +45,69 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
   public BlockLeaderboardResponse getBlockLeaderboards() {
     org.jooq.generated.tables.Block reserved = BLOCK.as("reserved");
     org.jooq.generated.tables.Block completed = BLOCK.as("completed");
+    org.jooq.generated.tables.Users cUsers = USERS.as("cUsers");
+    org.jooq.generated.tables.Users rUsers = USERS.as("rUsers");
 
-    Select<Record4<Integer, String, Integer, Integer>> userSub =
-        db.select(USERS.ID, USERS.USERNAME, completed.ASSIGNED_TO.as("blocksCompleted"),
-            inline(null, reserved.ASSIGNED_TO).as("blocksReserved"))
-            .from(USERS)
-            .leftJoin(completed).on(USERS.ID.eq(completed.ASSIGNED_TO)
+    /* The query below is trying to do this:
+     * select id, username, count(completed_raw) as completed, count(reserved_raw) as reserved
+     * from (select u.id, u.username, c.fid as completed_raw, null as reserved_raw
+     * from users u
+     * left join block c on u.id = c.assigned_to and c.status = 2
+     * union
+     * select uo.id, uo.username, null as completed_raw, f.fid as reserved_raw
+     * from users uo
+     * left join block f on uo.id = f.assigned_to and f.status = 1) s
+     * group by id, username
+     * order by completed desc, reserved desc
+     * limit 10;
+     */
+
+
+    Select<Record4<Integer, String, String, String>> userSub =
+        select(cUsers.ID, cUsers.USERNAME, completed.FID.as("isCompleted"),
+            inline(null, completed.FID).as("isReserved"))
+            .from(cUsers)
+            .join(completed).on(cUsers.ID.eq(completed.ASSIGNED_TO)
             .and(completed.STATUS.eq(BlockStatus.DONE)))
             .union(
-                select(USERS.ID, USERS.USERNAME, inline(null, completed.ASSIGNED_TO)
-                    .as("blocksCompleted"), reserved.ASSIGNED_TO.as("blocksReserved"))
-                    .from(USERS)
-                    .leftJoin(reserved).on(USERS.ID.eq(reserved.ASSIGNED_TO)
+                select(rUsers.ID, rUsers.USERNAME, inline(null, reserved.FID)
+                    .as("blocksCompleted"), reserved.FID.as("blocksReserved"))
+                    .from(rUsers)
+                    .join(reserved).on(rUsers.ID.eq(reserved.ASSIGNED_TO)
                     .and(reserved.STATUS.eq(BlockStatus.RESERVED))));
 
-    Field<?> userId = userSub.field(0).as("id");
-    Field<?> username = userSub.field(1).as("username");
-    Field<?> userCompleted = count(userSub.field(2)).as("blocksCompleted");
-    Field<?> userReserved = count(userSub.field(3)).as("blocksReserved");
+    Field<?> userId = userSub.field("id").as("id");
+    Field<?> username = userSub.field("username").as("username");
+    Field<?> userCompleted = count(userSub.field("isCompleted")).as("blocksCompleted");
+    Field<?> userReserved = count(userSub.field("isReserved")).as("blocksReserved");
 
     List<Individual> users =
-        db.select(userId, username, userCompleted,userReserved)
+        db.select(userId, username, userCompleted, userReserved)
             .from(userSub)
             .groupBy(userId, username)
-            .orderBy(count(userCompleted).desc(), count(userReserved).desc())
+            .orderBy(userCompleted.desc(), userReserved.desc())
             .limit(10)
             .fetchInto(Individual.class);
 
-    Select<Record4<Integer, String, Integer, Integer>> teamSub =
-        db.select(TEAM.ID, TEAM.NAME, completed.ASSIGNED_TO.as("blocksCompleted"),
-            inline(null, reserved.ASSIGNED_TO).as("blocksReserved"))
+    Select<Record4<Integer, String, String, String>> teamSub =
+        select(TEAM.ID, TEAM.NAME, completed.FID.as("isCompleted"),
+            inline(null, reserved.FID).as("isReserved"))
             .from(TEAM)
             .join(USER_TEAM).on(USER_TEAM.TEAM_ID.eq(TEAM.ID))
             .leftJoin(completed).on(USER_TEAM.USER_ID.eq(completed.ASSIGNED_TO)
             .and(completed.STATUS.eq(BlockStatus.DONE)))
             .union(
-                select(TEAM.ID, TEAM.NAME, inline(null, completed.ASSIGNED_TO).as("blocksCompleted"),
-                    reserved.ASSIGNED_TO.as("blocksReserved"))
+                select(TEAM.ID, TEAM.NAME, inline(null, completed.FID).as("blocksCompleted"),
+                    reserved.FID.as("blocksReserved"))
                     .from(TEAM)
                     .join(USER_TEAM).on(USER_TEAM.TEAM_ID.eq(TEAM.ID))
                     .leftJoin(reserved).on(USER_TEAM.USER_ID.eq(TEAM.ID)
                     .and(reserved.STATUS.eq(BlockStatus.RESERVED))));
 
-    Field<?> teamId = teamSub.field(0).as("id");
-    Field<?> teamName = teamSub.field(1).as("name");
-    Field<?> teamCompleted = count(teamSub.field(2)).as("blocksCompleted");
-    Field<?> teamReserved = count(teamSub.field(3)).as("blocksReserved");
+    Field<?> teamId = teamSub.field("id").as("id");
+    Field<?> teamName = teamSub.field("name").as("name");
+    Field<?> teamCompleted = count(teamSub.field("isCompleted")).as("blocksCompleted");
+    Field<?> teamReserved = count(teamSub.field("isReserved")).as("blocksReserved");
 
     List<Team> teams =
         db.select(teamId, teamName, teamCompleted, teamReserved)
@@ -97,27 +116,6 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
         .orderBy(teamCompleted.desc(), teamReserved.desc())
         .limit(10)
         .fetchInto(Team.class);
-
-//    List<Team> teams =
-//        db.select(TEAM.ID, TEAM.NAME, count(completed.FID).as("blocksCompleted"), count(reserved.FID).as("blocksReserved"))
-//            .from(TEAM)
-//            .join(USER_TEAM).on(USER_TEAM.TEAM_ID.eq(TEAM.ID))
-//            .leftJoin(reserved).on(USER_TEAM.USER_ID.eq(reserved.ASSIGNED_TO).and(reserved.STATUS.eq(BlockStatus.RESERVED)))
-//            .leftJoin(completed).on(USER_TEAM.USER_ID.eq(completed.ASSIGNED_TO).and(completed.STATUS.eq(BlockStatus.DONE)))
-//            .groupBy(TEAM.ID)
-//            .orderBy(inline(3).desc(), inline(4).desc())
-//            .limit(10)
-//            .fetchInto(Team.class);
-
-//    List<Individual> individuals =
-//        db.select(USERS.ID, USERS.USERNAME, count(completed.FID).as("blocksCompleted"), count(reserved.FID).as("blocksReserved"))
-//            .from(USERS)
-//            .leftJoin(reserved).on(USERS.ID.eq(reserved.ASSIGNED_TO).and(reserved.STATUS.eq(BlockStatus.RESERVED)))
-//            .leftJoin(completed).on(USERS.ID.eq(completed.ASSIGNED_TO).and(completed.STATUS.eq(BlockStatus.DONE)))
-//            .groupBy(USERS.ID)
-//            .orderBy(inline(3).desc(), inline(4).desc())
-//            .limit(10)
-//            .fetchInto(Individual.class);
 
     return new BlockLeaderboardResponse(teams, users);
   }
