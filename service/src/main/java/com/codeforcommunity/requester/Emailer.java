@@ -16,12 +16,13 @@ public class Emailer {
 
   public Emailer() {
     Properties emailProperties = PropertiesLoader.getEmailerProperties();
+    String senderName = emailProperties.getProperty("senderName");
     String sendEmail = emailProperties.getProperty("sendEmail");
     String sendPassword = emailProperties.getProperty("sendPassword");
     String emailHost = emailProperties.getProperty("emailHost");
     int emailPort = Integer.parseInt(emailProperties.getProperty("emailPort"));
 
-    this.emailOperations = new EmailOperations(sendEmail, sendPassword, emailHost, emailPort);
+    this.emailOperations = new EmailOperations(senderName, sendEmail, sendPassword, emailHost, emailPort);
 
     Properties frontendProperties = PropertiesLoader.getFrontendProperties();
     this.teamPageUrlTemplate = frontendProperties.getProperty("base_url") + frontendProperties.getProperty("team_page_route");

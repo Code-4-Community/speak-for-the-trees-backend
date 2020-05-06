@@ -20,10 +20,12 @@ import java.util.Optional;
 public class EmailOperations {
   private static final Logger logger = LogManager.getLogger(EmailOperations.class);
 
+  private final String senderName;
   private final String sendEmail;
   private final Mailer mailer;
 
-  public EmailOperations(String sendEmail, String sendPassword, String emailHost, int emailPort) {
+  public EmailOperations(String senderName, String sendEmail, String sendPassword, String emailHost, int emailPort) {
+    this.senderName = senderName;
     this.sendEmail = sendEmail;
     this.mailer = MailerBuilder
         .withSMTPServer(emailHost, emailPort, sendEmail, sendPassword)
@@ -100,7 +102,7 @@ public class EmailOperations {
     logger.info("Sending email subject " + subject);
 
     Email email = EmailBuilder.startingBlank()
-        .from("Speak For The Trees Boston", sendEmail)
+        .from(senderName, sendEmail)
         .to(sendToName, sendToEmail)
         .withSubject(subject)
         .withHTMLText(emailBody)
