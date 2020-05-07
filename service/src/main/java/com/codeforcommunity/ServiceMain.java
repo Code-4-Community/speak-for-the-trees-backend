@@ -2,12 +2,14 @@ package com.codeforcommunity;
 
 import com.codeforcommunity.api.IAuthProcessor;
 import com.codeforcommunity.api.IBlockProcessor;
+import com.codeforcommunity.api.IProtectedUserProcessor;
 import com.codeforcommunity.api.ITeamsProcessor;
 import com.codeforcommunity.auth.JWTAuthorizer;
 import com.codeforcommunity.auth.JWTCreator;
 import com.codeforcommunity.auth.JWTHandler;
 import com.codeforcommunity.processor.AuthProcessorImpl;
 import com.codeforcommunity.processor.BlocksProcessorImpl;
+import com.codeforcommunity.processor.ProtectedUserProcessorImpl;
 import com.codeforcommunity.processor.TeamsProcessorImpl;
 import com.codeforcommunity.propertiesLoader.PropertiesLoader;
 import com.codeforcommunity.requester.Emailer;
@@ -70,9 +72,15 @@ public class ServiceMain {
     Emailer emailer = new Emailer();
 
     IAuthProcessor authProcessor = new AuthProcessorImpl(this.db, jwtCreator);
+    IProtectedUserProcessor protectedUserProcessor = new ProtectedUserProcessorImpl(this.db);
     IBlockProcessor blockProcessor = new BlocksProcessorImpl(this.db, mapRequester);
     ITeamsProcessor teamsProcessor = new TeamsProcessorImpl(this.db, emailer);
-    ApiRouter router = new ApiRouter(authProcessor, blockProcessor, teamsProcessor, jwtAuthorizer);
+    ApiRouter router = new ApiRouter(authProcessor,
+        protectedUserProcessor,
+        blockProcessor,
+        teamsProcessor,
+        jwtAuthorizer);
+
     startApiServer(router, vertx);
   }
 
