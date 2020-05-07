@@ -27,7 +27,7 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
 
     db.deleteFrom(VERIFICATION_KEYS)
         .where(VERIFICATION_KEYS.USER_ID.eq(userId))
-        .execute();
+        .executeAsync();
 
     Optional<UserTeamRecord> maybeUserTeamRecord = Optional.ofNullable(
         db.selectFrom(USER_TEAM)
@@ -40,11 +40,11 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
       if (userTeamRecord.getTeamRole() == TeamRole.LEADER) {
         db.deleteFrom(USER_TEAM)
             .where(USER_TEAM.TEAM_ID.eq(userTeamRecord.getTeamId()))
-            .execute();
+            .executeAsync();
 
         db.deleteFrom(TEAM)
             .where(TEAM.ID.eq(userTeamRecord.getTeamId()))
-            .execute();
+            .executeAsync();
       } else {
         db.executeDelete(userTeamRecord, USER_TEAM.USER_ID.eq(userId));
       }
@@ -52,6 +52,6 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
 
     db.deleteFrom(USERS)
         .where(USERS.ID.eq(userId))
-        .execute();
+        .executeAsync();
   }
 }
