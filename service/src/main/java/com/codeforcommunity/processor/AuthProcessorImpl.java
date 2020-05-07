@@ -93,6 +93,11 @@ public class AuthProcessorImpl implements IAuthProcessor {
         }
     }
 
+    @Override
+    public void validateSecretKey(String secretKey) {
+        authDatabaseOperations.validateSecretKey(secretKey);
+    }
+
     /**
      * Given a valid user's email, get a corresponding refresh and access token
      * and return them as a SessionResponse object.

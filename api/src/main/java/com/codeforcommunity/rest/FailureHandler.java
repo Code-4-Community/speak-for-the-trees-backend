@@ -18,6 +18,7 @@ import com.codeforcommunity.exceptions.TokenInvalidException;
 import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
+import com.codeforcommunity.exceptions.UsernameAlreadyInUseException;
 import io.vertx.ext.web.RoutingContext;
 
 public class FailureHandler {
@@ -81,6 +82,22 @@ public class FailureHandler {
     String message = String.format("Error creating new user, given email %s already used", exception.getEmail());
 
     end(ctx, message, 409);
+  }
+
+  public void handleUsernameAlreadyInUse(RoutingContext ctx, UsernameAlreadyInUseException exception) {
+    String message = String.format("Error creating new user, given username %s already used", exception.getUsername());
+
+    end(ctx, message, 409);
+  }
+
+  public void handleInvalidEmailVerificationToken(RoutingContext ctx) {
+    String message = "Given token is invalid";
+    end(ctx, message, 401);
+  }
+
+  public void handleExpiredEmailVerificationToken(RoutingContext ctx) {
+    String message = "Given token is expired";
+    end(ctx, message, 401);
   }
 
   public void handleUserDoesNotExist(RoutingContext ctx, UserDoesNotExistException exception) {

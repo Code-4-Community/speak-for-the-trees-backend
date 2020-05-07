@@ -16,14 +16,16 @@ public interface IAuthProcessor {
     SessionResponse signUp(NewUserRequest request) throws AuthException;
 
     /**
-     * Logs in. TODO
+     * Given a LoginRequest log the user in if they're valid and return access and
+     * refresh tokens for their session.
      *
-     * @throws AuthException
+     * @throws AuthException If the given email / password combination is invalid
      */
     SessionResponse login(LoginRequest loginRequest) throws AuthException;
 
     /**
-     * Logs out. TODO
+     * Logs the user out by adding the given refresh token to the blacklist so that
+     * it cannot be used for future refreshes.
      */
     void logout(String refreshToken);
 
@@ -35,4 +37,11 @@ public interface IAuthProcessor {
      */
     RefreshSessionResponse refreshSession(RefreshSessionRequest request) throws AuthException;
 
+    /**
+     * Allows clients to submit a secret key in order to verify their email.
+     * @param secretKey string of user's verificaiton token.
+     * @throws ExpiredEmailVerificationTokenException if the token is expired.
+     * @throws InvalidEmailVerificationTokenException if the token is invalid.
+     */
+    void validateSecretKey(String secretKey);
 }
