@@ -2,9 +2,15 @@ package com.codeforcommunity.processor;
 
 import com.codeforcommunity.api.IProtectedUserProcessor;
 import com.codeforcommunity.auth.JWTData;
+import com.codeforcommunity.auth.Passwords;
+import com.codeforcommunity.dto.user.ChangePasswordRequest;
 import com.codeforcommunity.enums.TeamRole;
+import com.codeforcommunity.exceptions.UserDoesNotExistException;
+import com.codeforcommunity.exceptions.WrongPasswordException;
 import org.jooq.DSLContext;
+import org.jooq.generated.tables.pojos.Users;
 import org.jooq.generated.tables.records.UserTeamRecord;
+import org.jooq.generated.tables.records.UsersRecord;
 
 import java.util.Optional;
 
@@ -53,5 +59,22 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
     db.deleteFrom(USERS)
         .where(USERS.ID.eq(userId))
         .executeAsync();
+  }
+
+  @Override
+  public void changePassword(JWTData userData, ChangePasswordRequest changePasswordRequest) {
+    UsersRecord user = db.selectFrom(USERS)
+        .where(USERS.ID.eq(userData.getUserId()))
+        .fetchOne();
+
+    if (user == null) {
+      throw new UserDoesNotExistException(userData.getUserId());
+    }
+
+    if (Passwords.isExpectedPassword(changePasswordRequest.getCurrentPassword(), user.getPassHash())) {
+      user.setPassHash(Passwords.createHash(changePasswordRequest.getNewPassword()));
+    } else {
+      throw new WrongPasswordException();
+    }
   }
 }
