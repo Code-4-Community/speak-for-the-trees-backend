@@ -1,16 +1,10 @@
 package com.codeforcommunity.rest;
 
-import com.codeforcommunity.exceptions.CreateUserException;
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
 import com.codeforcommunity.exceptions.HandledException;
 import com.codeforcommunity.exceptions.MalformedParameterException;
 import com.codeforcommunity.exceptions.MissingHeaderException;
 import com.codeforcommunity.exceptions.MissingParameterException;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-
 import com.codeforcommunity.exceptions.NoSuchTeamException;
 import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
 import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
@@ -42,6 +36,11 @@ public class FailureHandler {
     end(ctx, message, 401);
   }
 
+  public void handleWrongPassword(RoutingContext ctx) {
+     String message = "Given password is not correct";
+     end(ctx, message, 401);
+  }
+
   public void handleMissingParameter(RoutingContext ctx, MissingParameterException e) {
     String message = String.format("Missing required path parameter: %s", e.getMissingParameterName());
     end(ctx, message, 400);
@@ -60,17 +59,6 @@ public class FailureHandler {
   public void handleMissingBody(RoutingContext ctx) {
     String message = "Missing required request body";
     end(ctx, message, 400);
-  }
-
-  public void handleCreateUser(RoutingContext ctx, CreateUserException exception) {
-    CreateUserException.UsedField reason = exception.getUsedField();
-
-    String reasonMessage = reason.equals(CreateUserException.UsedField.BOTH) ? "email and user name":
-            reason.toString();
-
-    String message = String.format("Error creating new user, given %s already used", reasonMessage);
-
-    end(ctx, message, 409);
   }
 
   public void handleMalformedParameter(RoutingContext ctx, MalformedParameterException exception) {

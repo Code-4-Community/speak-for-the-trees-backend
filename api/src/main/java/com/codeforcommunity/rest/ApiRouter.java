@@ -2,12 +2,14 @@ package com.codeforcommunity.rest;
 
 import com.codeforcommunity.api.IAuthProcessor;
 import com.codeforcommunity.api.IBlockProcessor;
+import com.codeforcommunity.api.IProtectedUserProcessor;
 import com.codeforcommunity.api.ITeamsProcessor;
 import com.codeforcommunity.auth.JWTAuthorizer;
 
 import com.codeforcommunity.rest.subrouter.AuthRouter;
 import com.codeforcommunity.rest.subrouter.BlocksRouter;
 import com.codeforcommunity.rest.subrouter.CommonRouter;
+import com.codeforcommunity.rest.subrouter.ProtectedUserRouter;
 import com.codeforcommunity.rest.subrouter.TeamsRouter;
 import io.vertx.core.Vertx;
 
@@ -20,12 +22,19 @@ public class ApiRouter implements IRouter {
     private final BlocksRouter blocksRouter;
     private final TeamsRouter teamsRouter;
     private final AuthRouter authRouter;
+    private final ProtectedUserRouter protectedUserRouter;
 
-    public ApiRouter(IAuthProcessor authProcessor, IBlockProcessor blockProcessor, ITeamsProcessor teamsProcessor, JWTAuthorizer jwtAuthorizer) {
+    public ApiRouter(IAuthProcessor authProcessor,
+                     IProtectedUserProcessor protectedUserProcessor,
+                     IBlockProcessor blockProcessor,
+                     ITeamsProcessor teamsProcessor,
+                     JWTAuthorizer jwtAuthorizer) {
+
         this.commonRouter = new CommonRouter(jwtAuthorizer);
         this.authRouter = new AuthRouter(authProcessor);
         this.blocksRouter = new BlocksRouter(blockProcessor);
         this.teamsRouter = new TeamsRouter(teamsProcessor);
+        this.protectedUserRouter = new ProtectedUserRouter(protectedUserProcessor);
     }
 
     /**
@@ -47,6 +56,7 @@ public class ApiRouter implements IRouter {
     private Router defineProtectedRoutes(Vertx vertx) {
         Router router = Router.router(vertx);
 
+        router.mountSubRouter("/user", protectedUserRouter.initializeRouter(vertx));
         router.mountSubRouter("/blocks", blocksRouter.initializeRouter(vertx));
         router.mountSubRouter("/teams", teamsRouter.initializeRouter(vertx));
 
