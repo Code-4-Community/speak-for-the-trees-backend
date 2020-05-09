@@ -4,6 +4,7 @@ import com.codeforcommunity.api.IProtectedUserProcessor;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blocks.BlockResponse;
 import com.codeforcommunity.dto.blocks.StandardBlockRequest;
+import com.codeforcommunity.dto.user.ChangePasswordRequest;
 import com.codeforcommunity.rest.IRouter;
 import com.codeforcommunity.rest.RestFunctions;
 import io.vertx.core.Vertx;
@@ -27,6 +28,7 @@ public class ProtectedUserRouter  implements IRouter {
     Router router = Router.router(vertx);
 
     registerDeleteUser(router);
+    registerChangePassword(router);
 
     return router;
   }
@@ -36,10 +38,26 @@ public class ProtectedUserRouter  implements IRouter {
     deleteUserRoute.handler(this::handleDeleteUserRoute);
   }
 
+  private void registerChangePassword(Router router) {
+    Route changePasswordRoute = router.post("/change_password");
+    changePasswordRoute.handler(this::handleChangePasswordRoute);
+  }
+
+
+
   private void handleDeleteUserRoute(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
 
     processor.deleteUser(userData);
+
+    end(ctx.response(), 200);
+  }
+
+  private void handleChangePasswordRoute(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+    ChangePasswordRequest changePasswordRequest = RestFunctions.getJsonBodyAsClass(ctx, ChangePasswordRequest.class);
+
+    processor.changePassword(userData, changePasswordRequest);
 
     end(ctx.response(), 200);
   }
