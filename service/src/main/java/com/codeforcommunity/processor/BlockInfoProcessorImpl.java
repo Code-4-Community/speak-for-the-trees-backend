@@ -16,6 +16,13 @@ import static org.jooq.generated.Tables.BLOCK;
 import static org.jooq.generated.Tables.TEAM;
 import static org.jooq.generated.Tables.USERS;
 import static org.jooq.generated.Tables.USER_TEAM;
+
+import org.jooq.SelectJoinStep;
+import org.jooq.SelectLimitPercentStep;
+import org.jooq.SelectSelectStep;
+import org.jooq.TableField;
+import org.jooq.impl.TableImpl;
+
 import static org.jooq.impl.DSL.count;
 import static org.jooq.impl.DSL.inline;
 import static org.jooq.impl.DSL.select;
@@ -40,78 +47,175 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
 
   @Override
   public BlockLeaderboardResponse getBlockLeaderboards() {
-    org.jooq.generated.tables.Block reserved = BLOCK.as("reserved");
-    org.jooq.generated.tables.Block completed = BLOCK.as("completed");
-
-    /* The query below is trying to do this:
-     * select id, username, count(completed_raw) as completed, count(reserved_raw) as reserved
-     * from (select u.id, u.username, c.fid as completed_raw, null as reserved_raw
-     * from users u
-     * left join block c on u.id = c.assigned_to and c.status = 2
-     * union
-     * select uo.id, uo.username, null as completed_raw, f.fid as reserved_raw
-     * from users uo
-     * left join block f on uo.id = f.assigned_to and f.status = 1) s
-     * group by id, username
-     * order by completed desc, reserved desc
-     * limit 10;
-     */
-
-
-    Select<Record4<Integer, String, String, String>> userSub =
-        select(USERS.ID, USERS.USERNAME, completed.FID.as("isCompleted"),
-            inline(null, completed.FID).as("isReserved"))
-            .from(USERS)
-            .join(completed).on(USERS.ID.eq(completed.ASSIGNED_TO)
-            .and(completed.STATUS.eq(BlockStatus.DONE)))
-            .union(
-                select(USERS.ID, USERS.USERNAME, inline(null, reserved.FID)
-                    .as("isCompleted"), reserved.FID.as("isReserved"))
-                    .from(USERS)
-                    .join(reserved).on(USERS.ID.eq(reserved.ASSIGNED_TO)
-                    .and(reserved.STATUS.eq(BlockStatus.RESERVED))));
-
-    Field<?> userId = userSub.field("id").as("id");
-    Field<?> username = userSub.field("username").as("username");
-    Field<?> userCompleted = count(userSub.field("isCompleted")).as("blocksCompleted");
-    Field<?> userReserved = count(userSub.field("isReserved")).as("blocksReserved");
-
-    List<Individual> users =
-        db.select(userId, username, userCompleted, userReserved)
-            .from(userSub)
-            .groupBy(userId, username)
-            .orderBy(userCompleted.desc(), userReserved.desc(), userId.asc())
-            .limit(10)
-            .fetchInto(Individual.class);
-
-    Select<Record4<Integer, String, String, String>> teamSub =
-        select(TEAM.ID, TEAM.NAME, completed.FID.as("isCompleted"),
-            inline(null, completed.FID).as("isReserved"))
-            .from(TEAM)
-            .join(USER_TEAM).on(USER_TEAM.TEAM_ID.eq(TEAM.ID))
-            .join(completed).on(USER_TEAM.USER_ID.eq(completed.ASSIGNED_TO)
-            .and(completed.STATUS.eq(BlockStatus.DONE)))
-            .union(
-                select(TEAM.ID, TEAM.NAME, inline(null, reserved.FID).as("isCompleted"),
-                    reserved.FID.as("isReserved"))
-                    .from(TEAM)
-                    .join(USER_TEAM).on(USER_TEAM.TEAM_ID.eq(TEAM.ID))
-                    .join(reserved).on(USER_TEAM.USER_ID.eq(reserved.ASSIGNED_TO)
-                    .and(reserved.STATUS.eq(BlockStatus.RESERVED))));
-
-    Field<?> teamId = teamSub.field("id").as("id");
-    Field<?> teamName = teamSub.field("name").as("name");
-    Field<?> teamCompleted = count(teamSub.field("isCompleted")).as("blocksCompleted");
-    Field<?> teamReserved = count(teamSub.field("isReserved")).as("blocksReserved");
-
-    List<Team> teams =
-        db.select(teamId, teamName, teamCompleted, teamReserved)
-        .from(teamSub)
-        .groupBy(teamId, teamName)
-        .orderBy(teamCompleted.desc(), teamReserved.desc(), teamId.asc())
-        .limit(10)
-        .fetchInto(Team.class);
+    List<Individual> users = getUsersLeaderboard();
+    List<Team> teams = getTeamLeaderboard();
 
     return new BlockLeaderboardResponse(teams, users);
+  }
+
+  /**
+   * Builds the main parts of the subquery. Specifically the
+   * <pre>
+   * SELECT <strong>id</strong>, <strong>name</strong>, ? AS completed, ? AS reserved
+   * FROM <strong>table</strong>
+   * (optional) JOIN user_team ON user_team.team_id = <strong>id</strong>
+   * JOIN block ON block.id = <strong>table</strong>.assigned_to AND block.status = <strong>blockStatus</strong>
+   * </pre>
+   * where ? AS [completed, reserved] matches <strong>blockStatus</strong>.
+   *
+   * @param table the table to select from (should be USERS or TEAM)
+   * @param id the ID field of the table record
+   * @param name the name field of the table record
+   * @param blockStatus the BlockStatus to search for
+   * @param isTeam if the record being selected is for a TEAM or USERS table
+   * @return the part of the query as represented above
+   */
+  SelectJoinStep<Record4<Integer, String, String, String>> buildSubQueryParts(
+      TableImpl<?> table, TableField<?, Integer> id, TableField<?, String> name,
+      BlockStatus blockStatus, boolean isTeam) {
+    org.jooq.generated.tables.Block reserved = BLOCK.as("reserved");
+    org.jooq.generated.tables.Block completed = BLOCK.as("completed");
+    org.jooq.generated.tables.Block selectedBlock;
+
+    SelectSelectStep<Record4<Integer, String, String, String>> selectBase;
+
+    if (blockStatus == BlockStatus.DONE) {
+      selectBase = select(id, name, completed.FID.as("isCompleted"),
+          inline(null, completed.FID).as("isReserved"));
+      selectedBlock = completed;
+    }
+    else {
+      selectBase = select(id, name, inline(null, reserved.FID)
+          .as("isCompleted"), reserved.FID.as("isReserved"));
+      selectedBlock = reserved;
+    }
+
+    SelectJoinStep<Record4<Integer, String, String, String>> joinStep =
+        selectBase.from(table);
+
+    if (isTeam) {
+      joinStep = joinStep.join(USER_TEAM).on(USER_TEAM.TEAM_ID.eq(id))
+          .join(selectedBlock).on(USER_TEAM.USER_ID.eq(selectedBlock.ASSIGNED_TO)
+          .and(selectedBlock.STATUS.eq(blockStatus)));
+    }
+    else {
+      joinStep = joinStep.join(selectedBlock).on(id.eq(selectedBlock.ASSIGNED_TO)
+      .and(selectedBlock.STATUS.eq(blockStatus)));
+    }
+
+    return joinStep;
+  }
+
+  /**
+   * Builds the subquery. Specifically the
+   * <pre>
+   *   SELECT <strong>id</strong>, <strong>name</strong>, fid as completed_raw, null as reserved_raw
+   *   FROM <strong>table</strong>
+   *   (optional) JOIN user_team ON user_team.team_id = <strong>id</strong>
+   *   JOIN block ON block.id = <strong>table</strong>.assigned_to AND block.status = 2
+   *   UNION
+   *   SELECT <strong>id</strong>, <strong>name</strong>, null as completed_raw, fid as reserved_raw
+   *   FROM <strong>table</strong>
+   *   (optional) JOIN user_team ON user_team.team_id = <strong>id</strong>
+   *   JOIN block ON block.id = <strong>table</strong>.assigned_to AND block.status = 1
+   * </pre>
+   *
+   * @param table the table to select from (should be USERS or TEAM)
+   * @param id the ID field of the table record
+   * @param name the name field of the table record
+   * @param isTeam if the record being selected is for a TEAM or USERS table
+   * @return the part of the query as represented above
+   */
+  Select<Record4<Integer, String, String, String>> buildSubQuery(TableImpl<?> table,
+      TableField<?, Integer> id, TableField<?, String> name, boolean isTeam) {
+
+    SelectJoinStep<Record4<Integer, String, String, String>> done =
+        buildSubQueryParts(table, id, name, BlockStatus.DONE, isTeam);
+
+    SelectJoinStep<Record4<Integer, String, String, String>> reserved =
+        buildSubQueryParts(table, id, name, BlockStatus.RESERVED, isTeam);
+
+    return done.union(reserved);
+  }
+
+  /**
+   * Compose the entire query after building the subquery. Specifically performs
+   * <pre>
+   *   SELECT <strong>id</strong>, <strong>name</strong>,
+   *     COUNT(completed_raw) AS completed, COUNT(reserved_raw) AS reserved
+   *   FROM subquery
+   *   GROUP BY <strong>id</strong>, <strong>name</strong>
+   *   ORDER BY completed DESC, reserved DESC
+   *   LIMIT 10;
+   * </pre>
+   * where subquery is what is returned from {@code buildSubQuery}.
+   * @param table the table to select from (should be USERS or TEAM)
+   * @param id the ID field of the table record
+   * @param name the name field of the table record
+   * @param isTeam if the record being selected is for a TEAM or USERS table
+   * @param clazz the Class Class to map the object into
+   * @param <T> the Class type to map the object into
+   * @return a List of the what is requested and returned from the query represented above
+   */
+  <T> List<T> composeFullQuery(TableImpl<?> table, TableField<?, Integer> id, TableField<?, String> name,
+      boolean isTeam, Class<T> clazz) {
+    Select<Record4<Integer, String, String, String>> subQuery =
+        buildSubQuery(table, id, name, isTeam);
+
+    Field<?> subQueryId = subQuery.field("id").as("id");
+    Field<?> subQueryName = subQuery.field(1).as(name.getName());
+    Field<?> subQueryCompleted = count(subQuery.field("isCompleted")).as("blocksCompleted");
+    Field<?> subQueryReserved = count(subQuery.field("isReserved")).as("blocksReserved");
+
+    SelectLimitPercentStep<? extends Record4<?, ?, ?, ?>> limit =
+        db.select(subQueryId, subQueryName, subQueryCompleted, subQueryReserved)
+        .from(subQuery)
+        .groupBy(subQueryId, subQueryName)
+        .orderBy(subQueryCompleted.desc(), subQueryReserved.desc())
+        .limit(10);
+
+    return limit.fetchInto(clazz);
+  }
+
+  /**
+   * Performs the following query:
+   * <pre>
+   * SELECT id, username, COUNT(completed_raw) AS completed, COUNT(reserved_raw) AS reserved
+   * FROM (SELECT uc.id, uc.username, c.fid AS completed_raw, null AS reserved_raw
+   * FROM team uc
+   * JOIN block c ON uc.id = c.assigned_to AND c.status = 2
+   * UNION
+   * SELECT ur.id, ur.username, null AS completed_raw, r.fid AS reserved_raw
+   * FROM users ur
+   * JOIN block r ON ur.id = r.assigned_to AND r.status = 1) s
+   * GROUP BY id, username
+   * ORDER BY completed DESC, reserved DESC
+   * LIMIT 10;
+   * </pre>
+   * @return a List of {@link Individual} as represented by the query above
+   */
+  List<Individual> getUsersLeaderboard() {
+    return composeFullQuery(USERS, USERS.ID, USERS.USERNAME, false, Individual.class);
+  }
+
+  /**
+   * Performs the following query:
+   * <pre>
+   * SELECT id, name, COUNT(completed_raw) AS completed, COUNT(reserved_raw) AS reserved
+   * FROM (SELECT tc.id, tc.name, c.fid AS completed_raw, null AS reserved_raw
+   * FROM team tc
+   * JOIN block c ON uc.id = c.assigned_to AND c.status = 2
+   * UNION
+   * SELECT tr.id, tr.name, null AS completed_raw, r.fid AS reserved_raw
+   * FROM users tr
+   * JOIN block r ON tr.id = r.assigned_to AND r.status = 1) s
+   * GROUP BY id, name
+   * ORDER BY completed DESC, reserved DESC
+   * LIMIT 10;
+   * </pre>
+   * @return a List of {@link Team} as represented by the above query
+   */
+  List<Team> getTeamLeaderboard() {
+    return composeFullQuery(TEAM, TEAM.ID, TEAM.NAME, true, Team.class);
   }
 }
