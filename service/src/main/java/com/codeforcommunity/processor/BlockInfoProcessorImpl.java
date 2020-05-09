@@ -20,6 +20,7 @@ import static org.jooq.generated.Tables.USER_TEAM;
 import org.jooq.SelectJoinStep;
 import org.jooq.SelectLimitPercentStep;
 import org.jooq.SelectSelectStep;
+import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.TableImpl;
 
@@ -96,11 +97,11 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
     if (isTeam) {
       joinStep = joinStep.join(USER_TEAM).on(USER_TEAM.TEAM_ID.eq(id))
           .join(selectedBlock).on(USER_TEAM.USER_ID.eq(selectedBlock.ASSIGNED_TO)
-          .and(selectedBlock.STATUS.eq(blockStatus)));
+              .and(selectedBlock.STATUS.eq(blockStatus)));
     }
     else {
       joinStep = joinStep.join(selectedBlock).on(id.eq(selectedBlock.ASSIGNED_TO)
-      .and(selectedBlock.STATUS.eq(blockStatus)));
+          .and(selectedBlock.STATUS.eq(blockStatus)));
     }
 
     return joinStep;
@@ -148,33 +149,29 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
    *   ORDER BY completed DESC, reserved DESC
    *   LIMIT 10;
    * </pre>
-   * where subquery is what is returned from {@code buildSubQuery}.
+   * where subquery is what is returned from {@code buildSubQuery}. To run, just call
+   * {@code fetch} on the returned object.
    * @param table the table to select from (should be USERS or TEAM)
    * @param id the ID field of the table record
    * @param name the name field of the table record
    * @param isTeam if the record being selected is for a TEAM or USERS table
-   * @param clazz the Class Class to map the object into
-   * @param <T> the Class type to map the object into
    * @return a List of the what is requested and returned from the query represented above
    */
-  <T> List<T> composeFullQuery(TableImpl<?> table, TableField<?, Integer> id, TableField<?, String> name,
-      boolean isTeam, Class<T> clazz) {
-    Select<Record4<Integer, String, String, String>> subQuery =
-        buildSubQuery(table, id, name, isTeam);
+  SelectLimitPercentStep<? extends Record4<?, ?, ?, ?>> composeFullQuery(
+      TableImpl<?> table, TableField<?, Integer> id, TableField<?, String> name, boolean isTeam) {
+    Table<Record4<Integer, String, String, String>> subQuery =
+        buildSubQuery(table, id, name, isTeam).asTable("subquery");
 
     Field<?> subQueryId = subQuery.field("id").as("id");
     Field<?> subQueryName = subQuery.field(1).as(name.getName());
     Field<?> subQueryCompleted = count(subQuery.field("isCompleted")).as("blocksCompleted");
     Field<?> subQueryReserved = count(subQuery.field("isReserved")).as("blocksReserved");
 
-    SelectLimitPercentStep<? extends Record4<?, ?, ?, ?>> limit =
-        db.select(subQueryId, subQueryName, subQueryCompleted, subQueryReserved)
+    return db.select(subQueryId, subQueryName, subQueryCompleted, subQueryReserved)
         .from(subQuery)
         .groupBy(subQueryId, subQueryName)
         .orderBy(subQueryCompleted.desc(), subQueryReserved.desc())
         .limit(10);
-
-    return limit.fetchInto(clazz);
   }
 
   /**
@@ -194,8 +191,9 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
    * </pre>
    * @return a List of {@link Individual} as represented by the query above
    */
-  List<Individual> getUsersLeaderboard() {
-    return composeFullQuery(USERS, USERS.ID, USERS.USERNAME, false, Individual.class);
+  public List<Individual> getUsersLeaderboard() {
+    return composeFullQuery(USERS, USERS.ID, USERS.USERNAME, false)
+        .fetchInto(Individual.class);
   }
 
   /**
@@ -215,7 +213,8 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
    * </pre>
    * @return a List of {@link Team} as represented by the above query
    */
-  List<Team> getTeamLeaderboard() {
-    return composeFullQuery(TEAM, TEAM.ID, TEAM.NAME, true, Team.class);
+  public List<Team> getTeamLeaderboard() {
+    return composeFullQuery(TEAM, TEAM.ID, TEAM.NAME, true)
+        .fetchInto(Team.class);
   }
 }
