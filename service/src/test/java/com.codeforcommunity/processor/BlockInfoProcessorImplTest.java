@@ -1,5 +1,6 @@
 package com.codeforcommunity.processor;
 
+import static org.jooq.generated.Tables.USER_TEAM;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.codeforcommunity.JooqMock;
@@ -14,11 +15,10 @@ import org.jooq.Record1;
 import org.jooq.Record4;
 import org.jooq.Result;
 import org.jooq.Select;
+import org.jooq.SelectFinalStep;
 import org.jooq.SelectJoinStep;
-import org.jooq.SelectLimitPercentStep;
-import org.jooq.TableField;
+import org.jooq.Table;
 import org.jooq.impl.DSL;
-import org.jooq.impl.TableImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -119,29 +119,22 @@ class BlockInfoProcessorImplTest {
     assertEquals(1, res.getIndividuals().get(0).getId());
   }
 
-  // gets the name field of the given table (FOR TESTING SQL QUERIES PART OF composeFullQuery ONLY)
-  private TableField<?, String> getName(TableImpl<?> table) {
-    if (table.getName().equals("team")) {
-      return TEAM.NAME;
+  // gets the name field of the given table
+  private String getNameName(Table<? extends Record> table) {
+    if (table.equals(TEAM)) {
+      return TEAM.NAME.getName();
+    }
+    else if (table.equals(USERS)){
+      return USERS.USERNAME.getName();
     }
     else {
-      return USERS.USERNAME;
-    }
-  }
-
-  // gets the id field of the given table (FOR TESTING SQL QUERIES PART OF composeFullQuery ONLY)
-  private TableField<?, Integer> getId(TableImpl<?> table) {
-    if (table.getName().equals("team")) {
-      return TEAM.ID;
-    }
-    else {
-      return USERS.ID;
+      throw new IllegalArgumentException("Expected TEAM or USERS table, got: " + table.getName());
     }
   }
 
   // programmatically builds the sql string that results from the buildSubQueryParts method
   private StringBuilder buildSubQueryPartsString(
-      TableImpl<?> table, BlockStatus status, boolean isTeam, boolean mainQuery) {
+      Table<? extends Record> table, BlockStatus status, boolean isTeam, boolean mainQuery) {
     String isCompleted;
     String isReserved;
     String block;
@@ -167,7 +160,7 @@ class BlockInfoProcessorImplTest {
             "\".\"id\", \"" +
             table.getName() +
             "\".\"" +
-            getName(table).getName() +
+            getNameName(table) +
             "\", " +
             isCompleted +
             asInsert +
@@ -218,7 +211,7 @@ class BlockInfoProcessorImplTest {
   @EnumSource(BlockStatus.class)
   public void testBuildSubQueryPartsUsers(BlockStatus status) {
     SelectJoinStep<Record4<Integer, String, String, String>> rawResult =
-        processor.buildSubQueryParts(USERS, getId(USERS), getName(USERS), status, false);
+        processor.buildSubQueryParts(USERS, status, false);
     String verificationQuery =
         this.buildSubQueryPartsString(USERS, status, false, false).toString();
     assertEquals(verificationQuery, rawResult.getSQL());
@@ -231,7 +224,7 @@ class BlockInfoProcessorImplTest {
   @EnumSource(BlockStatus.class)
   public void testBuildSubQueryPartsTeam(BlockStatus status) {
     SelectJoinStep<Record4<Integer, String, String, String>> rawResult =
-        processor.buildSubQueryParts(TEAM, getId(TEAM), getName(TEAM), status, true);
+        processor.buildSubQueryParts(TEAM, status, true);
     String verificationQuery =
         this.buildSubQueryPartsString(TEAM, status, true, false).toString();
     assertEquals(verificationQuery, rawResult.getSQL());
@@ -239,8 +232,21 @@ class BlockInfoProcessorImplTest {
     assertEquals(status, rawResult.getBindValues().get(0));
   }
 
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void testBuildSubQueryPartsInvalidTable(boolean isTeam) {
+    String errorMessage = "Table must be TEAM or USERS, was: user_team";
+    try {
+      processor.buildSubQueryParts(USER_TEAM, BlockStatus.DONE, isTeam);
+    }
+    catch (IllegalArgumentException e){
+      assertEquals(errorMessage, e.getMessage());
+    }
+  }
+
   // programmatically builds the sql string that results from the buildSubQuery method
-  private StringBuilder buildSubQueryString(TableImpl<?> table, boolean isTeam, boolean mainQuery) {
+  private StringBuilder buildSubQueryString(
+      Table<? extends Record> table, boolean isTeam, boolean mainQuery) {
     StringBuilder result = new StringBuilder("(");
     result.append(buildSubQueryPartsString(table, BlockStatus.DONE, isTeam, mainQuery));
     result.append(") union (");
@@ -254,9 +260,9 @@ class BlockInfoProcessorImplTest {
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
   public void testBuildSubQuery(boolean isTeam) {
-    TableImpl<?> table = isTeam ? TEAM : USERS;
-    Select<Record4<Integer, String, String, String>> subQuery = processor.buildSubQuery(table,
-        getId(table), getName(table), isTeam);
+    Table<? extends Record> table = isTeam ? TEAM : USERS;
+    Select<Record4<Integer, String, String, String>> subQuery =
+        processor.buildSubQuery(table, isTeam);
     String verificationQuery = buildSubQueryString(table, isTeam, false).toString();
 
     assertEquals(verificationQuery, subQuery.getSQL());
@@ -265,23 +271,33 @@ class BlockInfoProcessorImplTest {
     assertEquals(BlockStatus.RESERVED, subQuery.getBindValues().get(1));
   }
 
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void testBuildSubQueryInvalidTable(boolean isTeam) {
+    String errorMessage = "Table must be TEAM or USERS, was: user_team";
+    try {
+      processor.buildSubQuery(USER_TEAM, isTeam);
+    }
+    catch (IllegalArgumentException e){
+      assertEquals(errorMessage, e.getMessage());
+    }
+  }
+
   // programmatically builds the sql string that results from the composeFullQuery method
-  private StringBuilder buildFullQueryString(TableImpl<?> table, boolean isTeam) {
+  private StringBuilder buildFullQueryString(Table<? extends Record> table, boolean isTeam) {
     // create wrapper select statement up to from statement
     StringBuilder result = new StringBuilder(
-        "select \"subquery\".\"id\" as \"id\", \"subquery\".\"" +
-            getName(table).getName() +
-            "\" as \"" +
-            getName(table).getName() +
-            "\", count(\"subquery\".\"isCompleted\") as \"blocksCompleted\", " +
-            "count(\"subquery\".\"isReserved\") as \"blocksReserved\" from ("
+        "select \"id\", \"" +
+            getNameName(table) +
+            "\", count(\"subQuery\".\"isCompleted\") as \"blocksCompleted\", " +
+            "count(\"subQuery\".\"isReserved\") as \"blocksReserved\" from ("
     );
     // select FROM result of buildSubQueryString
     result.append(buildSubQueryString(table, isTeam, true));
     // finish the rest of the sql query
     result.append(
-        ") as \"subquery\" group by \"id\", \"" +
-            getName(table).getName() +
+        ") as \"subQuery\" group by \"id\", \"" +
+            getNameName(table) +
             "\" order by \"blocksCompleted\" desc, \"blocksReserved\" desc limit ?"
     );
     return result;
@@ -291,9 +307,9 @@ class BlockInfoProcessorImplTest {
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
   public void testComposeFullQuery(boolean isTeam) {
-    TableImpl<?> table = isTeam ? TEAM : USERS;
-    SelectLimitPercentStep<? extends Record4<?, ?, ?, ?>> query = processor.composeFullQuery(
-        table, getId(table), getName(table), isTeam);
+    Table<? extends Record> table = isTeam ? TEAM : USERS;
+    SelectFinalStep<Record4<Integer, String, Integer, Integer>> query =
+        processor.composeFullQuery(table, isTeam);
     String verificationQuery = buildFullQueryString(table, isTeam).toString();
 
     assertEquals(verificationQuery, query.getSQL());
@@ -301,5 +317,17 @@ class BlockInfoProcessorImplTest {
     assertEquals(BlockStatus.DONE, query.getBindValues().get(0));
     assertEquals(BlockStatus.RESERVED, query.getBindValues().get(1));
     assertEquals("10", query.getBindValues().get(2).toString());
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void testBuildQueryInvalidTable(boolean isTeam) {
+    String errorMessage = "Table must be TEAM or USERS, was: user_team";
+    try {
+      processor.composeFullQuery(USER_TEAM, isTeam);
+    }
+    catch (IllegalArgumentException e){
+      assertEquals(errorMessage, e.getMessage());
+    }
   }
 }
