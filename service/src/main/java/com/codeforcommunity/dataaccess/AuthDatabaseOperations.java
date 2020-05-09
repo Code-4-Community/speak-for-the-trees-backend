@@ -3,6 +3,7 @@ package com.codeforcommunity.dataaccess;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.auth.Passwords;
 import com.codeforcommunity.enums.PrivilegeLevel;
+import com.codeforcommunity.enums.VerificationKeyType;
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
 import com.codeforcommunity.exceptions.ExpiredEmailVerificationTokenException;
 import com.codeforcommunity.exceptions.InvalidEmailVerificationTokenException;
@@ -166,6 +167,7 @@ public class AuthDatabaseOperations {
         VerificationKeysRecord keysRecord = db.newRecord(Tables.VERIFICATION_KEYS);
         keysRecord.setId(token);
         keysRecord.setUserId(userId);
+        keysRecord.setType(VerificationKeyType.VERIFY_EMAIL);
         keysRecord.store();
 
         return token;
