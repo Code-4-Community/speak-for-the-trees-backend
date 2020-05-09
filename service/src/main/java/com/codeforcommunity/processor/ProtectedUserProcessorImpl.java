@@ -73,6 +73,7 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
 
     if (Passwords.isExpectedPassword(changePasswordRequest.getCurrentPassword(), user.getPassHash())) {
       user.setPassHash(Passwords.createHash(changePasswordRequest.getNewPassword()));
+      user.store();
     } else {
       throw new WrongPasswordException();
     }
