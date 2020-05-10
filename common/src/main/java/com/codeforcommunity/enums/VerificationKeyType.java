@@ -1,7 +1,7 @@
 package com.codeforcommunity.enums;
 
 public enum VerificationKeyType {
-  VERIFY_EMAIL(1), FORGOT_PASSWORD(2);
+  VERIFY_EMAIL(0), FORGOT_PASSWORD(1);
 
   private int val;
 

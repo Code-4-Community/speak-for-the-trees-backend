@@ -1,10 +1,12 @@
 package com.codeforcommunity.rest.subrouter;
 
 import com.codeforcommunity.api.IAuthProcessor;
+import com.codeforcommunity.dto.auth.ForgotPasswordRequest;
 import com.codeforcommunity.dto.auth.LoginRequest;
 import com.codeforcommunity.dto.auth.NewUserRequest;
 import com.codeforcommunity.dto.auth.RefreshSessionRequest;
 import com.codeforcommunity.dto.auth.RefreshSessionResponse;
+import com.codeforcommunity.dto.auth.ResetPasswordRequest;
 import com.codeforcommunity.dto.auth.SessionResponse;
 import com.codeforcommunity.rest.IRouter;
 import com.codeforcommunity.rest.RestFunctions;
@@ -33,6 +35,8 @@ public class AuthRouter implements IRouter {
     registerNewUser(router);
     registerLogoutUser(router);
     registerVerifySecretKey(router);
+    registerRequestForgotPassword(router);
+    registerResetPassword(router);
 
     return router;
   }
@@ -56,6 +60,16 @@ public class AuthRouter implements IRouter {
   private void registerLogoutUser(Router router) {
     Route logoutUserRoute = router.delete( "/login");
     logoutUserRoute.handler(this::handleDeleteLogoutUser);
+  }
+
+  private void registerRequestForgotPassword(Router router) {
+    Route forgotPasswordRequestRoute = router.post( "/forgot_password/request");
+    forgotPasswordRequestRoute.handler(this::handleForgotPasswordRequest);
+  }
+
+  private void registerResetPassword(Router router) {
+    Route resetPasswordRoute = router.post( "/forgot_password/reset");
+    resetPasswordRoute.handler(this::handleResetPassword);
   }
 
   /**
@@ -99,9 +113,25 @@ public class AuthRouter implements IRouter {
     end(ctx.response(), 201, JsonObject.mapFrom(response).toString());
   }
 
+  private void handleForgotPasswordRequest(RoutingContext ctx) {
+    ForgotPasswordRequest request = RestFunctions.getJsonBodyAsClass(ctx, ForgotPasswordRequest.class);
+
+    authProcessor.requestPasswordReset(request);
+
+    end(ctx.response(), 200);
+  }
+
+  private void handleResetPassword(RoutingContext ctx) {
+    ResetPasswordRequest request = RestFunctions.getJsonBodyAsClass(ctx, ResetPasswordRequest.class);
+
+    authProcessor.resetPassword(request);
+
+    end(ctx.response(), 200);
+  }
+
   private void handleVerifySecretKey(RoutingContext ctx) {
     String secret = ctx.pathParam("secret_key");
-    authProcessor.validateSecretKey(secret);
+    authProcessor.verifyEmail(secret);
     end(ctx.response(), 200);
   }
 }

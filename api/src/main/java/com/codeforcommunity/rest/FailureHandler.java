@@ -1,7 +1,9 @@
 package com.codeforcommunity.rest;
 
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
+import com.codeforcommunity.exceptions.ExpiredSecretKeyException;
 import com.codeforcommunity.exceptions.HandledException;
+import com.codeforcommunity.exceptions.InvalidSecretKeyException;
 import com.codeforcommunity.exceptions.MalformedParameterException;
 import com.codeforcommunity.exceptions.MissingHeaderException;
 import com.codeforcommunity.exceptions.MissingParameterException;
@@ -9,6 +11,7 @@ import com.codeforcommunity.exceptions.NoSuchTeamException;
 import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
 import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
 import com.codeforcommunity.exceptions.TokenInvalidException;
+import com.codeforcommunity.exceptions.UsedSecretKeyException;
 import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
@@ -78,14 +81,24 @@ public class FailureHandler {
     end(ctx, message, 409);
   }
 
-  public void handleInvalidEmailVerificationToken(RoutingContext ctx) {
-    String message = "Given token is invalid";
+  public void handleInvalidSecretKey(RoutingContext ctx, InvalidSecretKeyException exception) {
+    String message = String.format("Given %s token is invalid", exception.getType());
     end(ctx, message, 401);
   }
 
-  public void handleExpiredEmailVerificationToken(RoutingContext ctx) {
-    String message = "Given token is expired";
+  public void handleUsedSecretKey(RoutingContext ctx, UsedSecretKeyException exception) {
+     String message = String.format("Given %s token has already been used", exception.getType());
+     end (ctx, message, 401);
+  }
+
+  public void handleExpiredSecretKey(RoutingContext ctx, ExpiredSecretKeyException exception) {
+    String message = String.format("Given %s token is expired", exception.getType());
     end(ctx, message, 401);
+  }
+
+  public void handleInvalidPassword(RoutingContext ctx) {
+     String message = "Given password does not meet the security requirements";
+     end(ctx, message, 400);
   }
 
   public void handleUserDoesNotExist(RoutingContext ctx, UserDoesNotExistException exception) {

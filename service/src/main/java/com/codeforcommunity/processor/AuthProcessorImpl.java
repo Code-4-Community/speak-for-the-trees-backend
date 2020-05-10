@@ -3,16 +3,22 @@ package com.codeforcommunity.processor;
 import com.codeforcommunity.api.IAuthProcessor;
 import com.codeforcommunity.auth.JWTCreator;
 import com.codeforcommunity.auth.JWTData;
+import com.codeforcommunity.auth.Passwords;
 import com.codeforcommunity.dataaccess.AuthDatabaseOperations;
+import com.codeforcommunity.dto.auth.ForgotPasswordRequest;
+import com.codeforcommunity.dto.auth.ResetPasswordRequest;
 import com.codeforcommunity.dto.auth.SessionResponse;
 import com.codeforcommunity.dto.auth.LoginRequest;
 import com.codeforcommunity.dto.auth.NewUserRequest;
 import com.codeforcommunity.dto.auth.RefreshSessionRequest;
 import com.codeforcommunity.dto.auth.RefreshSessionResponse;
+import com.codeforcommunity.enums.VerificationKeyType;
 import com.codeforcommunity.exceptions.AuthException;
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
+import com.codeforcommunity.exceptions.InvalidPasswordException;
 import com.codeforcommunity.exceptions.TokenInvalidException;
 import org.jooq.DSLContext;
+import org.jooq.generated.tables.records.UsersRecord;
 
 import java.util.Optional;
 
@@ -37,8 +43,17 @@ public class AuthProcessorImpl implements IAuthProcessor {
      */
     @Override
     public SessionResponse signUp(NewUserRequest request) {
-        authDatabaseOperations.createNewUser(request.getUsername(), request.getEmail(), request.getPassword(),
+        if (isPasswordInvalid(request.getPassword())) {
+            throw new InvalidPasswordException();
+        }
+
+        UsersRecord user = authDatabaseOperations.createNewUser(request.getUsername(),
+            request.getEmail(), request.getPassword(),
             request.getFirstName(), request.getLastName());
+
+        String secretKey = authDatabaseOperations.createSecretKey(user.getId(), VerificationKeyType.VERIFY_EMAIL);
+
+        // TODO: Send email
 
         return setupSessionResponse(request.getEmail());
     }
@@ -93,9 +108,47 @@ public class AuthProcessorImpl implements IAuthProcessor {
         }
     }
 
+    /**
+     * Get the user associated with the email.
+     * Invalidate any outstanding requests
+     * Create and log a secret key associated with the user
+     * Send an email to the user with the secret key in a url.
+     */
     @Override
-    public void validateSecretKey(String secretKey) {
-        authDatabaseOperations.validateSecretKey(secretKey);
+    public void requestPasswordReset(ForgotPasswordRequest request) {
+        String email = request.getEmail();
+        JWTData userData = authDatabaseOperations.getUserJWTData(email);
+
+        String token = authDatabaseOperations.createSecretKey(userData.getUserId(), VerificationKeyType.FORGOT_PASSWORD);
+
+        // TODO: Send email
+    }
+
+    /**
+     * Check for an existing secret key that matches the request
+     * Make sure the key is valid (time constraint, and not used)
+     * Get the user associated with the key
+     * Update the user's password
+     * Update the key to be used
+     */
+    @Override
+    public void resetPassword(ResetPasswordRequest request) {
+        if (isPasswordInvalid(request.getNewPassword())) {
+            throw new InvalidPasswordException();
+        }
+
+        UsersRecord user = authDatabaseOperations.validateSecretKey(request.getSecretKey(), VerificationKeyType.FORGOT_PASSWORD);
+
+        user.setPassHash(Passwords.createHash(request.getNewPassword()));
+        user.store();
+    }
+
+    @Override
+    public void verifyEmail(String secretKey) {
+        UsersRecord user = authDatabaseOperations.validateSecretKey(secretKey, VerificationKeyType.VERIFY_EMAIL);
+
+        user.setEmailVerified(true);
+        user.store();
     }
 
     /**
@@ -116,6 +169,14 @@ public class AuthProcessorImpl implements IAuthProcessor {
             // If this is thrown there is probably an error in our JWT creation / validation logic
             throw new IllegalStateException("Newly created refresh token was deemed invalid");
         }
+    }
+
+    /**
+     * Returns true if the given password is invalid.
+     * A password is invalid if it is less than 8 characters.
+     */
+    private boolean isPasswordInvalid(String password) {
+        return password.length() < 8;
     }
 
     /**
