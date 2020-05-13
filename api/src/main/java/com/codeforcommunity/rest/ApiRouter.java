@@ -1,12 +1,14 @@
 package com.codeforcommunity.rest;
 
 import com.codeforcommunity.api.IAuthProcessor;
+import com.codeforcommunity.api.IBlockInfoProcessor;
 import com.codeforcommunity.api.IBlockProcessor;
 import com.codeforcommunity.api.IProtectedUserProcessor;
 import com.codeforcommunity.api.ITeamsProcessor;
 import com.codeforcommunity.auth.JWTAuthorizer;
 
 import com.codeforcommunity.rest.subrouter.AuthRouter;
+import com.codeforcommunity.rest.subrouter.BlockInfoRouter;
 import com.codeforcommunity.rest.subrouter.BlocksRouter;
 import com.codeforcommunity.rest.subrouter.CommonRouter;
 import com.codeforcommunity.rest.subrouter.ProtectedUserRouter;
@@ -23,18 +25,20 @@ public class ApiRouter implements IRouter {
     private final TeamsRouter teamsRouter;
     private final AuthRouter authRouter;
     private final ProtectedUserRouter protectedUserRouter;
+    private final BlockInfoRouter blockInfoRouter;
 
     public ApiRouter(IAuthProcessor authProcessor,
                      IProtectedUserProcessor protectedUserProcessor,
                      IBlockProcessor blockProcessor,
+                     IBlockInfoProcessor blockInfoProcessor,
                      ITeamsProcessor teamsProcessor,
                      JWTAuthorizer jwtAuthorizer) {
-
         this.commonRouter = new CommonRouter(jwtAuthorizer);
         this.authRouter = new AuthRouter(authProcessor);
         this.blocksRouter = new BlocksRouter(blockProcessor);
         this.teamsRouter = new TeamsRouter(teamsProcessor);
         this.protectedUserRouter = new ProtectedUserRouter(protectedUserProcessor);
+        this.blockInfoRouter = new BlockInfoRouter(blockInfoProcessor);
     }
 
     /**
@@ -44,6 +48,7 @@ public class ApiRouter implements IRouter {
         Router router = commonRouter.initializeRouter(vertx);
 
         router.mountSubRouter("/user", authRouter.initializeRouter(vertx));
+        router.mountSubRouter("/blocks", blockInfoRouter.initializeRouter(vertx));
         router.mountSubRouter("/protected", defineProtectedRoutes(vertx));
 
         return router;
