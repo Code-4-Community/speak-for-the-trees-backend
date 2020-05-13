@@ -13,7 +13,6 @@ import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import com.codeforcommunity.requester.Emailer;
 import org.jooq.DSLContext;
-import org.jooq.User;
 import org.jooq.generated.tables.pojos.Team;
 import org.jooq.generated.tables.pojos.Users;
 import org.jooq.generated.tables.records.TeamRecord;
@@ -53,8 +52,8 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
         .where(USERS.ID.eq(userData.getUserId()))
         .fetchOneInto(Users.class);
 
-    teamRequest.getInviteEmails().forEach((email) -> {
-      emailer.sendInviteEmail(email, "Team Member", inviter, teamRecord.into(Team.class));
+    teamRequest.getInvites().forEach((invitationRequest) -> {
+      emailer.sendInviteEmail(invitationRequest.getEmail(), invitationRequest.getName(), inviter, teamRecord.into(Team.class));
     });
 
     db.insertInto(USER_TEAM).columns(USER_TEAM.fields())

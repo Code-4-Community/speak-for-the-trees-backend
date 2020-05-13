@@ -10,14 +10,14 @@ public class CreateTeamRequest {
   private String bio;
   private Integer goal;
   private Timestamp goalCompletionDate;
-  private List<String> inviteEmails;
+  private List<TeamInvitationRequest> invites;
 
-  public CreateTeamRequest(String name, String bio, int goal, Timestamp goalCompletionDate, List<String> inviteEmails) {
+  public CreateTeamRequest(String name, String bio, int goal, Timestamp goalCompletionDate, List<TeamInvitationRequest> invites) {
     this.name = name;
     this.bio = bio;
     this.goal = goal;
     this.goalCompletionDate = goalCompletionDate;
-    this.inviteEmails = inviteEmails;
+    this.invites = invites;
   }
 
   private CreateTeamRequest() {}
@@ -54,12 +54,12 @@ public class CreateTeamRequest {
     this.goalCompletionDate = goalCompletionDate;
   }
 
-  public List<String> getInviteEmails() {
-    return inviteEmails;
+  public List<TeamInvitationRequest> getInvites() {
+    return invites;
   }
 
-  public void setInviteEmails(List<String> inviteEmails) {
-    this.inviteEmails = inviteEmails;
+  public void setInvites(List<TeamInvitationRequest> invites) {
+    this.invites = invites;
   }
 
   /**
