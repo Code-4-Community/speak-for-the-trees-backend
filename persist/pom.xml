@@ -128,6 +128,14 @@
                   <includeTypes>.*</includeTypes>
                   <nullability>NOT_NULL</nullability>
                 </forcedType>
+                <forcedType>
+                  <userType>com.codeforcommunity.enums.VerificationKeyType</userType>
+                  <enumConverter>true</enumConverter>
+
+                  <includeExpression>.*\.verification_keys\.type</includeExpression>
+                  <includeTypes>.*</includeTypes>
+                  <nullability>NOT_NULL</nullability>
+                </forcedType>
               </forcedTypes>
             </database>
           </generator>

@@ -1,9 +1,11 @@
 package com.codeforcommunity.api;
 
+import com.codeforcommunity.dto.auth.ForgotPasswordRequest;
 import com.codeforcommunity.dto.auth.LoginRequest;
 import com.codeforcommunity.dto.auth.NewUserRequest;
 import com.codeforcommunity.dto.auth.RefreshSessionRequest;
 import com.codeforcommunity.dto.auth.RefreshSessionResponse;
+import com.codeforcommunity.dto.auth.ResetPasswordRequest;
 import com.codeforcommunity.dto.auth.SessionResponse;
 import com.codeforcommunity.exceptions.AuthException;
 
@@ -38,10 +40,20 @@ public interface IAuthProcessor {
     RefreshSessionResponse refreshSession(RefreshSessionRequest request) throws AuthException;
 
     /**
+     * If the given request corresponds to a real user, send that user an email for them
+     * to reset their password with a secret key.
+     */
+    void requestPasswordReset(ForgotPasswordRequest request);
+
+    /**
+     * Given a secret key and a new password, update the user that's associated with the key's
+     * password.
+     */
+    void resetPassword(ResetPasswordRequest request);
+
+    /**
      * Allows clients to submit a secret key in order to verify their email.
      * @param secretKey string of user's verificaiton token.
-     * @throws ExpiredEmailVerificationTokenException if the token is expired.
-     * @throws InvalidEmailVerificationTokenException if the token is invalid.
      */
-    void validateSecretKey(String secretKey);
+    void verifyEmail(String secretKey);
 }
