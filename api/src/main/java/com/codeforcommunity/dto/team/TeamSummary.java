@@ -11,4 +11,16 @@ public class TeamSummary {
     this.name = name;
     this.memberCount = memberCount;
   }
+
+  public int getId() {
+    return id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public int getMemberCount() {
+    return memberCount;
+  }
 }

@@ -14,6 +14,8 @@ public class TeamResponse {
   private int blocksReserved;
   List<TeamMember> members;
 
+  private TeamResponse() {}
+
   public TeamResponse(int id, String name, String bio, int goal, Timestamp goalCompleteDate,
       int blocksCompleted, int blocksReserved,
       List<TeamMember> members) {
@@ -25,5 +27,37 @@ public class TeamResponse {
     this.blocksCompleted = blocksCompleted;
     this.blocksReserved = blocksReserved;
     this.members = members;
+  }
+
+  public int getId() {
+    return id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public String getBio() {
+    return bio;
+  }
+
+  public int getGoal() {
+    return goal;
+  }
+
+  public Timestamp getGoalCompleteDate() {
+    return goalCompleteDate;
+  }
+
+  public int getBlocksCompleted() {
+    return blocksCompleted;
+  }
+
+  public int getBlocksReserved() {
+    return blocksReserved;
+  }
+
+  public List<TeamMember> getMembers() {
+    return members;
   }
 }
