@@ -2,9 +2,14 @@ package com.codeforcommunity.processor;
 
 import com.codeforcommunity.api.ITeamsProcessor;
 import com.codeforcommunity.auth.JWTData;
+import com.codeforcommunity.dto.blockInfo.Individual;
 import com.codeforcommunity.dto.team.CreateTeamRequest;
+import com.codeforcommunity.dto.team.GetAllTeamsResponse;
 import com.codeforcommunity.dto.team.InviteMembersRequest;
+import com.codeforcommunity.dto.team.TeamMember;
 import com.codeforcommunity.dto.team.TeamResponse;
+import com.codeforcommunity.dto.team.TeamSummary;
+import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.NoSuchTeamException;
 import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
@@ -12,12 +17,17 @@ import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
 import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import com.codeforcommunity.requester.Emailer;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.jooq.DSLContext;
 import org.jooq.generated.tables.pojos.Team;
+import org.jooq.generated.tables.pojos.UserTeam;
 import org.jooq.generated.tables.pojos.Users;
 import org.jooq.generated.tables.records.TeamRecord;
 import org.jooq.generated.tables.records.UserTeamRecord;
+import org.jooq.impl.DSL;
 
+import static org.jooq.generated.Tables.BLOCK;
 import static org.jooq.generated.Tables.TEAM;
 import static org.jooq.generated.Tables.USERS;
 import static org.jooq.generated.Tables.USER_TEAM;
@@ -53,7 +63,8 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
         .fetchOneInto(Users.class);
 
     teamRequest.getInvites().forEach((invitationRequest) -> {
-      emailer.sendInviteEmail(invitationRequest.getEmail(), invitationRequest.getName(), inviter, teamRecord.into(Team.class));
+      emailer.sendInviteEmail(invitationRequest.getEmail(), invitationRequest.getName(), inviter,
+          teamRecord.into(Team.class));
     });
 
     db.insertInto(USER_TEAM).columns(USER_TEAM.fields())
@@ -167,5 +178,58 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     inviteMembersRequest.getEmails().forEach((email) -> {
       emailer.sendInviteEmail(email, "Team Member", inviter, inviterTeam);
     });
+  }
+
+  @Override
+  public GetAllTeamsResponse getAllTeams() {
+    List<Team> teamPojos = db.selectFrom(TEAM).fetchInto(Team.class);
+    List<TeamSummary> teams = teamPojos.stream().map(
+        team -> new TeamSummary(team.getId(), team.getName(), getTeamMembers(team.getId()).size()))
+        .collect(Collectors.toList());
+    return new GetAllTeamsResponse(teams, teams.size());
+  }
+
+  @Override
+  public TeamResponse getSingleTeam(int teamId) {
+    Team teamPojo = db.selectFrom(TEAM).where(TEAM.ID.eq(teamId)).fetchOneInto(Team.class);
+    List<TeamMember> teamMembers = getTeamMembers(teamId);
+    int doneBlocks = teamMembers.stream().map(Individual::getBlocksCompleted).reduce(0,
+        Integer::sum);
+    int reservedBlocks = teamMembers.stream().map(Individual::getBlocksReserved).reduce(0,
+        Integer::sum);
+    return new TeamResponse(
+        teamPojo.getId(),
+        teamPojo.getName(),
+        teamPojo.getBio(),
+        teamPojo.getGoal(),
+        teamPojo.getGoalCompletionDate(),
+        doneBlocks,
+        reservedBlocks,
+        teamMembers
+    );
+  }
+
+  private List<TeamMember> getTeamMembers(int teamId) {
+    List<UserTeam> userTeamPojos = db.selectFrom(USER_TEAM).where(USER_TEAM.TEAM_ID.eq(teamId))
+        .fetchInto(UserTeam.class);
+    return userTeamPojos.stream().map(this::userTeamPojoToTeamMember).collect(
+        Collectors.toList());
+  }
+
+  private TeamMember userTeamPojoToTeamMember(UserTeam userTeamPojo) {
+    int userId = userTeamPojo.getUserId();
+    Users user = db.selectFrom(USERS).where(USERS.ID.eq(userId)).fetchOneInto(Users.class);
+    return new TeamMember(
+        userId,
+        user.getUsername(),
+        getBlocksForMember(userId, BlockStatus.DONE),
+        getBlocksForMember(userId, BlockStatus.RESERVED),
+        userTeamPojo.getTeamRole()
+    );
+  }
+
+  private int getBlocksForMember(int userId, BlockStatus status) {
+    return db.selectCount().from(BLOCK).where(BLOCK.ASSIGNED_TO.eq(userId))
+        .and(BLOCK.STATUS.eq(status)).fetchOneInto(Integer.class);
   }
 }
