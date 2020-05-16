@@ -27,9 +27,8 @@ before_deploy:
   - zip build.zip Dockerfile service/target/service-1.0-SNAPSHOT-jar-with-dependencies.jar
 deploy:
   provider: elasticbeanstalk
-  access_key_id: AKIAXEDZZITUSILI6QM3
-  secret_access_key:
-    secure: TCswXtdsDXoOjioSlh4JB9b9Lo9mgOVw9d31covW7wU9T8+a+F4uYp/3HRmrSWO8qWR0mAi2pD7RkJRCXx9L/gXl76D2dxVO+PoppiYPt0MIu/+fAYz6q+1LWAiPdzL9IJRcpYJjJPL8Eb0Qe7jOA0eVoLe8R1uFt863Z/wrKLnxmRp81EoNdgdAPG4cFmCH3Xfdzxy4L3LTzMuBjUzGmpj3CleU1PlLeN7zeBhF8CClS6YCwzC3BqPec6Fezo3JAZx+9xBu4zItku84hskBVjff21RmrhrMSzr0MpJ4sxAviv9mclLRyASolKaPX60B8c3NVLDo4gvcech1f5q9iRJF8eAVgL1k5fzkQ8FgjXmv0sunVWzw3t2mdgf+B1KeGy9XZ6LvmlY1P0z2hvf6IdhLNNyP+DzKWEoGreSsiC+VCCBN5vwIfnI0BWske2StNDil+9fFYagktJt2RsNukIKeRiiaLFwrZc/RPQ2PsElBgw/LPPBNh+Yswf3N1auKnvLmA01bBvJ+ss7yPmwA8S8w3jyeLj2l5MUQRCwhKmd9DjRn8z1ns+E6HmxEfP4YQbDYW43kdRMBU5C/8S5nUNLhQPdWs7hiuFj2OB0Htiz2TBZJpdLSR1uR4SFpW1jyKr9Ch5vSBzbnTNP9Bcj/cwTZLCj4BR+Z46lseqE0eoA=
+  access_key_id: AKIAXEDZZITURJ35FPBI
+  secret_access_key: $AWS_SECRET_KEY
   region: us-east-2
   app: c4c-travis-ci
   env: sftt-travis-env
