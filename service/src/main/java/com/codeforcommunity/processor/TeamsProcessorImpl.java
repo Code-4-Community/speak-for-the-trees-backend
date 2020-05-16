@@ -22,6 +22,7 @@ import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
 import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import com.codeforcommunity.requester.Emailer;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -192,7 +193,8 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
         .fetch();
     List<TeamSummary> teams = teamResult.stream().map(
         team -> new TeamSummary(team.getValue(TEAM.ID), team.getValue(TEAM.NAME),
-            (int) team.getValue("memberCount"))).collect(Collectors.toList());
+            (int) team.getValue("memberCount")))
+        .collect(Collectors.toList());
     return new GetAllTeamsResponse(teams, teams.size());
   }
 
@@ -224,18 +226,16 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
         USERS.ID,
         USERS.USERNAME,
         DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.DONE), 1).else_(0)).as("blocksCompleted"),
-        DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).else_(0).as("blocksReserved")),
+        DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).else_(0)).as("blocksReserved"),
         USER_TEAM.TEAM_ROLE
     )
         .from(USERS)
         .innerJoin(USER_TEAM).on(USERS.ID.eq(USER_TEAM.USER_ID))
-        .innerJoin(BLOCK).on(USER_TEAM.USER_ID.eq(BLOCK.ASSIGNED_TO))
+        .fullJoin(BLOCK).on(USER_TEAM.USER_ID.eq(BLOCK.ASSIGNED_TO))
         .where(USER_TEAM.TEAM_ID.eq(teamId))
-        .groupBy(USERS.ID)
+        .groupBy(USERS.ID, USERS.USERNAME, USER_TEAM.TEAM_ROLE)
         .orderBy(USERS.USERNAME)
         .fetch();
-
-    System.out.println("User result: " + userResult);
 
     List<TeamMember> teamMembers = new ArrayList<>();
 
@@ -243,8 +243,8 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
       teamMembers.add(new TeamMember(
           record.getValue(USERS.ID),
           record.getValue(USERS.USERNAME),
-          (int) record.getValue("blocksCompleted"),
-          (int) record.getValue("blocksReserved"),
+          ((BigDecimal) record.getValue("blocksCompleted")).intValue(),
+          ((BigDecimal) record.getValue("blocksReserved")).intValue(),
           record.getValue(USER_TEAM.TEAM_ROLE)
       ));
     }
