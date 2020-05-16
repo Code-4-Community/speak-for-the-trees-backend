@@ -1,5 +1,10 @@
 package com.codeforcommunity.processor;
 
+import static org.jooq.generated.Tables.BLOCK;
+import static org.jooq.generated.Tables.TEAM;
+import static org.jooq.generated.Tables.USERS;
+import static org.jooq.generated.Tables.USER_TEAM;
+
 import com.codeforcommunity.api.ITeamsProcessor;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blockInfo.Individual;
@@ -18,23 +23,16 @@ import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import com.codeforcommunity.requester.Emailer;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.jooq.DSLContext;
+import org.jooq.Record;
 import org.jooq.Result;
-import org.jooq.generated.tables.pojos.Block;
 import org.jooq.generated.tables.pojos.Team;
-import org.jooq.generated.tables.pojos.UserTeam;
 import org.jooq.generated.tables.pojos.Users;
 import org.jooq.generated.tables.records.TeamRecord;
 import org.jooq.generated.tables.records.UserTeamRecord;
 import org.jooq.impl.DSL;
-
-import static org.jooq.generated.Tables.BLOCK;
-import static org.jooq.generated.Tables.TEAM;
-import static org.jooq.generated.Tables.USERS;
-import static org.jooq.generated.Tables.USER_TEAM;
 
 public class TeamsProcessorImpl implements ITeamsProcessor {
 
@@ -186,11 +184,15 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
   @Override
   public GetAllTeamsResponse getAllTeams() {
-    List<Team> teamPojos = db.selectFrom(TEAM).fetchInto(Team.class);
-    List<TeamSummary> teams = teamPojos.stream().map(
-        team -> new TeamSummary(team.getId(), team.getName(),
-            getUserTeamPojos(team.getId()).size()))
-        .sorted(Comparator.comparing(TeamSummary::getName)).collect(Collectors.toList());
+    Result<?> teamResult = db.select(TEAM.ID, TEAM.NAME, DSL.count().as("memberCount"))
+        .from(TEAM)
+        .innerJoin(USER_TEAM).on(TEAM.ID.eq(USER_TEAM.TEAM_ID))
+        .groupBy(TEAM.ID)
+        .orderBy(TEAM.NAME.asc())
+        .fetch();
+    List<TeamSummary> teams = teamResult.stream().map(
+        team -> new TeamSummary(team.getValue(TEAM.ID), team.getValue(TEAM.NAME),
+            (int) team.getValue("memberCount"))).collect(Collectors.toList());
     return new GetAllTeamsResponse(teams, teams.size());
   }
 
@@ -217,60 +219,35 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     );
   }
 
-  private List<UserTeam> getUserTeamPojos(int teamId) {
-    return db.selectFrom(USER_TEAM).where(USER_TEAM.TEAM_ID.eq(teamId)).fetchInto(UserTeam.class);
-  }
-
   private List<TeamMember> getTeamMembers(int teamId) {
-    List<UserTeam> userTeamPojos = getUserTeamPojos(teamId);
-    userTeamPojos.sort(Comparator.comparing(UserTeam::getUserId));
-
-    List<Integer> userIds = userTeamPojos.stream().map(UserTeam::getUserId)
-        .collect(Collectors.toList());
-
-    Result<?> userResult = db.select(USERS.ID, USERS.USERNAME, USER_TEAM.TEAM_ROLE)
-        .from(USERS).innerJoin(USER_TEAM)
-        .on(USERS.ID.eq(USER_TEAM.USER_ID))
-        .where(USERS.ID.in(userIds))
+    Result<?> userResult = db.select(
+        USERS.ID,
+        USERS.USERNAME,
+        DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.DONE), 1).else_(0)).as("blocksCompleted"),
+        DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).else_(0).as("blocksReserved")),
+        USER_TEAM.TEAM_ROLE
+    )
+        .from(USERS)
+        .innerJoin(USER_TEAM).on(USERS.ID.eq(USER_TEAM.USER_ID))
+        .innerJoin(BLOCK).on(USER_TEAM.USER_ID.eq(BLOCK.ASSIGNED_TO))
+        .where(USER_TEAM.TEAM_ID.eq(teamId))
+        .groupBy(USERS.ID)
+        .orderBy(USERS.USERNAME)
         .fetch();
 
-    Result<?> blockResult = db.select(DSL.count(), BLOCK.ASSIGNED_TO, BLOCK.STATUS)
-        .from(BLOCK).where(BLOCK.ASSIGNED_TO.in(userIds))
-        .groupBy(BLOCK.ASSIGNED_TO, BLOCK.STATUS)
-        .fetch();
-//    userPojos.sort(Comparator.comparing(Users::getId));
-
-    List<Block> teamBlocks = db.selectFrom(BLOCK).where(BLOCK.ASSIGNED_TO.in(userIds)).fetchInto(Block.class);
+    System.out.println("User result: " + userResult);
 
     List<TeamMember> teamMembers = new ArrayList<>();
-    for (int i = 0; i < userPojos.size(); i++) {
-      // both userTeamPojos and userPojos are sorted and user IDs are unique, so
-      // the lists should line up with each other
-      Users userPojo = userPojos.get(i);
+
+    for (Record record : userResult) {
       teamMembers.add(new TeamMember(
-          userPojo.getId(),
-          userPojo.getUsername(),
-          0,
-          0,
-          userTeamPojos.get(i).getTeamRole()
+          record.getValue(USERS.ID),
+          record.getValue(USERS.USERNAME),
+          (int) record.getValue("blocksCompleted"),
+          (int) record.getValue("blocksReserved"),
+          record.getValue(USER_TEAM.TEAM_ROLE)
       ));
     }
-  }
-
-  private TeamMember userPojosToTeamMember(UserTeam userTeamPojo, Users userPojo) {
-    int userId = userTeamPojo.getUserId();
-//    Users user = db.selectFrom(USERS).where(USERS.ID.eq(userId)).fetchOneInto(Users.class);
-    return new TeamMember(
-        userId,
-        userPojo.getUsername(),
-        getBlocksForMember(userId, BlockStatus.DONE),
-        getBlocksForMember(userId, BlockStatus.RESERVED),
-        userTeamPojo.getTeamRole()
-    );
-  }
-
-  private int getBlocksForMember(int userId, BlockStatus status) {
-    return db.selectCount().from(BLOCK).where(BLOCK.ASSIGNED_TO.eq(userId))
-        .and(BLOCK.STATUS.eq(status)).fetchOneInto(Integer.class);
+    return teamMembers;
   }
 }
