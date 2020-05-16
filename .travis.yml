@@ -11,7 +11,7 @@ before_install:
   - cp jwt.properties.example jwt.properties
   - awk -F" = " -v updatedVal="= " '/database.password =/{$2=updatedVal}1' input.properties > db.properties
   - rm input.properties
-  - cd /home/travis/build/Code-4-Community/lucys-love-bus-backend/
+  - cd /home/travis/build/Code-4-Community/speak-for-the-trees-backend/
   - psql -c 'create database "lucys-love-bus";' -U postgres
 before_deploy:
   - cd common/src/main/resources/properties/
@@ -22,7 +22,7 @@ before_deploy:
   - rm user.properties
   - rm pass.properties
   - rm input.properties
-  - cd /home/travis/build/Code-4-Community/lucys-love-bus-backend/
+  - cd /home/travis/build/Code-4-Community/speak-for-the-trees-backend/
   - mvn clean install
   - zip build.zip Dockerfile service/target/service-1.0-SNAPSHOT-jar-with-dependencies.jar
 deploy:
