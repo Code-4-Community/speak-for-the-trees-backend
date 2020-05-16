@@ -6,6 +6,7 @@ import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blocks.BlockResponse;
 import com.codeforcommunity.dto.blocks.StandardBlockRequest;
 import com.codeforcommunity.dto.team.CreateTeamRequest;
+import com.codeforcommunity.dto.team.GetAllTeamsResponse;
 import com.codeforcommunity.dto.team.InviteMembersRequest;
 import com.codeforcommunity.dto.team.TeamResponse;
 import com.codeforcommunity.rest.IRouter;
@@ -36,8 +37,20 @@ public class TeamsRouter implements IRouter {
     registerDisband(router);
     registerKick(router);
     registerInvite(router);
+    registerGetAllTeams(router);
+    registerGetSingleTeam(router);
 
     return router;
+  }
+
+  private void registerGetAllTeams(Router router) {
+    Route getAllTeamsRoute = router.get("/");
+    getAllTeamsRoute.handler(this::handleGetAllTeams);
+  }
+
+  private void registerGetSingleTeam(Router router) {
+    Route getSingleTeamRoute = router.get("/:team_id");
+    getSingleTeamRoute.handler(this::handleGetSingleTeam);
   }
 
   private void registerCreate(Router router) {
@@ -70,6 +83,16 @@ public class TeamsRouter implements IRouter {
     inviteRoute.handler(this::handleInviteRoute);
   }
 
+  private void handleGetAllTeams(RoutingContext ctx) {
+    GetAllTeamsResponse response = processor.getAllTeams();
+    end(ctx.response(), 200, JsonObject.mapFrom(response).toString());
+  }
+
+  private void handleGetSingleTeam(RoutingContext ctx) {
+    int teamId = RestFunctions.getRequestParameterAsInt(ctx.request(), "team_id");
+    TeamResponse response = processor.getSingleTeam(teamId);
+    end(ctx.response(), 200, JsonObject.mapFrom(response).toString());
+  }
 
   private void handleCreateRoute(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
@@ -77,9 +100,7 @@ public class TeamsRouter implements IRouter {
 
     TeamResponse response = processor.createTeam(userData, createTeamRequest);
 
-    //TODO: Implement get team route and set create team to return the same json
-    // JsonObject.mapFrom(response).encode());
-    end(ctx.response(), 200);
+    end(ctx.response(), 200, JsonObject.mapFrom(response).toString());
   }
 
   private void handleJoinRoute(RoutingContext ctx) {
