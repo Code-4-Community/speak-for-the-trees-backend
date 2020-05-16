@@ -17,9 +17,13 @@ import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
 import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import com.codeforcommunity.requester.Emailer;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.jooq.DSLContext;
+import org.jooq.Result;
+import org.jooq.generated.tables.pojos.Block;
 import org.jooq.generated.tables.pojos.Team;
 import org.jooq.generated.tables.pojos.UserTeam;
 import org.jooq.generated.tables.pojos.Users;
@@ -71,7 +75,7 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
         .values(userData.getUserId(), teamRecord.getId(), TeamRole.LEADER)
         .execute();
 
-    return null;//getTeam(teamRecord.getId());
+    return getSingleTeam(teamRecord.getId());
   }
 
   @Override
@@ -184,14 +188,18 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
   public GetAllTeamsResponse getAllTeams() {
     List<Team> teamPojos = db.selectFrom(TEAM).fetchInto(Team.class);
     List<TeamSummary> teams = teamPojos.stream().map(
-        team -> new TeamSummary(team.getId(), team.getName(), getTeamMembers(team.getId()).size()))
-        .collect(Collectors.toList());
+        team -> new TeamSummary(team.getId(), team.getName(),
+            getUserTeamPojos(team.getId()).size()))
+        .sorted(Comparator.comparing(TeamSummary::getName)).collect(Collectors.toList());
     return new GetAllTeamsResponse(teams, teams.size());
   }
 
   @Override
   public TeamResponse getSingleTeam(int teamId) {
     Team teamPojo = db.selectFrom(TEAM).where(TEAM.ID.eq(teamId)).fetchOneInto(Team.class);
+    if (teamPojo == null) {
+      throw new NoSuchTeamException(teamId);
+    }
     List<TeamMember> teamMembers = getTeamMembers(teamId);
     int doneBlocks = teamMembers.stream().map(Individual::getBlocksCompleted).reduce(0,
         Integer::sum);
@@ -209,19 +217,52 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     );
   }
 
-  private List<TeamMember> getTeamMembers(int teamId) {
-    List<UserTeam> userTeamPojos = db.selectFrom(USER_TEAM).where(USER_TEAM.TEAM_ID.eq(teamId))
-        .fetchInto(UserTeam.class);
-    return userTeamPojos.stream().map(this::userTeamPojoToTeamMember).collect(
-        Collectors.toList());
+  private List<UserTeam> getUserTeamPojos(int teamId) {
+    return db.selectFrom(USER_TEAM).where(USER_TEAM.TEAM_ID.eq(teamId)).fetchInto(UserTeam.class);
   }
 
-  private TeamMember userTeamPojoToTeamMember(UserTeam userTeamPojo) {
+  private List<TeamMember> getTeamMembers(int teamId) {
+    List<UserTeam> userTeamPojos = getUserTeamPojos(teamId);
+    userTeamPojos.sort(Comparator.comparing(UserTeam::getUserId));
+
+    List<Integer> userIds = userTeamPojos.stream().map(UserTeam::getUserId)
+        .collect(Collectors.toList());
+
+    Result<?> userResult = db.select(USERS.ID, USERS.USERNAME, USER_TEAM.TEAM_ROLE)
+        .from(USERS).innerJoin(USER_TEAM)
+        .on(USERS.ID.eq(USER_TEAM.USER_ID))
+        .where(USERS.ID.in(userIds))
+        .fetch();
+
+    Result<?> blockResult = db.select(DSL.count(), BLOCK.ASSIGNED_TO, BLOCK.STATUS)
+        .from(BLOCK).where(BLOCK.ASSIGNED_TO.in(userIds))
+        .groupBy(BLOCK.ASSIGNED_TO, BLOCK.STATUS)
+        .fetch();
+//    userPojos.sort(Comparator.comparing(Users::getId));
+
+    List<Block> teamBlocks = db.selectFrom(BLOCK).where(BLOCK.ASSIGNED_TO.in(userIds)).fetchInto(Block.class);
+
+    List<TeamMember> teamMembers = new ArrayList<>();
+    for (int i = 0; i < userPojos.size(); i++) {
+      // both userTeamPojos and userPojos are sorted and user IDs are unique, so
+      // the lists should line up with each other
+      Users userPojo = userPojos.get(i);
+      teamMembers.add(new TeamMember(
+          userPojo.getId(),
+          userPojo.getUsername(),
+          0,
+          0,
+          userTeamPojos.get(i).getTeamRole()
+      ));
+    }
+  }
+
+  private TeamMember userPojosToTeamMember(UserTeam userTeamPojo, Users userPojo) {
     int userId = userTeamPojo.getUserId();
-    Users user = db.selectFrom(USERS).where(USERS.ID.eq(userId)).fetchOneInto(Users.class);
+//    Users user = db.selectFrom(USERS).where(USERS.ID.eq(userId)).fetchOneInto(Users.class);
     return new TeamMember(
         userId,
-        user.getUsername(),
+        userPojo.getUsername(),
         getBlocksForMember(userId, BlockStatus.DONE),
         getBlocksForMember(userId, BlockStatus.RESERVED),
         userTeamPojo.getTeamRole()
