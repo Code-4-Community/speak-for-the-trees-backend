@@ -31,7 +31,7 @@ deploy:
   secret_access_key: $AWS_SECRET_KEY
   region: us-east-2
   app: c4c-travis-ci
-  env: sftt-travis-env
+  env: sftt-travis-api
   bucket: elasticbeanstalk-us-east-2-489881683177
   zip_file: "build.zip"
   on:
