@@ -12,7 +12,7 @@ before_install:
   - awk -F" = " -v updatedVal="= " '/database.password =/{$2=updatedVal}1' input.properties > db.properties
   - rm input.properties
   - cd /home/travis/build/Code-4-Community/speak-for-the-trees-backend/
-  - psql -c 'create database "lucys-love-bus";' -U postgres
+  - psql -c 'create database "speak-for-the-trees";' -U postgres
 before_deploy:
   - cd common/src/main/resources/properties/
   - cp db.properties input.properties
