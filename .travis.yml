@@ -36,6 +36,6 @@ deploy:
   zip_file: "build.zip"
   on:
     repo: Code-4-Community/speak-for-the-trees-backend
-    branch: travis
+    branch: master
   skip_cleanup: true
 
