@@ -185,16 +185,12 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
   @Override
   public GetAllTeamsResponse getAllTeams() {
-    Result<?> teamResult = db.select(TEAM.ID, TEAM.NAME, DSL.count().as("memberCount"))
+     List<TeamSummary> teams = db.select(TEAM.ID, TEAM.NAME, DSL.count().as("memberCount"))
         .from(TEAM)
         .innerJoin(USER_TEAM).on(TEAM.ID.eq(USER_TEAM.TEAM_ID))
         .groupBy(TEAM.ID)
         .orderBy(TEAM.NAME.asc())
-        .fetch();
-    List<TeamSummary> teams = teamResult.stream().map(
-        team -> new TeamSummary(team.getValue(TEAM.ID), team.getValue(TEAM.NAME),
-            (int) team.getValue("memberCount")))
-        .collect(Collectors.toList());
+        .fetchInto(TeamSummary.class);
     return new GetAllTeamsResponse(teams, teams.size());
   }
 
