@@ -35,7 +35,7 @@ public interface RestFunctions {
 
   static String getRequestHeader(HttpServerRequest req, String name) {
     String headerValue = req.getHeader(name);
-    if (headerValue != null) {
+    if (headerValue != null && !headerValue.isEmpty()) {
       return headerValue;
     }
     throw new MissingHeaderException(name);
@@ -52,7 +52,7 @@ public interface RestFunctions {
 
   static String getRequestParameterAsString(HttpServerRequest req, String name) {
     String paramValue = req.getParam(name);
-    if (paramValue != null) {
+    if (paramValue != null && !paramValue.isEmpty()) {
       return paramValue;
     }
     throw new MissingParameterException(name);
