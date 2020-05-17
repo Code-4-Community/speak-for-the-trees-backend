@@ -1,7 +1,8 @@
 package com.codeforcommunity.enums;
 
 public enum PrivilegeLevel {
-  STANDARD(1), ADMIN(2);
+  STANDARD(1),
+  ADMIN(2);
 
   private int val;
 
@@ -19,6 +20,7 @@ public enum PrivilegeLevel {
         return privilegeLevel;
       }
     }
-    throw new IllegalArgumentException(String.format("Given num (%d) that doesn't correspond to any PrivilegeLevel", val));
+    throw new IllegalArgumentException(
+        String.format("Given num (%d) that doesn't correspond to any PrivilegeLevel", val));
   }
 }

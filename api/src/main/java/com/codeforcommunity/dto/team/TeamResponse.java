@@ -16,8 +16,14 @@ public class TeamResponse {
 
   private TeamResponse() {}
 
-  public TeamResponse(int id, String name, String bio, int goal, Timestamp goalCompleteDate,
-      int blocksCompleted, int blocksReserved,
+  public TeamResponse(
+      int id,
+      String name,
+      String bio,
+      int goal,
+      Timestamp goalCompleteDate,
+      int blocksCompleted,
+      int blocksReserved,
       List<TeamMember> members) {
     this.id = id;
     this.name = name;

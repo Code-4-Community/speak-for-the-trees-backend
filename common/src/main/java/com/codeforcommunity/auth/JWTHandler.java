@@ -7,7 +7,6 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.Verification;
 import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.propertiesLoader.PropertiesLoader;
-
 import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
@@ -25,15 +24,16 @@ public class JWTHandler {
     this.algorithm = Algorithm.HMAC256(secretKey);
     this.verification = getDefaultClaimVerification(this.algorithm);
 
-    this.MS_REFRESH_EXPIRATION = Long.valueOf(PropertiesLoader.getExpirationProperties()
-        .getProperty("ms_refresh_expiration"));
-    this.MS_ACCESS_EXPIRATION = Long.valueOf(PropertiesLoader.getExpirationProperties()
-        .getProperty("ms_access_expiration"));
+    this.MS_REFRESH_EXPIRATION =
+        Long.valueOf(
+            PropertiesLoader.getExpirationProperties().getProperty("ms_refresh_expiration"));
+    this.MS_ACCESS_EXPIRATION =
+        Long.valueOf(
+            PropertiesLoader.getExpirationProperties().getProperty("ms_access_expiration"));
   }
 
   /**
-   * Given a jwt token, if the token is valid return its data otherwise return an
-   * empty optional.
+   * Given a jwt token, if the token is valid return its data otherwise return an empty optional.
    */
   public Optional<JWTData> checkTokenAndGetData(String token) {
     if (isAuthorized(token)) {
@@ -43,16 +43,12 @@ public class JWTHandler {
     }
   }
 
-  /**
-   * Generate a new refresh token that stores the given JWTData object's information.
-   */
+  /** Generate a new refresh token that stores the given JWTData object's information. */
   public String createNewRefreshToken(JWTData jwtData) {
     return createToken(true, jwtData);
   }
 
-  /**
-   * Create a new access token from the given refresh token.
-   */
+  /** Create a new access token from the given refresh token. */
   public Optional<String> getNewAccessToken(String refreshToken) {
     if (isAuthorized(refreshToken)) {
       JWTData refreshTokenData = getJWTDataFromToken(refreshToken);
@@ -63,8 +59,9 @@ public class JWTHandler {
   }
 
   /**
-   * Verifies that given access token is unedited and unexpired. Also will confirm any claims defined in
-   *  this.getDefaultClaimVerification().
+   * Verifies that given access token is unedited and unexpired. Also will confirm any claims
+   * defined in this.getDefaultClaimVerification().
+   *
    * @param accessToken token to be validated
    * @return true if and only if all conforms to all of said conditions.
    */
@@ -77,13 +74,12 @@ public class JWTHandler {
     }
   }
 
-  /**
-   * Get the stored information in the given jwt string.
-   */
+  /** Get the stored information in the given jwt string. */
   private JWTData getJWTDataFromToken(String token) {
     DecodedJWT decodedJWT = getDecodedJWT(token);
     int userId = decodedJWT.getClaim("userId").asInt();
-    PrivilegeLevel privilegeLevel = PrivilegeLevel.from(decodedJWT.getClaim("privilegeLevel").asInt());
+    PrivilegeLevel privilegeLevel =
+        PrivilegeLevel.from(decodedJWT.getClaim("privilegeLevel").asInt());
     return new JWTData(userId, privilegeLevel);
   }
 
@@ -110,8 +106,9 @@ public class JWTHandler {
   }
 
   /**
-   * Create verification object that ensures all default claims we have decided should be
-   * in every token are present.
+   * Create verification object that ensures all default claims we have decided should be in every
+   * token are present.
+   *
    * @return verification object.
    */
   private static Verification getDefaultClaimVerification(Algorithm algorithm) {

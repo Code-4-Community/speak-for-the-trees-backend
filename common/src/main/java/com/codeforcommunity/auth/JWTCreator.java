@@ -16,6 +16,4 @@ public class JWTCreator {
   public Optional<String> getNewAccessToken(String refreshToken) {
     return handler.getNewAccessToken(refreshToken);
   }
-
-
 }

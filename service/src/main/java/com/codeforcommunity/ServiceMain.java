@@ -17,12 +17,10 @@ import com.codeforcommunity.propertiesLoader.PropertiesLoader;
 import com.codeforcommunity.requester.Emailer;
 import com.codeforcommunity.requester.MapRequester;
 import com.codeforcommunity.rest.ApiRouter;
-
 import io.vertx.core.Vertx;
+import java.util.Properties;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
-
-import java.util.Properties;
 
 public class ServiceMain {
   private DSLContext db;
@@ -37,46 +35,43 @@ public class ServiceMain {
     }
   }
 
-  /**
-   * Start the server, get everything going.
-   */
+  /** Start the server, get everything going. */
   public void initialize() {
     setUpSystemProperties();
     connectDb();
     initializeServer();
   }
 
-  /**
-   * Adds any necessary system properties.
-   */
+  /** Adds any necessary system properties. */
   private void setUpSystemProperties() {
     Properties systemProperties = System.getProperties();
-    systemProperties.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.logging.SLF4JLogDelegateFactory");
+    systemProperties.setProperty(
+        "vertx.logger-delegate-factory-class-name",
+        "io.vertx.core.logging.SLF4JLogDelegateFactory");
     System.setProperties(systemProperties);
   }
 
-  /**
-   * Connect to the database and create a DSLContext so jOOQ can interact with it.
-   */
+  /** Connect to the database and create a DSLContext so jOOQ can interact with it. */
   private void connectDb() {
-    //This block ensures that the Postgres driver is loaded in the classpath
+    // This block ensures that the Postgres driver is loaded in the classpath
     try {
       Class.forName(dbProperties.getProperty("database.driver"));
     } catch (ClassNotFoundException e) {
       e.printStackTrace();
     }
 
-    DSLContext db = DSL.using(dbProperties.getProperty("database.url"),
-        dbProperties.getProperty("database.username"),
-        dbProperties.getProperty("database.password"));
+    DSLContext db =
+        DSL.using(
+            dbProperties.getProperty("database.url"),
+            dbProperties.getProperty("database.username"),
+            dbProperties.getProperty("database.password"));
     this.db = db;
   }
 
-  /**
-   * Initialize the server and get all the supporting classes going.
-   */
+  /** Initialize the server and get all the supporting classes going. */
   private void initializeServer() {
-    JWTHandler jwtHandler = new JWTHandler(PropertiesLoader.getJwtProperties().getProperty("secret_key"));
+    JWTHandler jwtHandler =
+        new JWTHandler(PropertiesLoader.getJwtProperties().getProperty("secret_key"));
     JWTAuthorizer jwtAuthorizer = new JWTAuthorizer(jwtHandler);
     JWTCreator jwtCreator = new JWTCreator(jwtHandler);
 
@@ -89,19 +84,19 @@ public class ServiceMain {
     IBlockProcessor blockProcessor = new BlocksProcessorImpl(this.db, mapRequester);
     IBlockInfoProcessor blockInfoProcessor = new BlockInfoProcessorImpl(this.db);
     ITeamsProcessor teamsProcessor = new TeamsProcessorImpl(this.db, emailer);
-    ApiRouter router = new ApiRouter(authProcessor,
-        protectedUserProcessor,
-        blockProcessor,
-        blockInfoProcessor,
-        teamsProcessor,
-        jwtAuthorizer);
+    ApiRouter router =
+        new ApiRouter(
+            authProcessor,
+            protectedUserProcessor,
+            blockProcessor,
+            blockInfoProcessor,
+            teamsProcessor,
+            jwtAuthorizer);
 
     startApiServer(router, vertx);
   }
 
-  /**
-   * Start up the actual API server that will listen for requests.
-   */
+  /** Start up the actual API server that will listen for requests. */
   private void startApiServer(ApiRouter router, Vertx vertx) {
     ApiMain apiMain = new ApiMain(router);
     apiMain.startApi(vertx);

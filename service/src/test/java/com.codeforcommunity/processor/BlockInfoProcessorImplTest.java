@@ -1,5 +1,7 @@
 package com.codeforcommunity.processor;
 
+import static org.jooq.generated.Tables.TEAM;
+import static org.jooq.generated.Tables.USERS;
 import static org.jooq.generated.Tables.USER_TEAM;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,9 +27,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import static org.jooq.generated.Tables.TEAM;
-import static org.jooq.generated.Tables.USERS;
-
 class BlockInfoProcessorImplTest {
   private JooqMock mock;
   private BlockInfoProcessorImpl processor;
@@ -38,7 +37,8 @@ class BlockInfoProcessorImplTest {
     processor = new BlockInfoProcessorImpl(mock.getContext());
   }
 
-  // this test is basically useless at this point since it only tests that expected db calls are made
+  // this test is basically useless at this point since it only tests that expected db calls are
+  // made
   @Test
   void testGetBlocks() {
     Record1<Integer> open = mock.getContext().newRecord(DSL.field("COUNT", Integer.class));
@@ -71,7 +71,8 @@ class BlockInfoProcessorImplTest {
     assertEquals(3, res.getBlocksReserved());
   }
 
-  // this test is basically useless at this point since it only tests that expected db calls are made
+  // this test is basically useless at this point since it only tests that expected db calls are
+  // made
   @Test
   void testGetBlockLeaderboards() {
     // create aggregate fields for use
@@ -123,11 +124,9 @@ class BlockInfoProcessorImplTest {
   private String getNameName(Table<? extends Record> table) {
     if (table.equals(TEAM)) {
       return TEAM.NAME.getName();
-    }
-    else if (table.equals(USERS)){
+    } else if (table.equals(USERS)) {
       return USERS.USERNAME.getName();
-    }
-    else {
+    } else {
       throw new IllegalArgumentException("Expected TEAM or USERS table, got: " + table.getName());
     }
   }
@@ -146,63 +145,49 @@ class BlockInfoProcessorImplTest {
       isCompleted = "\"completed\".\"fid\"";
       isReserved = "null";
       block = "\"completed\"";
-    }
-    else {
+    } else {
       isCompleted = "null";
       isReserved = "\"reserved\".\"fid\"";
       block = "\"reserved\"";
     }
 
     // build query up to the first join
-    StringBuilder verificationQuery = new StringBuilder(
-        "select \"" +
-            table.getName() +
-            "\".\"id\", \"" +
-            table.getName() +
-            "\".\"" +
-            getNameName(table) +
-            "\", " +
-            isCompleted +
-            asInsert +
-            " \"isCompleted\", " +
-            isReserved +
-            asInsert +
-            " \"isReserved\" from \"" +
-            table.getName() +
-            "\" "
-    );
+    StringBuilder verificationQuery =
+        new StringBuilder(
+            "select \""
+                + table.getName()
+                + "\".\"id\", \""
+                + table.getName()
+                + "\".\""
+                + getNameName(table)
+                + "\", "
+                + isCompleted
+                + asInsert
+                + " \"isCompleted\", "
+                + isReserved
+                + asInsert
+                + " \"isReserved\" from \""
+                + table.getName()
+                + "\" ");
 
     // if isTeam, then add user_team join
     if (isTeam) {
-      verificationQuery.append("join \"user_team\" on "
-          + "\"user_team\".\"team_id\" = \"team\".\"id\" ");
+      verificationQuery.append(
+          "join \"user_team\" on " + "\"user_team\".\"team_id\" = \"team\".\"id\" ");
     }
 
     // add block join up to on statement
-    verificationQuery.append(
-        "join \"block\"" +
-            asInsert +
-            " " +
-            block +
-            " on (\""
-    );
+    verificationQuery.append("join \"block\"" + asInsert + " " + block + " on (\"");
 
     // if isTeam, join on user_team user_id, otherwise join on table's id column
     if (isTeam) {
       verificationQuery.append("user_team\".\"user_id\" ");
-    }
-    else {
+    } else {
       verificationQuery.append(table.getName() + "\".\"id\" ");
     }
 
     // build query to end
-    verificationQuery.append(
-        "= " +
-            block +
-            ".\"assigned_to\" and " +
-            block +
-            ".\"status\" = ?)"
-    );
+    verificationQuery.append("= " + block + ".\"assigned_to\" and " + block + ".\"status\" = ?)");
     return verificationQuery;
   }
 
@@ -225,8 +210,7 @@ class BlockInfoProcessorImplTest {
   public void testBuildSubQueryPartsTeam(BlockStatus status) {
     SelectJoinStep<Record4<Integer, String, String, String>> rawResult =
         processor.buildSubQueryParts(TEAM, status, true);
-    String verificationQuery =
-        this.buildSubQueryPartsString(TEAM, status, true, false).toString();
+    String verificationQuery = this.buildSubQueryPartsString(TEAM, status, true, false).toString();
     assertEquals(verificationQuery, rawResult.getSQL());
     assertEquals(1, rawResult.getBindValues().size());
     assertEquals(status, rawResult.getBindValues().get(0));
@@ -238,8 +222,7 @@ class BlockInfoProcessorImplTest {
     String errorMessage = "Table must be TEAM or USERS, was: user_team";
     try {
       processor.buildSubQueryParts(USER_TEAM, BlockStatus.DONE, isTeam);
-    }
-    catch (IllegalArgumentException e){
+    } catch (IllegalArgumentException e) {
       assertEquals(errorMessage, e.getMessage());
     }
   }
@@ -277,8 +260,7 @@ class BlockInfoProcessorImplTest {
     String errorMessage = "Table must be TEAM or USERS, was: user_team";
     try {
       processor.buildSubQuery(USER_TEAM, isTeam);
-    }
-    catch (IllegalArgumentException e){
+    } catch (IllegalArgumentException e) {
       assertEquals(errorMessage, e.getMessage());
     }
   }
@@ -286,20 +268,19 @@ class BlockInfoProcessorImplTest {
   // programmatically builds the sql string that results from the composeFullQuery method
   private StringBuilder buildFullQueryString(Table<? extends Record> table, boolean isTeam) {
     // create wrapper select statement up to from statement
-    StringBuilder result = new StringBuilder(
-        "select \"id\", \"" +
-            getNameName(table) +
-            "\", count(\"subQuery\".\"isCompleted\") as \"blocksCompleted\", " +
-            "count(\"subQuery\".\"isReserved\") as \"blocksReserved\" from ("
-    );
+    StringBuilder result =
+        new StringBuilder(
+            "select \"id\", \""
+                + getNameName(table)
+                + "\", count(\"subQuery\".\"isCompleted\") as \"blocksCompleted\", "
+                + "count(\"subQuery\".\"isReserved\") as \"blocksReserved\" from (");
     // select FROM result of buildSubQueryString
     result.append(buildSubQueryString(table, isTeam, true));
     // finish the rest of the sql query
     result.append(
-        ") as \"subQuery\" group by \"id\", \"" +
-            getNameName(table) +
-            "\" order by \"blocksCompleted\" desc, \"blocksReserved\" desc limit ?"
-    );
+        ") as \"subQuery\" group by \"id\", \""
+            + getNameName(table)
+            + "\" order by \"blocksCompleted\" desc, \"blocksReserved\" desc limit ?");
     return result;
   }
 
@@ -325,8 +306,7 @@ class BlockInfoProcessorImplTest {
     String errorMessage = "Table must be TEAM or USERS, was: user_team";
     try {
       processor.composeFullQuery(USER_TEAM, isTeam);
-    }
-    catch (IllegalArgumentException e){
+    } catch (IllegalArgumentException e) {
       assertEquals(errorMessage, e.getMessage());
     }
   }
