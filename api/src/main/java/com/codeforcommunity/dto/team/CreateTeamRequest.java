@@ -1,7 +1,6 @@
 package com.codeforcommunity.dto.team;
 
 import com.codeforcommunity.exceptions.MalformedParameterException;
-
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -12,7 +11,12 @@ public class CreateTeamRequest {
   private Timestamp goalCompletionDate;
   private List<TeamInvitationRequest> invites;
 
-  public CreateTeamRequest(String name, String bio, int goal, Timestamp goalCompletionDate, List<TeamInvitationRequest> invites) {
+  public CreateTeamRequest(
+      String name,
+      String bio,
+      int goal,
+      Timestamp goalCompletionDate,
+      List<TeamInvitationRequest> invites) {
     this.name = name;
     this.bio = bio;
     this.goal = goal;

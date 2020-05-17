@@ -12,5 +12,4 @@ public class JWTAuthorizer {
   public Optional<JWTData> checkTokenAndGetData(String accessToken) {
     return handler.checkTokenAndGetData(accessToken);
   }
-
 }

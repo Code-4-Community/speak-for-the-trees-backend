@@ -1,16 +1,21 @@
 package com.codeforcommunity.dto.team;
 
 public class TeamInvitationRequest {
-    private String name;
-    private String email;
+  private String name;
+  private String email;
 
-    private TeamInvitationRequest() {}
+  private TeamInvitationRequest() {}
 
-    public TeamInvitationRequest(String name, String email) {
-        this.name = name;
-        this.email = email;
-    }
+  public TeamInvitationRequest(String name, String email) {
+    this.name = name;
+    this.email = email;
+  }
 
-    public String getName() { return this.name; }
-    public String getEmail() { return this.email; }
+  public String getName() {
+    return this.name;
+  }
+
+  public String getEmail() {
+    return this.email;
+  }
 }

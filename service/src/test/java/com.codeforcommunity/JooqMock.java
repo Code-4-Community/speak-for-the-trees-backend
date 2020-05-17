@@ -21,9 +21,7 @@ import org.jooq.tools.jdbc.MockDataProvider;
 import org.jooq.tools.jdbc.MockExecuteContext;
 import org.jooq.tools.jdbc.MockResult;
 
-/**
- * A class to mock database interactions.
- */
+/** A class to mock database interactions. */
 public class JooqMock implements MockDataProvider {
   // Operations mapped to the list of things to walk through
   private Map<String, Operations> recordReturns;
@@ -32,9 +30,7 @@ public class JooqMock implements MockDataProvider {
   // Map of class names to classes
   private Map<String, Table> classMap;
 
-  /**
-   * A class to hold all operation handler functions and call information.
-   */
+  /** A class to hold all operation handler functions and call information. */
   class Operations {
     // List of Supplier functions to call in order, acts as a queue for record Supplier functions
     private List<Supplier<Result<? extends Record>>> recordReturns;
@@ -47,16 +43,14 @@ public class JooqMock implements MockDataProvider {
     // Bindings used for each call linked to each Record returned
     private List<List<Object[]>> handlerSqlBindings;
 
-    /**
-     * Constructor for 'UNKNOWN' and 'DROP/CREATE' operations.
-     */
+    /** Constructor for 'UNKNOWN' and 'DROP/CREATE' operations. */
     Operations() {
       this(() -> null);
     }
 
     /**
      * Constructor for Operations object that takes in a record and creates a Supplier for it while
-     *  initializing other class fields.
+     * initializing other class fields.
      *
      * @param record The record to be returned during the first call of this operation.
      */
@@ -65,8 +59,8 @@ public class JooqMock implements MockDataProvider {
     }
 
     /**
-     * Constructor for operations object that takes in a List of records and creates a supplier
-     *  for it while initializing other class fields.
+     * Constructor for operations object that takes in a List of records and creates a supplier for
+     * it while initializing other class fields.
      *
      * @param records The record to be returned during the first call of this operation.
      */
@@ -76,7 +70,7 @@ public class JooqMock implements MockDataProvider {
 
     /**
      * Constructor for operations object that takes in a record Supplier and initializes other class
-     *  fields.
+     * fields.
      *
      * @param recordFunction The first record Supplier to be called for this operation.
      */
@@ -88,7 +82,8 @@ public class JooqMock implements MockDataProvider {
     }
 
     /**
-     * Add a record to the end of the record Supplier queue by creating a Supplier for the given record.
+     * Add a record to the end of the record Supplier queue by creating a Supplier for the given
+     * record.
      *
      * @param record Record to be returned at the end of the queue.
      */
@@ -97,7 +92,8 @@ public class JooqMock implements MockDataProvider {
     }
 
     /**
-     * Add a record to the end of the record Supplier queue by creating a Supplier for the given record.
+     * Add a record to the end of the record Supplier queue by creating a Supplier for the given
+     * record.
      *
      * @param records list of Record to be returned at the end of the queue.
      */
@@ -114,16 +110,14 @@ public class JooqMock implements MockDataProvider {
       recordReturns.add(recordFunction);
     }
 
-    /**
-     * Adds an empty return to the end of the Supplier queue.
-     */
+    /** Adds an empty return to the end of the Supplier queue. */
     private void addEmptyReturn() {
       recordReturns.add(() -> context.newResult());
     }
 
     /**
-     * Increment callCount, and call next record Supplier. If currently at the final record supplier,
-     * then call the last record supplier in the queue.
+     * Increment callCount, and call next record Supplier. If currently at the final record
+     * supplier, then call the last record supplier in the queue.
      *
      * @param ctx The context supplied to execute.
      * @return TableRecord to be returned.
@@ -173,8 +167,9 @@ public class JooqMock implements MockDataProvider {
     }
 
     /**
-     * Return the SQL strings used with each call linked to each Record
-     *  returned by position in the list.
+     * Return the SQL strings used with each call linked to each Record returned by position in the
+     * list.
+     *
      * @return List<List<String>> of every SQL string used.
      */
     List<List<String>> getSqlStrings() {
@@ -191,10 +186,7 @@ public class JooqMock implements MockDataProvider {
     }
   }
 
-  /**
-   * Constructor for JooqMock. 'UNKNOWN' and 'DROP/CREATE' operations are added by
-   * default.
-   */
+  /** Constructor for JooqMock. 'UNKNOWN' and 'DROP/CREATE' operations are added by default. */
   public JooqMock() {
     // create DSL context
     MockConnection connection = new MockConnection(this);
@@ -216,6 +208,7 @@ public class JooqMock implements MockDataProvider {
 
   /**
    * Creates a result from a given record.
+   *
    * @param r the Record to create a result for.
    * @return the result for the given Record.
    */
@@ -230,13 +223,14 @@ public class JooqMock implements MockDataProvider {
 
   /**
    * Creates a result from a given record.
+   *
    * @param r the List of Records to create a result for.
    * @return the result for the given Records.
    */
   private Result<? extends Record> createResult(List<? extends Record> r) {
     if (r.parallelStream().anyMatch(Objects::isNull)) {
-      throw new IllegalArgumentException("Record in provided list was null. No records "
-          + "should be null in a list of returns.");
+      throw new IllegalArgumentException(
+          "Record in provided list was null. No records " + "should be null in a list of returns.");
     }
     if (r.size() == 0) {
       return context.newResult();
@@ -246,14 +240,12 @@ public class JooqMock implements MockDataProvider {
     return res;
   }
 
-
   /**
-   * Add record to return during a call of execute. Will return this record after
-   *  returning all record (functions) that have been added prior to this.
-   * The final record acts as the default record for when new records run out.
+   * Add record to return during a call of execute. Will return this record after returning all
+   * record (functions) that have been added prior to this. The final record acts as the default
+   * record for when new records run out.
    *
-   * The 'UNKNOWN' and 'DROP/CREATE' operations are added by default since they
-   *  return nothing.
+   * <p>The 'UNKNOWN' and 'DROP/CREATE' operations are added by default since they return nothing.
    *
    * @param operation The operation to return this for (e.g. 'SELECT', 'INSERT', ...).
    * @param record The record to return
@@ -269,17 +261,16 @@ public class JooqMock implements MockDataProvider {
     recordReturns.get(operation).addRecord(record);
   }
 
-/**
- * Add List of records to return during a call of execute. Will return this list after
- *  returning all record (functions) that have been added prior to this.
- * The final record acts as the default record for when new records run out.
- *
- * The 'UNKNOWN' and 'DROP/CREATE' operations are added by default since they
- *  return nothing.
- *
- * @param operation The operation to return this for (e.g. 'SELECT', 'INSERT', ...).
- * @param records The List of records to return
- */
+  /**
+   * Add List of records to return during a call of execute. Will return this list after returning
+   * all record (functions) that have been added prior to this. The final record acts as the default
+   * record for when new records run out.
+   *
+   * <p>The 'UNKNOWN' and 'DROP/CREATE' operations are added by default since they return nothing.
+   *
+   * @param operation The operation to return this for (e.g. 'SELECT', 'INSERT', ...).
+   * @param records The List of records to return
+   */
   public void addReturn(String operation, List<? extends Record> records) {
     if (!recordReturns.containsKey(operation)) {
       recordReturns.put(operation, new Operations(records));
@@ -290,11 +281,10 @@ public class JooqMock implements MockDataProvider {
 
   /**
    * Add custom record return function to run during call of execute. Will return record the
-   *  supplier supplies after returning all record (functions) that have been added prior to this.
+   * supplier supplies after returning all record (functions) that have been added prior to this.
    * The final record acts as the default record for when new records run out.
    *
-   * The 'UNKNOWN' and 'DROP/CREATE' operations are added by default since they
-   *  return nothing.
+   * <p>The 'UNKNOWN' and 'DROP/CREATE' operations are added by default since they return nothing.
    *
    * @param operation THe operation to run this for (e.g. 'SELECT', 'INSERT'...).
    * @param recordFunction The function to run when execute is called.
@@ -308,21 +298,21 @@ public class JooqMock implements MockDataProvider {
   }
 
   /**
-   * Add multiple records to return during next call of execute. Records will be returned
-   *  in the order they are in the list.
-   * The final record acts as the default record for when new records run out.
+   * Add multiple records to return during next call of execute. Records will be returned in the
+   * order they are in the list. The final record acts as the default record for when new records
+   * run out.
    *
-   * The 'UNKNOWN' and 'DROP/CREATE' operations are added by default since they
-   *  return nothing.
+   * <p>The 'UNKNOWN' and 'DROP/CREATE' operations are added by default since they return nothing.
    *
    * @param records A map of operations to records to be returned.
    */
   public void addReturn(Map<String, List<? extends Record>> records) {
-    records.forEach((k, v) -> {
-      for (Record record : v) {
-        addReturn(k, record);
-      }
-    });
+    records.forEach(
+        (k, v) -> {
+          for (Record record : v) {
+            addReturn(k, record);
+          }
+        });
   }
 
   /**
@@ -349,38 +339,40 @@ public class JooqMock implements MockDataProvider {
   }
 
   /**
-   * Combines everything in the List<List<String>> into one list to be what each Operation's name
-   *  is mapped to.
+   * Combines everything in the List<List<String>> into one list to be what each Operation's name is
+   * mapped to.
    *
    * @return Map of each Operation to each SQL statement used
    */
   public Map<String, List<String>> getSqlStrings() {
     Map<String, List<String>> result = new HashMap<>();
-    recordReturns.forEach((k, v) -> {
-      List<String> opResult = new ArrayList<>();
-      for (List<String> list : v.getSqlStrings()) {
-        opResult.addAll(list);
-      }
-      result.put(k, opResult);
-    });
+    recordReturns.forEach(
+        (k, v) -> {
+          List<String> opResult = new ArrayList<>();
+          for (List<String> list : v.getSqlStrings()) {
+            opResult.addAll(list);
+          }
+          result.put(k, opResult);
+        });
     return result;
   }
 
   /**
    * Combines everything in the List<List<Object[]>> into one list to be what each Operation's name
-   *  is mapped to.
+   * is mapped to.
    *
    * @return Map of each Operation to each SQL binding used
    */
   public Map<String, List<Object[]>> getSqlBindings() {
     Map<String, List<Object[]>> result = new HashMap<>();
-    recordReturns.forEach((k, v) -> {
-      List<Object[]> opResult = new ArrayList<>();
-      for (List<Object[]> list : v.getSqlBindings()) {
-        opResult.addAll(list);
-      }
-      result.put(k, opResult);
-    });
+    recordReturns.forEach(
+        (k, v) -> {
+          List<Object[]> opResult = new ArrayList<>();
+          for (List<Object[]> list : v.getSqlBindings()) {
+            opResult.addAll(list);
+          }
+          result.put(k, opResult);
+        });
     return result;
   }
 
@@ -446,16 +438,17 @@ public class JooqMock implements MockDataProvider {
     // catch and rethrow exception if return not primed
     try {
       result = recordReturns.get(operation).call(ctx);
-    }
-    catch (NullPointerException e) {
-      System.out.println("WARNING: JooqMock could not find a primed result for the given operation,"
-          + "so an empty result is being returned. Provided SQL string was '" + ctx.sql() + "'");
+    } catch (NullPointerException e) {
+      System.out.println(
+          "WARNING: JooqMock could not find a primed result for the given operation,"
+              + "so an empty result is being returned. Provided SQL string was '"
+              + ctx.sql()
+              + "'");
       result = context.newResult();
     }
     try {
       result.toString();
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
     return new MockResult(result.size(), result);
@@ -464,7 +457,7 @@ public class JooqMock implements MockDataProvider {
   @Override
   public MockResult[] execute(MockExecuteContext ctx) throws SQLException {
     MockResult[] mock;
-    mock = new MockResult[]{ getResult(ctx) };
+    mock = new MockResult[] {getResult(ctx)};
 
     return mock;
   }

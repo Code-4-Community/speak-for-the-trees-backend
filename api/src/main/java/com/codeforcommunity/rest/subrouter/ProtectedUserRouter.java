@@ -1,21 +1,18 @@
 package com.codeforcommunity.rest.subrouter;
 
+import static com.codeforcommunity.rest.ApiRouter.end;
+
 import com.codeforcommunity.api.IProtectedUserProcessor;
 import com.codeforcommunity.auth.JWTData;
-import com.codeforcommunity.dto.blocks.BlockResponse;
-import com.codeforcommunity.dto.blocks.StandardBlockRequest;
 import com.codeforcommunity.dto.user.ChangePasswordRequest;
 import com.codeforcommunity.rest.IRouter;
 import com.codeforcommunity.rest.RestFunctions;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-import static com.codeforcommunity.rest.ApiRouter.end;
-
-public class ProtectedUserRouter  implements IRouter {
+public class ProtectedUserRouter implements IRouter {
 
   private final IProtectedUserProcessor processor;
 
@@ -43,8 +40,6 @@ public class ProtectedUserRouter  implements IRouter {
     changePasswordRoute.handler(this::handleChangePasswordRoute);
   }
 
-
-
   private void handleDeleteUserRoute(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
 
@@ -55,7 +50,8 @@ public class ProtectedUserRouter  implements IRouter {
 
   private void handleChangePasswordRoute(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
-    ChangePasswordRequest changePasswordRequest = RestFunctions.getJsonBodyAsClass(ctx, ChangePasswordRequest.class);
+    ChangePasswordRequest changePasswordRequest =
+        RestFunctions.getJsonBodyAsClass(ctx, ChangePasswordRequest.class);
 
     processor.changePassword(userData, changePasswordRequest);
 

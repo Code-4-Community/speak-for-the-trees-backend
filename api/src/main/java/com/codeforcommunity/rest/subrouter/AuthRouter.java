@@ -1,5 +1,7 @@
 package com.codeforcommunity.rest.subrouter;
 
+import static com.codeforcommunity.rest.ApiRouter.end;
+
 import com.codeforcommunity.api.IAuthProcessor;
 import com.codeforcommunity.dto.auth.ForgotPasswordRequest;
 import com.codeforcommunity.dto.auth.LoginRequest;
@@ -10,14 +12,11 @@ import com.codeforcommunity.dto.auth.ResetPasswordRequest;
 import com.codeforcommunity.dto.auth.SessionResponse;
 import com.codeforcommunity.rest.IRouter;
 import com.codeforcommunity.rest.RestFunctions;
-
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-
-import static com.codeforcommunity.rest.ApiRouter.end;
 
 public class AuthRouter implements IRouter {
   private final IAuthProcessor authProcessor;
@@ -41,7 +40,6 @@ public class AuthRouter implements IRouter {
     return router;
   }
 
-
   private void registerLoginUser(Router router) {
     Route loginUserRoute = router.post("/login");
     loginUserRoute.handler(this::handlePostUserLoginRoute);
@@ -58,30 +56,25 @@ public class AuthRouter implements IRouter {
   }
 
   private void registerLogoutUser(Router router) {
-    Route logoutUserRoute = router.delete( "/login");
+    Route logoutUserRoute = router.delete("/login");
     logoutUserRoute.handler(this::handleDeleteLogoutUser);
   }
 
   private void registerRequestForgotPassword(Router router) {
-    Route forgotPasswordRequestRoute = router.post( "/forgot_password/request");
+    Route forgotPasswordRequestRoute = router.post("/forgot_password/request");
     forgotPasswordRequestRoute.handler(this::handleForgotPasswordRequest);
   }
 
   private void registerResetPassword(Router router) {
-    Route resetPasswordRoute = router.post( "/forgot_password/reset");
+    Route resetPasswordRoute = router.post("/forgot_password/reset");
     resetPasswordRoute.handler(this::handleResetPassword);
   }
 
-  /**
-   * This route is for validating a secret key that has been sent to a
-   * user's email.
-   */
+  /** This route is for validating a secret key that has been sent to a user's email. */
   private void registerVerifySecretKey(Router router) {
     Route verifySecretKeyRoute = router.get("/verify/:secret_key");
     verifySecretKeyRoute.handler(this::handleVerifySecretKey);
   }
-
-
 
   private void handlePostUserLoginRoute(RoutingContext ctx) {
     LoginRequest userRequest = RestFunctions.getJsonBodyAsClass(ctx, LoginRequest.class);
@@ -114,7 +107,8 @@ public class AuthRouter implements IRouter {
   }
 
   private void handleForgotPasswordRequest(RoutingContext ctx) {
-    ForgotPasswordRequest request = RestFunctions.getJsonBodyAsClass(ctx, ForgotPasswordRequest.class);
+    ForgotPasswordRequest request =
+        RestFunctions.getJsonBodyAsClass(ctx, ForgotPasswordRequest.class);
 
     authProcessor.requestPasswordReset(request);
 
@@ -122,7 +116,8 @@ public class AuthRouter implements IRouter {
   }
 
   private void handleResetPassword(RoutingContext ctx) {
-    ResetPasswordRequest request = RestFunctions.getJsonBodyAsClass(ctx, ResetPasswordRequest.class);
+    ResetPasswordRequest request =
+        RestFunctions.getJsonBodyAsClass(ctx, ResetPasswordRequest.class);
 
     authProcessor.resetPassword(request);
 

@@ -1,7 +1,8 @@
 package com.codeforcommunity.enums;
 
 public enum VerificationKeyType {
-  VERIFY_EMAIL(0), FORGOT_PASSWORD(1);
+  VERIFY_EMAIL(0),
+  FORGOT_PASSWORD(1);
 
   private int val;
 
@@ -19,6 +20,7 @@ public enum VerificationKeyType {
         return type;
       }
     }
-    throw new IllegalArgumentException(String.format("Given num (%d) that doesn't correspond to any VerificationKeyType", val));
+    throw new IllegalArgumentException(
+        String.format("Given num (%d) that doesn't correspond to any VerificationKeyType", val));
   }
 }

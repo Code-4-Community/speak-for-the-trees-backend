@@ -5,5 +5,6 @@ import com.codeforcommunity.dto.blockInfo.BlockLeaderboardResponse;
 
 public interface IBlockInfoProcessor {
   BlockInfoResponse getBlocks();
+
   BlockLeaderboardResponse getBlockLeaderboards();
 }

@@ -1,10 +1,11 @@
 package com.codeforcommunity.rest.subrouter;
 
+import static com.codeforcommunity.rest.ApiRouter.end;
+
 import com.codeforcommunity.api.IBlockProcessor;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blocks.BlockResponse;
 import com.codeforcommunity.dto.blocks.StandardBlockRequest;
-import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.rest.IRouter;
 import com.codeforcommunity.rest.RestFunctions;
 import io.vertx.core.Vertx;
@@ -12,8 +13,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-
-import static com.codeforcommunity.rest.ApiRouter.end;
 
 public class BlocksRouter implements IRouter {
 
@@ -57,7 +56,8 @@ public class BlocksRouter implements IRouter {
 
   private void handleReserveRoute(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
-    StandardBlockRequest blockRequest = RestFunctions.getJsonBodyAsClass(ctx, StandardBlockRequest.class);
+    StandardBlockRequest blockRequest =
+        RestFunctions.getJsonBodyAsClass(ctx, StandardBlockRequest.class);
 
     BlockResponse response = processor.reserveBlocks(userData, blockRequest.getBlocks());
 
@@ -66,7 +66,8 @@ public class BlocksRouter implements IRouter {
 
   private void handleFinishRoute(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
-    StandardBlockRequest blockRequest = RestFunctions.getJsonBodyAsClass(ctx, StandardBlockRequest.class);
+    StandardBlockRequest blockRequest =
+        RestFunctions.getJsonBodyAsClass(ctx, StandardBlockRequest.class);
 
     BlockResponse response = processor.finishBlocks(userData, blockRequest.getBlocks());
 
@@ -75,7 +76,8 @@ public class BlocksRouter implements IRouter {
 
   private void handleReleaseRoute(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
-    StandardBlockRequest blockRequest = RestFunctions.getJsonBodyAsClass(ctx, StandardBlockRequest.class);
+    StandardBlockRequest blockRequest =
+        RestFunctions.getJsonBodyAsClass(ctx, StandardBlockRequest.class);
 
     BlockResponse response = processor.releaseBlocks(userData, blockRequest.getBlocks());
 
@@ -84,7 +86,8 @@ public class BlocksRouter implements IRouter {
 
   private void handleResetRoute(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
-    StandardBlockRequest blockRequest = RestFunctions.getJsonBodyAsClass(ctx, StandardBlockRequest.class);
+    StandardBlockRequest blockRequest =
+        RestFunctions.getJsonBodyAsClass(ctx, StandardBlockRequest.class);
 
     BlockResponse response = processor.resetBlocks(userData, blockRequest.getBlocks());
 

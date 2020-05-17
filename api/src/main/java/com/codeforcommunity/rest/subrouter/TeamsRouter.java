@@ -1,10 +1,9 @@
 package com.codeforcommunity.rest.subrouter;
 
-import com.codeforcommunity.api.IBlockProcessor;
+import static com.codeforcommunity.rest.ApiRouter.end;
+
 import com.codeforcommunity.api.ITeamsProcessor;
 import com.codeforcommunity.auth.JWTData;
-import com.codeforcommunity.dto.blocks.BlockResponse;
-import com.codeforcommunity.dto.blocks.StandardBlockRequest;
 import com.codeforcommunity.dto.team.CreateTeamRequest;
 import com.codeforcommunity.dto.team.GetAllTeamsResponse;
 import com.codeforcommunity.dto.team.InviteMembersRequest;
@@ -16,8 +15,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-
-import static com.codeforcommunity.rest.ApiRouter.end;
 
 public class TeamsRouter implements IRouter {
 
@@ -96,7 +93,8 @@ public class TeamsRouter implements IRouter {
 
   private void handleCreateRoute(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
-    CreateTeamRequest createTeamRequest = RestFunctions.getJsonBodyAsClass(ctx, CreateTeamRequest.class);
+    CreateTeamRequest createTeamRequest =
+        RestFunctions.getJsonBodyAsClass(ctx, CreateTeamRequest.class);
 
     TeamResponse response = processor.createTeam(userData, createTeamRequest);
 
@@ -143,7 +141,8 @@ public class TeamsRouter implements IRouter {
   private void handleInviteRoute(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
     int teamId = RestFunctions.getRequestParameterAsInt(ctx.request(), "team_id");
-    InviteMembersRequest inviteMembersRequest = RestFunctions.getJsonBodyAsClass(ctx, InviteMembersRequest.class);
+    InviteMembersRequest inviteMembersRequest =
+        RestFunctions.getJsonBodyAsClass(ctx, InviteMembersRequest.class);
     inviteMembersRequest.setTeamId(teamId);
 
     processor.inviteToTeam(userData, inviteMembersRequest);
