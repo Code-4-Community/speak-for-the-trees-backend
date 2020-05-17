@@ -2,6 +2,7 @@ package com.codeforcommunity.api;
 
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.team.CreateTeamRequest;
+import com.codeforcommunity.dto.team.GetAllTeamsResponse;
 import com.codeforcommunity.dto.team.InviteMembersRequest;
 import com.codeforcommunity.dto.team.TeamResponse;
 
@@ -13,5 +14,6 @@ public interface ITeamsProcessor {
   void disbandTeam(JWTData userData, int teamId);
   void kickFromTeam(JWTData userData, int teamId, int kickUserId);
   void inviteToTeam(JWTData userData, InviteMembersRequest inviteMembersRequest);
-
+  GetAllTeamsResponse getAllTeams();
+  TeamResponse getSingleTeam(int teamId);
 }

@@ -29,8 +29,6 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
   @Override
   public BlockResponse reserveBlocks(JWTData jwtData, List<String> blockIds) {
-    int userId = jwtData.getUserId();
-
     Map<BlockStatus, Result<BlockRecord>> brs = getBlocksByStatus(blockIds);
 
     List<String> failures = getInvalidBlockStatusIds(brs, BlockStatus.OPEN);

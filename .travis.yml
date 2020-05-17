@@ -1,0 +1,41 @@
+language: java
+services:
+  - postgresql
+before_install:
+  - cd common/src/main/resources/properties/
+  - cp db.properties.example input.properties
+  - cp db.properties.example db.properties
+  - cp emailer.properties.example emailer.properties
+  - cp frontend.properties.example frontend.properties
+  - cp expiration.properties.example expiration.properties
+  - cp jwt.properties.example jwt.properties
+  - awk -F" = " -v updatedVal="= " '/database.password =/{$2=updatedVal}1' input.properties > db.properties
+  - rm input.properties
+  - cd /home/travis/build/Code-4-Community/speak-for-the-trees-backend/
+  - psql -c 'create database "speak-for-the-trees";' -U postgres
+before_deploy:
+  - cd common/src/main/resources/properties/
+  - cp db.properties input.properties
+  - awk -F" = " -v updatedVal="= $DB_USERNAME" '/database.username =/{$2=updatedVal}1' input.properties > user.properties
+  - awk -F" = " -v updatedVal="= $DB_PASSWORD" '/database.password =/{$2=updatedVal}1' user.properties > pass.properties
+  - awk -F" = " -v updatedVal="= $DB_DOMAIN" '/database.url =/{$2=updatedVal}1' pass.properties > db.properties
+  - rm user.properties
+  - rm pass.properties
+  - rm input.properties
+  - cd /home/travis/build/Code-4-Community/speak-for-the-trees-backend/
+  - mvn clean install
+  - zip build.zip Dockerfile service/target/service-1.0-SNAPSHOT-jar-with-dependencies.jar
+deploy:
+  provider: elasticbeanstalk
+  access_key_id: AKIAXEDZZITURJ35FPBI
+  secret_access_key: $AWS_SECRET_KEY
+  region: us-east-2
+  app: c4c-travis-ci
+  env: sftt-travis-api
+  bucket: elasticbeanstalk-us-east-2-489881683177
+  zip_file: "build.zip"
+  on:
+    repo: Code-4-Community/speak-for-the-trees-backend
+    branch: master
+  skip_cleanup: true
+

@@ -6,7 +6,7 @@ public class TeamInvitationRequest {
 
     private TeamInvitationRequest() {}
 
-    public  TeamInvitationRequest(String name, String email) {
+    public TeamInvitationRequest(String name, String email) {
         this.name = name;
         this.email = email;
     }
