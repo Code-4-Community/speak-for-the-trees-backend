@@ -2,6 +2,7 @@ package com.codeforcommunity.api;
 
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.user.ChangePasswordRequest;
+import com.codeforcommunity.dto.user.UserDataResponse;
 
 public interface IProtectedUserProcessor {
 
@@ -13,4 +14,7 @@ public interface IProtectedUserProcessor {
    * to the new password value.
    */
   void changePassword(JWTData userData, ChangePasswordRequest changePasswordRequest);
+
+  /** Get the user's data for use in the site. */
+  UserDataResponse getUserData(JWTData userData);
 }
