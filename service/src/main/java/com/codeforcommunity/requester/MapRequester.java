@@ -38,7 +38,7 @@ public class MapRequester {
       List<String> streetIds, BlockStatus updateTo, Future<String> tokenFuture) {
     /*
     var settings = {
-      "url": "https://services7.arcgis.com/iIw2JoTaLFMnHLgW/ArcGIS/rest/services/boston_street_segments_1/FeatureServer/0/applyEdits",
+      "url": "https://services7.arcgis.com/iIw2JoTaLFMnHLgW/arcgis/rest/services/boston_street_segments_2/FeatureServer/0/applyEdits",
       "method": "POST",
       "timeout": 0,
       "headers": {
@@ -78,7 +78,7 @@ public class MapRequester {
                   promise -> {
                     client
                         .postAbs(
-                            "https://services7.arcgis.com/iIw2JoTaLFMnHLgW/ArcGIS/rest/services/boston_street_segments_1/FeatureServer/0/applyEdits")
+                            "https://services7.arcgis.com/iIw2JoTaLFMnHLgW/arcgis/rest/services/boston_street_segments_2/FeatureServer/0/applyEdits")
                         .putHeader("content-type", "multipart/form-data")
                         .sendForm(
                             formData,
