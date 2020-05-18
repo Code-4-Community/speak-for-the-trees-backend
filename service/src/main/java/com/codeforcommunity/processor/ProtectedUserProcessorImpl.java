@@ -9,6 +9,7 @@ import com.codeforcommunity.api.IProtectedUserProcessor;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.auth.Passwords;
 import com.codeforcommunity.dto.user.ChangePasswordRequest;
+import com.codeforcommunity.dto.user.UserDataResponse;
 import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.WrongPasswordException;
@@ -66,5 +67,17 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
     } else {
       throw new WrongPasswordException();
     }
+  }
+
+  @Override
+  public UserDataResponse getUserData(JWTData userData) {
+    UsersRecord user = db.selectFrom(USERS).where(USERS.ID.eq(userData.getUserId())).fetchOne();
+
+    if (user == null) {
+      throw new UserDoesNotExistException(userData.getUserId());
+    }
+
+    return new UserDataResponse(
+        user.getFirstName(), user.getLastName(), user.getUsername(), user.getEmail());
   }
 }

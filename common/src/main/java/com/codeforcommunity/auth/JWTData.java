@@ -6,10 +6,12 @@ public class JWTData {
 
   private final Integer userId;
   private final PrivilegeLevel privilegeLevel;
+  private final Integer userTeamId;
 
-  public JWTData(Integer userId, PrivilegeLevel privilegeLevel) {
+  public JWTData(Integer userId, PrivilegeLevel privilegeLevel, Integer userTeamId) {
     this.userId = userId;
     this.privilegeLevel = privilegeLevel;
+    this.userTeamId = userTeamId;
   }
 
   public Integer getUserId() {
@@ -18,5 +20,9 @@ public class JWTData {
 
   public PrivilegeLevel getPrivilegeLevel() {
     return privilegeLevel;
+  }
+
+  public Integer getUserTeamId() {
+    return userTeamId;
   }
 }

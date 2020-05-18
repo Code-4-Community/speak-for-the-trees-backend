@@ -5,9 +5,11 @@ import static com.codeforcommunity.rest.ApiRouter.end;
 import com.codeforcommunity.api.IProtectedUserProcessor;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.user.ChangePasswordRequest;
+import com.codeforcommunity.dto.user.UserDataResponse;
 import com.codeforcommunity.rest.IRouter;
 import com.codeforcommunity.rest.RestFunctions;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -26,6 +28,7 @@ public class ProtectedUserRouter implements IRouter {
 
     registerDeleteUser(router);
     registerChangePassword(router);
+    registerGetUserData(router);
 
     return router;
   }
@@ -38,6 +41,11 @@ public class ProtectedUserRouter implements IRouter {
   private void registerChangePassword(Router router) {
     Route changePasswordRoute = router.post("/change_password");
     changePasswordRoute.handler(this::handleChangePasswordRoute);
+  }
+
+  private void registerGetUserData(Router router) {
+    Route getUserDataRoute = router.get("/data");
+    getUserDataRoute.handler(this::handleGetUserDataRoute);
   }
 
   private void handleDeleteUserRoute(RoutingContext ctx) {
@@ -56,5 +64,13 @@ public class ProtectedUserRouter implements IRouter {
     processor.changePassword(userData, changePasswordRequest);
 
     end(ctx.response(), 200);
+  }
+
+  private void handleGetUserDataRoute(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+
+    UserDataResponse response = processor.getUserData(userData);
+
+    end(ctx.response(), 200, JsonObject.mapFrom(response).toString());
   }
 }

@@ -1,7 +1,6 @@
 package com.codeforcommunity.dataaccess;
 
-import static org.jooq.generated.Tables.USERS;
-import static org.jooq.generated.Tables.VERIFICATION_KEYS;
+import static org.jooq.generated.Tables.*;
 
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.auth.Passwords;
@@ -21,6 +20,7 @@ import java.util.Optional;
 import java.util.Properties;
 import org.jooq.DSLContext;
 import org.jooq.generated.Tables;
+import org.jooq.generated.tables.pojos.UserTeam;
 import org.jooq.generated.tables.pojos.Users;
 import org.jooq.generated.tables.records.UsersRecord;
 import org.jooq.generated.tables.records.VerificationKeysRecord;
@@ -58,7 +58,16 @@ public class AuthDatabaseOperations {
 
     if (maybeUser.isPresent()) {
       Users user = maybeUser.get();
-      return new JWTData(user.getId(), user.getPrivilegeLevel());
+      Integer userId = user.getId();
+
+      Optional<UserTeam> mayberUserTeam =
+          Optional.ofNullable(
+              db.selectFrom(USER_TEAM)
+                  .where(USER_TEAM.USER_ID.eq(userId))
+                  .fetchOneInto(UserTeam.class));
+      return mayberUserTeam
+          .map(userTeam -> new JWTData(userId, user.getPrivilegeLevel(), userTeam.getTeamId()))
+          .orElseGet(() -> new JWTData(user.getId(), user.getPrivilegeLevel(), -1));
     } else {
       throw new UserDoesNotExistException(email);
     }
