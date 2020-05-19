@@ -94,6 +94,7 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     }
 
     if (userTeamRecord.getTeamRole() == TeamRole.LEADER) {
+
       throw new TeamLeaderExcludedRouteException(teamId);
     }
 
