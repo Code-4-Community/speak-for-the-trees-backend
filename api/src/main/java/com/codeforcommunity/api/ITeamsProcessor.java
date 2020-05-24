@@ -20,7 +20,7 @@ public interface ITeamsProcessor {
 
   void inviteToTeam(JWTData userData, InviteMembersRequest inviteMembersRequest);
 
-  GetAllTeamsResponse getAllTeams();
+  GetAllTeamsResponse getAllTeams(JWTData userData);
 
-  TeamResponse getSingleTeam(int teamId);
+  TeamResponse getSingleTeam(JWTData userData, int teamId);
 }

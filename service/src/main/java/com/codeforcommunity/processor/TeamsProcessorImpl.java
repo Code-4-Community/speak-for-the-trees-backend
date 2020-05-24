@@ -26,6 +26,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.Result;
 import org.jooq.generated.tables.pojos.Team;
@@ -79,7 +80,7 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
         .values(userData.getUserId(), teamRecord.getId(), TeamRole.LEADER)
         .execute();
 
-    return getSingleTeam(teamRecord.getId());
+    return getSingleTeam(userData, teamRecord.getId());
   }
 
   @Override
@@ -193,9 +194,30 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
   }
 
   @Override
-  public GetAllTeamsResponse getAllTeams() {
+  public GetAllTeamsResponse getAllTeams(JWTData userData) {
+    /*
+    Field<Boolean> userOnTeamField =
+        db.select(
+                DSL.when(
+                        DSL.exists(
+                            db.select(USER_TEAM.TEAM_ROLE)
+                                .from(USER_TEAM)
+                                .where(USER_TEAM.TEAM_ID.eq(TEAM.ID))
+                                .and(USER_TEAM.USER_ID.eq(userData.getUserId()))),
+                      USER_TEAM.TEAM_ROLE)
+                    .otherwise(TeamRole.NONE))
+            .asField("isOnTeam");
+    */
+
+    Field<TeamRole> userTeamRole =
+        db.select(USER_TEAM.TEAM_ROLE)
+            .from(USER_TEAM)
+            .where(USER_TEAM.TEAM_ID.eq(TEAM.ID))
+            .and(USER_TEAM.USER_ID.eq(userData.getUserId()))
+            .asField("userTeamRole");
+
     List<TeamSummary> teams =
-        db.select(TEAM.ID, TEAM.NAME, DSL.count().as("memberCount"))
+        db.select(TEAM.ID, TEAM.NAME, DSL.count().as("memberCount"), userTeamRole)
             .from(TEAM)
             .innerJoin(USER_TEAM)
             .on(TEAM.ID.eq(USER_TEAM.TEAM_ID))
@@ -206,7 +228,7 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
   }
 
   @Override
-  public TeamResponse getSingleTeam(int teamId) {
+  public TeamResponse getSingleTeam(JWTData userData, int teamId) {
     Team teamPojo = db.selectFrom(TEAM).where(TEAM.ID.eq(teamId)).fetchOneInto(Team.class);
     if (teamPojo == null) {
       throw new NoSuchTeamException(teamId);
@@ -216,6 +238,12 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
         teamMembers.stream().map(Individual::getBlocksCompleted).reduce(0, Integer::sum);
     int reservedBlocks =
         teamMembers.stream().map(Individual::getBlocksReserved).reduce(0, Integer::sum);
+    TeamRole userTeamRole =
+        teamMembers.stream()
+            .filter(tm -> tm.getId() == userData.getUserId())
+            .map(TeamMember::getRole)
+            .findFirst()
+            .orElse(TeamRole.NONE);
     return new TeamResponse(
         teamPojo.getId(),
         teamPojo.getName(),
@@ -224,6 +252,7 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
         teamPojo.getGoalCompletionDate(),
         doneBlocks,
         reservedBlocks,
+        userTeamRole,
         teamMembers);
   }
 

@@ -1,5 +1,6 @@
 package com.codeforcommunity.dto.team;
 
+import com.codeforcommunity.enums.TeamRole;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -12,6 +13,7 @@ public class TeamResponse {
   private Timestamp goalCompleteDate;
   private int blocksCompleted;
   private int blocksReserved;
+  private TeamRole userTeamRole;
   List<TeamMember> members;
 
   private TeamResponse() {}
@@ -24,6 +26,7 @@ public class TeamResponse {
       Timestamp goalCompleteDate,
       int blocksCompleted,
       int blocksReserved,
+      TeamRole userTeamRole,
       List<TeamMember> members) {
     this.id = id;
     this.name = name;
@@ -32,6 +35,7 @@ public class TeamResponse {
     this.goalCompleteDate = goalCompleteDate;
     this.blocksCompleted = blocksCompleted;
     this.blocksReserved = blocksReserved;
+    this.userTeamRole = userTeamRole;
     this.members = members;
   }
 
@@ -61,6 +65,10 @@ public class TeamResponse {
 
   public int getBlocksReserved() {
     return blocksReserved;
+  }
+
+  public TeamRole getUserTeamRole() {
+    return userTeamRole;
   }
 
   public List<TeamMember> getMembers() {

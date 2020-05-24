@@ -81,13 +81,15 @@ public class TeamsRouter implements IRouter {
   }
 
   private void handleGetAllTeams(RoutingContext ctx) {
-    GetAllTeamsResponse response = processor.getAllTeams();
+    JWTData userData = ctx.get("jwt_data");
+    GetAllTeamsResponse response = processor.getAllTeams(userData);
     end(ctx.response(), 200, JsonObject.mapFrom(response).toString());
   }
 
   private void handleGetSingleTeam(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
     int teamId = RestFunctions.getRequestParameterAsInt(ctx.request(), "team_id");
-    TeamResponse response = processor.getSingleTeam(teamId);
+    TeamResponse response = processor.getSingleTeam(userData, teamId);
     end(ctx.response(), 200, JsonObject.mapFrom(response).toString());
   }
 
