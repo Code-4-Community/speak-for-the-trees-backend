@@ -195,20 +195,6 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
   @Override
   public GetAllTeamsResponse getAllTeams(JWTData userData) {
-    /*
-    Field<Boolean> userOnTeamField =
-        db.select(
-                DSL.when(
-                        DSL.exists(
-                            db.select(USER_TEAM.TEAM_ROLE)
-                                .from(USER_TEAM)
-                                .where(USER_TEAM.TEAM_ID.eq(TEAM.ID))
-                                .and(USER_TEAM.USER_ID.eq(userData.getUserId()))),
-                      USER_TEAM.TEAM_ROLE)
-                    .otherwise(TeamRole.NONE))
-            .asField("isOnTeam");
-    */
-
     Field<TeamRole> userTeamRole =
         db.select(USER_TEAM.TEAM_ROLE)
             .from(USER_TEAM)
