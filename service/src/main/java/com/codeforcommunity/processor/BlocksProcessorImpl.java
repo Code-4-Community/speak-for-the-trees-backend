@@ -184,14 +184,20 @@ public class BlocksProcessorImpl implements IBlockProcessor {
   /**
    * Returns all blocks that are reserved by a user.
    * @param userId the ID of the user.
-   * @param includeDone if true, returns all blocks that are NOT "OPEN", else only returns "RESERVED" blocks
-   * @return
+   * @param includeDone if true, returns all blocks that are "RESERVED" or "DONE", else only returns "RESERVED" blocks
+   * @return A list of BlockRecord that are assigned to the given user.
    */
   private List<BlockRecord> getUserReservedBlocks(int userId, boolean includeDone) {
     if (includeDone) {
-      return db.selectFrom(BLOCK).where(BLOCK.STATUS.notEqual(BlockStatus.OPEN)).and(BLOCK.ASSIGNED_TO.equal(userId)).fetch();
+      return db.selectFrom(BLOCK)
+          .where(BLOCK.STATUS.equal(BlockStatus.RESERVED).or(BLOCK.STATUS.equal(BlockStatus.DONE)))
+          .and(BLOCK.ASSIGNED_TO.equal(userId))
+          .fetch();
     } else {
-      return db.selectFrom(BLOCK).where(BLOCK.STATUS.equal(BlockStatus.RESERVED)).and(BLOCK.ASSIGNED_TO.equal(userId)).fetch();
+      return db.selectFrom(BLOCK)
+          .where(BLOCK.STATUS.equal(BlockStatus.RESERVED))
+          .and(BLOCK.ASSIGNED_TO.equal(userId))
+          .fetch();
     }
   }
 }
