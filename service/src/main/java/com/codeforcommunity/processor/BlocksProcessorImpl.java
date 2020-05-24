@@ -8,10 +8,12 @@ import com.codeforcommunity.dto.blocks.BlockResponse;
 import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.requester.MapRequester;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import org.jooq.DSLContext;
 import org.jooq.Result;
 import org.jooq.generated.tables.records.BlockRecord;
@@ -101,6 +103,11 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     return new BlockResponse(successfulBlockIds, failures);
   }
 
+  @Override
+  public List<String> getUserReservedBlocks(JWTData jwtData, boolean includeDone) {
+    return getUserReservedBlocks(jwtData.getUserId(), includeDone).stream().map(BlockRecord::getFid).collect(Collectors.toList());
+  }
+
   /**
    * Given a list of block ids, return the corresponding block records separated by block status.
    */
@@ -108,7 +115,9 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     return db.selectFrom(BLOCK).where(BLOCK.FID.in(blockIds)).fetchGroups(BLOCK.STATUS);
   }
 
-  /** Get the list of block ids from the given Map that are not in the correct state. */
+  /**
+   * Get the list of block ids from the given Map that are not in the correct state.
+   */
   private List<String> getInvalidBlockStatusIds(
       Map<BlockStatus, Result<BlockRecord>> blocks, BlockStatus validBlockStatus) {
     List<String> failures = new ArrayList<>();
@@ -170,5 +179,19 @@ public class BlocksProcessorImpl implements IBlockProcessor {
           br.setStatus(newStatus);
           br.store();
         });
+  }
+
+  /**
+   * Returns all blocks that are reserved by a user.
+   * @param userId the ID of the user.
+   * @param includeDone if true, returns all blocks that are NOT "OPEN", else only returns "RESERVED" blocks
+   * @return
+   */
+  private List<BlockRecord> getUserReservedBlocks(int userId, boolean includeDone) {
+    if (includeDone) {
+      return db.selectFrom(BLOCK).where(BLOCK.STATUS.notEqual(BlockStatus.OPEN)).and(BLOCK.ASSIGNED_TO.equal(userId)).fetch();
+    } else {
+      return db.selectFrom(BLOCK).where(BLOCK.STATUS.equal(BlockStatus.RESERVED)).and(BLOCK.ASSIGNED_TO.equal(userId)).fetch();
+    }
   }
 }
