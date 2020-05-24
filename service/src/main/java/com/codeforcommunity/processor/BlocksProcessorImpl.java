@@ -8,12 +8,10 @@ import com.codeforcommunity.dto.blocks.BlockResponse;
 import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.requester.MapRequester;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import org.jooq.DSLContext;
 import org.jooq.Result;
 import org.jooq.generated.tables.records.BlockRecord;
@@ -105,7 +103,9 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
   @Override
   public List<String> getUserReservedBlocks(JWTData jwtData, boolean includeDone) {
-    return getUserReservedBlocks(jwtData.getUserId(), includeDone).stream().map(BlockRecord::getFid).collect(Collectors.toList());
+    return getUserReservedBlocks(jwtData.getUserId(), includeDone).stream()
+        .map(BlockRecord::getFid)
+        .collect(Collectors.toList());
   }
 
   /**
@@ -115,9 +115,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     return db.selectFrom(BLOCK).where(BLOCK.FID.in(blockIds)).fetchGroups(BLOCK.STATUS);
   }
 
-  /**
-   * Get the list of block ids from the given Map that are not in the correct state.
-   */
+  /** Get the list of block ids from the given Map that are not in the correct state. */
   private List<String> getInvalidBlockStatusIds(
       Map<BlockStatus, Result<BlockRecord>> blocks, BlockStatus validBlockStatus) {
     List<String> failures = new ArrayList<>();
@@ -183,8 +181,10 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
   /**
    * Returns all blocks that are reserved by a user.
+   *
    * @param userId the ID of the user.
-   * @param includeDone if true, returns all blocks that are "RESERVED" or "DONE", else only returns "RESERVED" blocks
+   * @param includeDone if true, returns all blocks that are "RESERVED" or "DONE", else only returns
+   *     "RESERVED" blocks
    * @return A list of BlockRecord that are assigned to the given user.
    */
   private List<BlockRecord> getUserReservedBlocks(int userId, boolean includeDone) {

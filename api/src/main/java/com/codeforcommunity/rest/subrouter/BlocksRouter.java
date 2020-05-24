@@ -1,5 +1,7 @@
 package com.codeforcommunity.rest.subrouter;
 
+import static com.codeforcommunity.rest.ApiRouter.end;
+
 import com.codeforcommunity.api.IBlockProcessor;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blocks.BlockResponse;
@@ -12,10 +14,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-
 import java.util.List;
-
-import static com.codeforcommunity.rest.ApiRouter.end;
 
 public class BlocksRouter implements IRouter {
 
@@ -106,7 +105,8 @@ public class BlocksRouter implements IRouter {
   private void handleGetReserved(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
 
-    boolean includeDone = ctx.queryParams().contains("done") && Boolean.parseBoolean(ctx.queryParams().get("done"));
+    boolean includeDone =
+        ctx.queryParams().contains("done") && Boolean.parseBoolean(ctx.queryParams().get("done"));
 
     List<String> response = processor.getUserReservedBlocks(userData, includeDone);
 
