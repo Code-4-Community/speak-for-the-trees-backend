@@ -104,9 +104,7 @@ public class BlocksRouter implements IRouter {
 
   private void handleGetReserved(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
-
-    boolean includeDone =
-        ctx.queryParams().contains("done") && Boolean.parseBoolean(ctx.queryParams().get("done"));
+    boolean includeDone = RestFunctions.getRequestParameterAsBoolean(ctx.request(), "done");
 
     List<String> response = processor.getUserReservedBlocks(userData, includeDone);
 
