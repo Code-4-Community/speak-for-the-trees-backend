@@ -60,14 +60,14 @@ public class AuthDatabaseOperations {
       Users user = maybeUser.get();
       Integer userId = user.getId();
 
-      Optional<UserTeam> mayberUserTeam =
+      Optional<UserTeam> mayberUserTeam = // loop into array of teams
           Optional.ofNullable(
               db.selectFrom(USER_TEAM)
                   .where(USER_TEAM.USER_ID.eq(userId))
                   .fetchOneInto(UserTeam.class));
       return mayberUserTeam
           .map(userTeam -> new JWTData(userId, user.getPrivilegeLevel(), userTeam.getTeamId()))
-          .orElseGet(() -> new JWTData(user.getId(), user.getPrivilegeLevel(), -1));
+          .orElseGet(() -> new JWTData(user.getId(), user.getPrivilegeLevel(), -1)); // array
     } else {
       throw new UserDoesNotExistException(email);
     }

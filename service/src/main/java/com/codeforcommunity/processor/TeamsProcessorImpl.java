@@ -10,6 +10,7 @@ import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blockInfo.Individual;
 import com.codeforcommunity.dto.team.CreateTeamRequest;
 import com.codeforcommunity.dto.team.GetAllTeamsResponse;
+import com.codeforcommunity.dto.team.GetUserTeamsResponse;
 import com.codeforcommunity.dto.team.InviteMembersRequest;
 import com.codeforcommunity.dto.team.TeamMember;
 import com.codeforcommunity.dto.team.TeamResponse;
@@ -240,6 +241,20 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
         reservedBlocks,
         userTeamRole,
         teamMembers);
+  }
+
+  @Override
+  public GetUserTeamsResponse getUserTeams(JWTData userdata) {
+    List<TeamResponse> ret = new ArrayList<TeamResponse>();
+    List<UserTeamRecord> userTeamRecords =
+        db.selectFrom(USER_TEAM).where(USER_TEAM.USER_ID.eq(userdata.getUserId())).fetch();
+
+    for (UserTeamRecord record : userTeamRecords) {
+      int teamid = record.getTeamId();
+      ret.add(getSingleTeam(userdata, teamid));
+    }
+
+    return new GetUserTeamsResponse(ret);
   }
 
   private List<TeamMember> getTeamMembers(int teamId) {

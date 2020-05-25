@@ -6,6 +6,7 @@ import com.codeforcommunity.api.ITeamsProcessor;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.team.CreateTeamRequest;
 import com.codeforcommunity.dto.team.GetAllTeamsResponse;
+import com.codeforcommunity.dto.team.GetUserTeamsResponse;
 import com.codeforcommunity.dto.team.InviteMembersRequest;
 import com.codeforcommunity.dto.team.TeamResponse;
 import com.codeforcommunity.rest.IRouter;
@@ -28,6 +29,7 @@ public class TeamsRouter implements IRouter {
   public Router initializeRouter(Vertx vertx) {
     Router router = Router.router(vertx);
 
+    registerGetUserTeams(router);
     registerCreate(router);
     registerJoin(router);
     registerLeave(router);
@@ -38,6 +40,11 @@ public class TeamsRouter implements IRouter {
     registerGetSingleTeam(router);
 
     return router;
+  }
+
+  private void registerGetUserTeams(Router router) {
+    Route getUserTeamsRoute = router.get("/user_teams");
+    getUserTeamsRoute.handler(this::handleGetUserTeams);
   }
 
   private void registerGetAllTeams(Router router) {
@@ -78,6 +85,12 @@ public class TeamsRouter implements IRouter {
   private void registerInvite(Router router) {
     Route inviteRoute = router.post("/:team_id/invite");
     inviteRoute.handler(this::handleInviteRoute);
+  }
+
+  private void handleGetUserTeams(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+    GetUserTeamsResponse response = processor.getUserTeams(userData);
+    end(ctx.response(), 200, JsonObject.mapFrom(response).toString());
   }
 
   private void handleGetAllTeams(RoutingContext ctx) {
