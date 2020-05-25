@@ -12,4 +12,6 @@ public interface IBlockProcessor {
   BlockResponse releaseBlocks(JWTData jwtData, List<String> blockIds);
 
   BlockResponse resetBlocks(JWTData jwtData, List<String> blockIds);
+
+  List<String> getUserReservedBlocks(JWTData jwtData, boolean includeDone);
 }

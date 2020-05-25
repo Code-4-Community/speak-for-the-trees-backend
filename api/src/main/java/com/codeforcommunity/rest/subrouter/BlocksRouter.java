@@ -9,10 +9,12 @@ import com.codeforcommunity.dto.blocks.StandardBlockRequest;
 import com.codeforcommunity.rest.IRouter;
 import com.codeforcommunity.rest.RestFunctions;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import java.util.List;
 
 public class BlocksRouter implements IRouter {
 
@@ -30,6 +32,7 @@ public class BlocksRouter implements IRouter {
     registerFinish(router);
     registerRelease(router);
     registerReset(router);
+    registerGetReserved(router);
 
     return router;
   }
@@ -52,6 +55,11 @@ public class BlocksRouter implements IRouter {
   private void registerReset(Router router) {
     Route reserveRoute = router.post("/reset");
     reserveRoute.handler(this::handleResetRoute);
+  }
+
+  private void registerGetReserved(Router router) {
+    Route reserveRoute = router.get("/reserved");
+    reserveRoute.handler(this::handleGetReserved);
   }
 
   private void handleReserveRoute(RoutingContext ctx) {
@@ -92,5 +100,14 @@ public class BlocksRouter implements IRouter {
     BlockResponse response = processor.resetBlocks(userData, blockRequest.getBlocks());
 
     end(ctx.response(), 200, JsonObject.mapFrom(response).encode());
+  }
+
+  private void handleGetReserved(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+    boolean includeDone = RestFunctions.getRequestParameterAsBoolean(ctx.request(), "done");
+
+    List<String> response = processor.getUserReservedBlocks(userData, includeDone);
+
+    end(ctx.response(), 200, new JsonArray(response).encode());
   }
 }

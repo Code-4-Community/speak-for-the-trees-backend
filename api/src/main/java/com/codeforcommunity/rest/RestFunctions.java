@@ -56,4 +56,9 @@ public interface RestFunctions {
     }
     throw new MissingParameterException(name);
   }
+
+  static boolean getRequestParameterAsBoolean(HttpServerRequest req, String name) {
+    String paramValue = req.getParam(name);
+    return Boolean.parseBoolean(paramValue);
+  }
 }
