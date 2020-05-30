@@ -1,7 +1,6 @@
 package com.codeforcommunity.processor;
 
 import com.codeforcommunity.dto.team.InviteMembersRequest;
-import com.codeforcommunity.processor.TeamsProcessorImpl;
 
 import com.codeforcommunity.requester.Emailer;
 import com.codeforcommunity.dto.team.CreateTeamRequest;
@@ -13,26 +12,26 @@ import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import com.codeforcommunity.enums.PrivilegeLevel;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-
 import com.codeforcommunity.auth.Passwords;
 import org.jooq.generated.tables.pojos.Team;
 import org.jooq.generated.tables.pojos.Users;
-import org.jooq.impl.UpdatableRecordImpl;
 import org.jooq.generated.tables.records.UsersRecord;
 import org.jooq.generated.tables.records.UserTeamRecord;
 import org.jooq.generated.tables.records.TeamRecord;
 import com.codeforcommunity.enums.TeamRole;
 import org.jooq.generated.Tables;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.sql.Timestamp;
+import java.util.List;
+
 import com.codeforcommunity.JooqMock;
 import com.codeforcommunity.auth.JWTData;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.mockito.ArgumentCaptor;
+
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -50,12 +49,11 @@ public class TeamsProcessorImplTest {
     /**
      * Method to setup mockDb and processor.
      */
+    @BeforeEach
     void setup() {
-        this.mockDb = new JooqMock();
+        mockDb = new JooqMock();
         emailer = mock(Emailer.class);
-        this.processor = new TeamsProcessorImpl(mockDb.getContext(), emailer);
-
-        jwtData = null;
+        processor = new TeamsProcessorImpl(mockDb.getContext(), emailer);
     }
 
     void userCreatingTeam() {
@@ -83,38 +81,72 @@ public class TeamsProcessorImplTest {
     // successfully create a team
     @Test
     public void testCreateTeam1() {
-        setup();
         mockDb.addEmptyReturn("SELECT");
-        mockDb.addEmptyReturn("UPDATE");
-        mockDb.addEmptyReturn("DROP/CREATE");
         mockDb.addEmptyReturn("INSERT");
 
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        ArrayList<String> emailList = new ArrayList<String>(
-                Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com"));
-        CreateTeamRequest teamRequest = new CreateTeamRequest("teamName", "teamBio", 2, timestamp, emailList);
+        Timestamp timestamp = Timestamp.valueOf("2020-05-30 02:00:55.939");
+        List<String> emailList = Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com");
+        CreateTeamRequest teamRequest =
+                new CreateTeamRequest("teamName", "teamBio", 2, timestamp, emailList);
 
         jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
         processor.createTeam(jwtData, teamRequest);
         assertEquals(2, mockDb.timesCalled("SELECT"));
-        assertEquals(0, mockDb.timesCalled("UPDATE"));
         assertEquals(2, mockDb.timesCalled("INSERT"));
-        assertEquals(0, mockDb.getSqlBindings().get("UNKNOWN").size());
-        assertEquals(0, mockDb.getSqlBindings().get("DROP/CREATE").size());
 
-        verify(emailer, times(3)).sendInviteEmail(anyString(),
-                anyString(), any(Users.class), any(Team.class));
+        ArgumentCaptor<String> stringArgs = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Users> usersArgs = ArgumentCaptor.forClass(Users.class);
+        ArgumentCaptor<Team> teamArgs = ArgumentCaptor.forClass(Team.class);
+        verify(emailer, times(3)).sendInviteEmail(stringArgs.capture(),
+                stringArgs.capture(),
+                usersArgs.capture(), teamArgs.capture());
+
+        List<String> capturedStrings = stringArgs.getAllValues();
+        assertEquals("ex1@example.com", capturedStrings.get(0));
+        assertEquals("Team Member", capturedStrings.get(1));
+        assertEquals("ex2@example.com", capturedStrings.get(2));
+        assertEquals("Team Member", capturedStrings.get(3));
+        assertEquals("ex3@example.com", capturedStrings.get(4));
+        assertEquals("Team Member", capturedStrings.get(5));
+        List<Users> capturedUsers = usersArgs.getAllValues();
+        // code should be fixed
+        //assertEquals("test", capturedUsers.get(0));
+//        assertEquals("null", capturedUsers.get(1));
+//        assertEquals("null", capturedUsers.get(2));
+        List<Team> capturedTeam = teamArgs.getAllValues();
+        assertEquals("teamName", capturedTeam.get(0).getName());
+        assertEquals("teamBio", capturedTeam.get(0).getBio());
+        assertEquals(2, capturedTeam.get(0).getGoal());
+        assertEquals(1, capturedTeam.get(0).getId());
+        assertEquals(Team.class, capturedTeam.get(0).getClass());
+        assertEquals("2020-05-30 02:00:55.939", capturedTeam.get(0).getGoalCompletionDate().toString());
+        assertEquals("teamName", capturedTeam.get(1).getName());
+        assertEquals("teamBio", capturedTeam.get(2).getBio());
+        assertEquals(2, capturedTeam.get(1).getGoal());
+        assertEquals(1, capturedTeam.get(1).getId());
+        assertEquals(Team.class, capturedTeam.get(1).getClass());
+        assertEquals("2020-05-30 02:00:55.939", capturedTeam.get(1).getGoalCompletionDate().toString());
+        assertEquals("teamName", capturedTeam.get(2).getName());
+        assertEquals("teamBio", capturedTeam.get(2).getBio());
+        assertEquals(2, capturedTeam.get(2).getGoal());
+        assertEquals(1, capturedTeam.get(2).getId());
+        assertEquals(Team.class, capturedTeam.get(2).getClass());
+        assertEquals("2020-05-30 02:00:55.939", capturedTeam.get(2).getGoalCompletionDate().toString());
     }
 
     // UserAlreadyOnTeamException from user being already on the team
     @Test
     public void testCreateTeam2() {
-        setup();
+        team1();
+        UserTeamRecord myUserTeam = mockDb.getContext().newRecord(Tables.USER_TEAM);
+        myUserTeam.setUserId(1);
+        myUserTeam.setTeamId(5);
+        myUserTeam.setTeamRole(TeamRole.MEMBER);
+        mockDb.addReturn("SELECT", myUserTeam);
         userCreatingTeam();
 
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        ArrayList<String> emailList = new ArrayList<String>(
-                Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com"));
+        List<String> emailList = Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com");
         CreateTeamRequest teamRequest = new CreateTeamRequest("teamName", "teamBio", 1, timestamp, emailList);
         jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
         try {
@@ -128,13 +160,10 @@ public class TeamsProcessorImplTest {
     // MalformedParameterException from false validation of teamRequest
     @Test
     public void testCreateTeam3() {
-        setup();
         mockDb.addEmptyReturn("SELECT");
-        mockDb.addEmptyReturn("UPDATE");
         mockDb.addEmptyReturn("INSERT");
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        ArrayList<String> emailList = new ArrayList<String>(
-                Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com"));
+        List<String> emailList = Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com");
         CreateTeamRequest teamRequest = new CreateTeamRequest("teamName", "teamBio", -1, timestamp, emailList);
 
         try {
@@ -148,7 +177,6 @@ public class TeamsProcessorImplTest {
     // user successfully joins team
     @Test
     public void testJoinTeam1() {
-        setup();
         mockDb.addEmptyReturn("SELECT");
         mockDb.addEmptyReturn("UPDATE");
         mockDb.addEmptyReturn("INSERT");
@@ -158,30 +186,30 @@ public class TeamsProcessorImplTest {
         processor.joinTeam(jwtData, 5);
 
         assertEquals(2, mockDb.timesCalled("SELECT"));
-        assertEquals(0, mockDb.timesCalled("UPDATE"));
         assertEquals(1, mockDb.timesCalled("INSERT"));
-        assertEquals(0, mockDb.getSqlBindings().get("UNKNOWN").size());
-        assertEquals(0, mockDb.getSqlBindings().get("DROP/CREATE").size());
     }
 
     // NoSuchTeamException
     @Test
     public void testJoinTeam2() {
-        testCreateTeam1();
-
+        jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
         try {
-            processor.joinTeam(jwtData, 3);
+            processor.joinTeam(jwtData, 8);
             fail();
         } catch (NoSuchTeamException e) {
-            assertEquals(e.getTeamId(), 3);
+            assertEquals(e.getTeamId(), 8);
         }
     }
 
     // UserAlreadyOnTeamException
     @Test
     public void testJoinTeam3() {
-        setup();
-        userCreatingTeam();
+        UserTeamRecord myUserTeam = mockDb.getContext().newRecord(Tables.USER_TEAM);
+        myUserTeam.setUserId(1);
+        myUserTeam.setTeamId(5);
+        myUserTeam.setTeamRole(TeamRole.MEMBER);
+        mockDb.addReturn("SELECT", myUserTeam);
+        jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
 
         try {
             processor.joinTeam(jwtData, 5);
@@ -194,26 +222,14 @@ public class TeamsProcessorImplTest {
     // successfully leaves team
     @Test
     public void testLeaveTeam1() {
-        setup();
-        UsersRecord myUser = mockDb.getContext().newRecord(Tables.USERS);
-        myUser.setUsername("kiminusername");
-        myUser.setEmail("kimin@example.com");
-        myUser.setPassHash(Passwords.createHash("password"));
-        myUser.setId(1);
-        myUser.setPrivilegeLevel(PrivilegeLevel.STANDARD);
-        mockDb.addReturn("SELECT", myUser);
-        jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
-        mockDb.addReturn("DELETE", myUser);
+        userCreatingTeam();
         processor.leaveTeam(jwtData, 5);
-
         assertEquals(1, mockDb.timesCalled("SELECT"));
-        assertEquals(1, mockDb.timesCalled("DELETE"));
     }
 
     // UserNotOnTeamException for user not being in the team
     @Test
     public void testLeaveTeam2() {
-        setup();
         testCreateTeam1();
         jwtData = new JWTData(2, PrivilegeLevel.STANDARD);
         try {
@@ -228,18 +244,14 @@ public class TeamsProcessorImplTest {
     // TeamLeaderExcludedRouteException for the user being the team leader
     @Test
     public void testLeaveTeam3() {
-        setup();
-        mockDb.addEmptyReturn("SELECT");
-        mockDb.addEmptyReturn("UPDATE");
-        mockDb.addEmptyReturn("INSERT");
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        ArrayList<String> emailList = new ArrayList<String>(
-                Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com"));
-        CreateTeamRequest teamRequest = new CreateTeamRequest("teamName", "teamBio", 1, timestamp, emailList);
-        team1();
+        UserTeamRecord userTeamRecord =  mockDb.getContext().newRecord(Tables.USER_TEAM);
+        userTeamRecord.setTeamRole(TeamRole.LEADER);
+        userTeamRecord.setTeamId(5);
+        userTeamRecord.setUserId(1);
+        mockDb.addReturn("SELECT", userTeamRecord);
+        userCreatingTeam();
 
         jwtData = new JWTData(2, PrivilegeLevel.STANDARD);
-        processor.createTeam(jwtData, teamRequest);
         try {
             processor.leaveTeam(jwtData, 5);
             fail();
@@ -251,12 +263,6 @@ public class TeamsProcessorImplTest {
     // successfully disbands team
     @Test
     public void testDisbandTeam1() {
-        setup();
-        mockDb.addEmptyReturn("SELECT");
-        mockDb.addEmptyReturn("UPDATE");
-        mockDb.addEmptyReturn("DROP/CREATE");
-        mockDb.addEmptyReturn("INSERT");
-
         TeamRecord myTeam = mockDb.getContext().newRecord(Tables.TEAM);
         myTeam.setId(5);
         myTeam.setName("teamKimin");
@@ -265,15 +271,16 @@ public class TeamsProcessorImplTest {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         myTeam.setGoalCompletionDate(timestamp);
 
-        ArrayList<String> emailList = new ArrayList<String>(
-                Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com"));
-        CreateTeamRequest teamRequest = new CreateTeamRequest("teamName", "teamBio", 2, timestamp, emailList);
-
+        UserTeamRecord userTeamRecord =  mockDb.getContext().newRecord(Tables.USER_TEAM);
+        userTeamRecord.setTeamRole(TeamRole.LEADER);
+        userTeamRecord.setTeamId(5);
+        userTeamRecord.setUserId(1);
+        mockDb.addReturn("SELECT", userTeamRecord);
+        userCreatingTeam();
         mockDb.addReturn("SELECT", myTeam);
         mockDb.addReturn("DELETE", myTeam);
 
         jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
-        processor.createTeam(jwtData, teamRequest);
         processor.disbandTeam(jwtData, 5);
         assertEquals(2, mockDb.timesCalled("DELETE"));
         assertEquals(1, mockDb.timesCalled("SELECT"));
@@ -282,7 +289,6 @@ public class TeamsProcessorImplTest {
     // UserNotOnTeamException for user not being on the team
     @Test
     public void testDisbandTeam2() {
-        setup();
         jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
         try {
             processor.disbandTeam(jwtData, 5);
@@ -296,7 +302,6 @@ public class TeamsProcessorImplTest {
     // TeamLeaderOnlyRouteException for user not being a leader
     @Test
     public void testDisbandTeam3() {
-        setup();
         TeamRecord myTeam = mockDb.getContext().newRecord(Tables.TEAM);
         myTeam.setId(5);
         myTeam.setName("teamKimin");
@@ -318,32 +323,35 @@ public class TeamsProcessorImplTest {
 
     @Test
     public void testKickFromTeam1() {
-        setup();
-        TeamRecord myTeam = mockDb.getContext().newRecord(Tables.TEAM);
-        myTeam.setId(5);
-        myTeam.setName("teamKimin");
-        myTeam.setBio("bioTeam");
-        myTeam.setGoal(2);
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        myTeam.setGoalCompletionDate(timestamp);
-        mockDb.addReturn("SELECT", myTeam);
-        ArrayList<String> emailList = new ArrayList<String>(
-                Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com"));
-        CreateTeamRequest teamRequest = new CreateTeamRequest("teamName", "teamBio", 2, timestamp, emailList);
+        UserTeamRecord userTeamRecord =  mockDb.getContext().newRecord(Tables.USER_TEAM);
+        userTeamRecord.setTeamRole(TeamRole.LEADER);
+        userTeamRecord.setTeamId(5);
+        userTeamRecord.setUserId(1);
+        mockDb.addReturn("SELECT", userTeamRecord);
 
         jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
-        processor.createTeam(jwtData, teamRequest);
         processor.kickFromTeam(jwtData, 5, 1);
 
-        assertEquals(1, mockDb.timesCalled("DELETE"));
         assertEquals(1, mockDb.timesCalled("SELECT"));
     }
 
     // TeamLeaderOnlyRouteException
     @Test
     public void testKickFromTeam2() {
-        setup();
         team1();
+        jwtData = new JWTData(2, PrivilegeLevel.STANDARD);
+
+        try {
+            processor.kickFromTeam(jwtData, 5, 1);
+            fail();
+        } catch (TeamLeaderOnlyRouteException e) {
+            assertEquals(e.getTeamId(), 5);
+        }
+    }
+
+    // userTeamRecord == null
+    @Test
+    public void testKickFromTeam3() {
         jwtData = new JWTData(2, PrivilegeLevel.STANDARD);
 
         try {
@@ -356,10 +364,14 @@ public class TeamsProcessorImplTest {
 
     @Test
     public void testInviteToTeam1() {
-        setup();
-        team1();
-        ArrayList<String> emailList = new ArrayList<String>(
-                Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com"));
+        UserTeamRecord userTeamRecord =  mockDb.getContext().newRecord(Tables.USER_TEAM);
+        userTeamRecord.setTeamRole(TeamRole.LEADER);
+        userTeamRecord.setTeamId(5);
+        userTeamRecord.setUserId(1);
+        mockDb.addReturn("SELECT", userTeamRecord);
+        userCreatingTeam();
+
+        List<String> emailList = Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com");
         InviteMembersRequest imr = new InviteMembersRequest(emailList, 5);
         jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
         processor.inviteToTeam(jwtData, imr);
@@ -372,10 +384,8 @@ public class TeamsProcessorImplTest {
     // TeamLeaderOnlyRouteException since user is not team leader
     @Test
     public void testInviteToTeam2() {
-        setup();
         team1();
-        ArrayList<String> emailList = new ArrayList<String>(
-                Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com"));
+        List<String> emailList = Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com");
         InviteMembersRequest imr = new InviteMembersRequest(emailList, 5);
         jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
 
@@ -390,9 +400,7 @@ public class TeamsProcessorImplTest {
     // TeamLeaderOnlyRouteException since team doesn't exist
     @Test
     public void testInviteToTeam3() {
-        setup();
-        ArrayList<String> emailList = new ArrayList<String>(
-                Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com"));
+        List<String> emailList = Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com");
         InviteMembersRequest imr = new InviteMembersRequest(emailList, 5);
         jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
 
