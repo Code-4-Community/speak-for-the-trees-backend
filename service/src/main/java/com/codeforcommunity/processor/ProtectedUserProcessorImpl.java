@@ -33,17 +33,16 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
 
     db.deleteFrom(VERIFICATION_KEYS).where(VERIFICATION_KEYS.USER_ID.eq(userId)).executeAsync();
 
-    List<Optional<UserTeamRecord>> maybeUserTeamRecords =
+    Optional<List<UserTeamRecord>> maybeUserTeamRecords =
         Optional.ofNullable(db.selectFrom(USER_TEAM).where(USER_TEAM.USER_ID.eq(userId)).fetch());
 
-    for (Optional<UserTeamRecord> maybeUserTeamRecord : maybeUserTeamRecords) {
-      if (maybeUserTeamRecord.isPresent()) {
-        UserTeamRecord userTeamRecord = maybeUserTeamRecord.get();
+    if (maybeUserTeamRecords.isPresent()) {
+      List<UserTeamRecord> userTeamRecords = maybeUserTeamRecords.get();
+      for (UserTeamRecord userTeamRecord : userTeamRecords) {
         if (userTeamRecord.getTeamRole() == TeamRole.LEADER) {
           db.deleteFrom(USER_TEAM)
               .where(USER_TEAM.TEAM_ID.eq(userTeamRecord.getTeamId()))
               .executeAsync();
-
           db.deleteFrom(TEAM).where(TEAM.ID.eq(userTeamRecord.getTeamId())).executeAsync();
         } else {
           db.executeDelete(userTeamRecord, USER_TEAM.USER_ID.eq(userId));
