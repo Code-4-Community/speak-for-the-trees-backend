@@ -7,8 +7,7 @@ public class JWTData {
   private final Integer userId;
   private final PrivilegeLevel privilegeLevel;
 
-  public JWTData(
-      Integer userId, PrivilegeLevel privilegeLevel) {
+  public JWTData(Integer userId, PrivilegeLevel privilegeLevel) {
     this.userId = userId;
     this.privilegeLevel = privilegeLevel;
   }
@@ -20,5 +19,4 @@ public class JWTData {
   public PrivilegeLevel getPrivilegeLevel() {
     return privilegeLevel;
   }
-
 }

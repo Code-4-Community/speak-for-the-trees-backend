@@ -13,11 +13,11 @@ import com.codeforcommunity.dto.user.UserDataResponse;
 import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.WrongPasswordException;
+import java.util.List;
 import java.util.Optional;
 import org.jooq.DSLContext;
 import org.jooq.generated.tables.records.UserTeamRecord;
 import org.jooq.generated.tables.records.UsersRecord;
-import java.util.List;
 
 public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
 
@@ -34,8 +34,7 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
     db.deleteFrom(VERIFICATION_KEYS).where(VERIFICATION_KEYS.USER_ID.eq(userId)).executeAsync();
 
     List<Optional<UserTeamRecord>> maybeUserTeamRecords =
-        Optional.ofNullable(
-            db.selectFrom(USER_TEAM).where(USER_TEAM.USER_ID.eq(userId)).fetch());
+        Optional.ofNullable(db.selectFrom(USER_TEAM).where(USER_TEAM.USER_ID.eq(userId)).fetch());
 
     for (Optional<UserTeamRecord> maybeUserTeamRecord : maybeUserTeamRecords) {
       if (maybeUserTeamRecord.isPresent()) {
