@@ -66,8 +66,9 @@ public class AuthDatabaseOperations {
                   .where(USER_TEAM.USER_ID.eq(userId))
                   .fetchOneInto(UserTeam.class));
       return mayberUserTeam
-          .map(userTeam -> new JWTData(userId, user.getPrivilegeLevel(), userTeam.getTeamId()))
-          .orElseGet(() -> new JWTData(user.getId(), user.getPrivilegeLevel(), -1)); // array
+          .map(
+              userTeam -> new JWTData(userId, user.getPrivilegeLevel())) // , userTeam.getTeamId()))
+          .orElseGet(() -> new JWTData(user.getId(), user.getPrivilegeLevel())); // , -1)); // array
     } else {
       throw new UserDoesNotExistException(email);
     }

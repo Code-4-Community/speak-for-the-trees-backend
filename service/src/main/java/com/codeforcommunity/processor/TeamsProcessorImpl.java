@@ -20,7 +20,6 @@ import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.NoSuchTeamException;
 import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
 import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
-import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import com.codeforcommunity.requester.Emailer;
 import java.math.BigDecimal;
@@ -49,11 +48,6 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
   @Override
   public TeamResponse createTeam(JWTData userData, CreateTeamRequest teamRequest) {
     teamRequest.validate();
-
-    boolean userOnTeam = db.fetchExists(USER_TEAM, USER_TEAM.USER_ID.eq(userData.getUserId()));
-    if (userOnTeam) {
-      throw new UserAlreadyOnTeamException(userData.getUserId());
-    }
 
     TeamRecord teamRecord = db.newRecord(TEAM);
     teamRecord.setName(teamRequest.getName());
@@ -86,10 +80,6 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
   @Override
   public void joinTeam(JWTData userData, int teamId) {
-    boolean userOnTeam = db.fetchExists(USER_TEAM, USER_TEAM.USER_ID.eq(userData.getUserId()));
-    if (userOnTeam) {
-      throw new UserAlreadyOnTeamException(userData.getUserId());
-    }
 
     Team teamPojo = db.selectFrom(TEAM).where(TEAM.ID.eq(teamId)).fetchOneInto(Team.class);
     if (teamPojo == null) {

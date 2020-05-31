@@ -17,6 +17,7 @@ import java.util.Optional;
 import org.jooq.DSLContext;
 import org.jooq.generated.tables.records.UserTeamRecord;
 import org.jooq.generated.tables.records.UsersRecord;
+import java.util.List;
 
 public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
 
@@ -32,20 +33,22 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
 
     db.deleteFrom(VERIFICATION_KEYS).where(VERIFICATION_KEYS.USER_ID.eq(userId)).executeAsync();
 
-    Optional<UserTeamRecord> maybeUserTeamRecord =
+    List<Optional<UserTeamRecord>> maybeUserTeamRecords =
         Optional.ofNullable(
-            db.selectFrom(USER_TEAM).where(USER_TEAM.USER_ID.eq(userId)).fetchOne());
+            db.selectFrom(USER_TEAM).where(USER_TEAM.USER_ID.eq(userId)).fetch());
 
-    if (maybeUserTeamRecord.isPresent()) {
-      UserTeamRecord userTeamRecord = maybeUserTeamRecord.get();
-      if (userTeamRecord.getTeamRole() == TeamRole.LEADER) {
-        db.deleteFrom(USER_TEAM)
-            .where(USER_TEAM.TEAM_ID.eq(userTeamRecord.getTeamId()))
-            .executeAsync();
+    for (Optional<UserTeamRecord> maybeUserTeamRecord : maybeUserTeamRecords) {
+      if (maybeUserTeamRecord.isPresent()) {
+        UserTeamRecord userTeamRecord = maybeUserTeamRecord.get();
+        if (userTeamRecord.getTeamRole() == TeamRole.LEADER) {
+          db.deleteFrom(USER_TEAM)
+              .where(USER_TEAM.TEAM_ID.eq(userTeamRecord.getTeamId()))
+              .executeAsync();
 
-        db.deleteFrom(TEAM).where(TEAM.ID.eq(userTeamRecord.getTeamId())).executeAsync();
-      } else {
-        db.executeDelete(userTeamRecord, USER_TEAM.USER_ID.eq(userId));
+          db.deleteFrom(TEAM).where(TEAM.ID.eq(userTeamRecord.getTeamId())).executeAsync();
+        } else {
+          db.executeDelete(userTeamRecord, USER_TEAM.USER_ID.eq(userId));
+        }
       }
     }
 

@@ -80,8 +80,7 @@ public class JWTHandler {
     int userId = decodedJWT.getClaim("userId").asInt();
     PrivilegeLevel privilegeLevel =
         PrivilegeLevel.from(decodedJWT.getClaim("privilegeLevel").asInt());
-    int userTeamId = decodedJWT.getClaim("teamId").asInt();
-    return new JWTData(userId, privilegeLevel, userTeamId);
+    return new JWTData(userId, privilegeLevel);
   }
 
   private DecodedJWT getDecodedJWT(String jwt) throws JWTVerificationException {
@@ -101,7 +100,6 @@ public class JWTHandler {
     return JWT.create()
         .withClaim("userId", jwtData.getUserId())
         .withClaim("privilegeLevel", jwtData.getPrivilegeLevel().getVal())
-        .withClaim("teamId", jwtData.getUserTeamId())
         .withExpiresAt(date)
         .withIssuer(C4C_ISSUER)
         .sign(algorithm);
