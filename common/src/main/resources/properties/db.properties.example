@@ -1,0 +1,4 @@
+database.driver = org.postgresql.Driver
+database.url = jdbc:postgresql://localhost:5432/speak-for-the-trees?autoreconnect=true
+database.username = postgres
+database.password = secret
