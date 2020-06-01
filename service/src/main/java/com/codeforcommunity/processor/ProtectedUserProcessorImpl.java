@@ -13,6 +13,7 @@ import com.codeforcommunity.dto.user.UserDataResponse;
 import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.WrongPasswordException;
+import java.util.List;
 import java.util.Optional;
 import org.jooq.DSLContext;
 import org.jooq.generated.tables.records.UserTeamRecord;
@@ -32,20 +33,20 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
 
     db.deleteFrom(VERIFICATION_KEYS).where(VERIFICATION_KEYS.USER_ID.eq(userId)).executeAsync();
 
-    Optional<UserTeamRecord> maybeUserTeamRecord =
-        Optional.ofNullable(
-            db.selectFrom(USER_TEAM).where(USER_TEAM.USER_ID.eq(userId)).fetchOne());
+    Optional<List<UserTeamRecord>> maybeUserTeamRecords =
+        Optional.ofNullable(db.selectFrom(USER_TEAM).where(USER_TEAM.USER_ID.eq(userId)).fetch());
 
-    if (maybeUserTeamRecord.isPresent()) {
-      UserTeamRecord userTeamRecord = maybeUserTeamRecord.get();
-      if (userTeamRecord.getTeamRole() == TeamRole.LEADER) {
-        db.deleteFrom(USER_TEAM)
-            .where(USER_TEAM.TEAM_ID.eq(userTeamRecord.getTeamId()))
-            .executeAsync();
-
-        db.deleteFrom(TEAM).where(TEAM.ID.eq(userTeamRecord.getTeamId())).executeAsync();
-      } else {
-        db.executeDelete(userTeamRecord, USER_TEAM.USER_ID.eq(userId));
+    if (maybeUserTeamRecords.isPresent()) {
+      List<UserTeamRecord> userTeamRecords = maybeUserTeamRecords.get();
+      for (UserTeamRecord userTeamRecord : userTeamRecords) {
+        if (userTeamRecord.getTeamRole() == TeamRole.LEADER) {
+          db.deleteFrom(USER_TEAM)
+              .where(USER_TEAM.TEAM_ID.eq(userTeamRecord.getTeamId()))
+              .executeAsync();
+          db.deleteFrom(TEAM).where(TEAM.ID.eq(userTeamRecord.getTeamId())).executeAsync();
+        } else {
+          db.executeDelete(userTeamRecord, USER_TEAM.USER_ID.eq(userId));
+        }
       }
     }
 

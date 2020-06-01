@@ -10,6 +10,7 @@ import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blockInfo.Individual;
 import com.codeforcommunity.dto.team.CreateTeamRequest;
 import com.codeforcommunity.dto.team.GetAllTeamsResponse;
+import com.codeforcommunity.dto.team.GetUserTeamsResponse;
 import com.codeforcommunity.dto.team.InviteMembersRequest;
 import com.codeforcommunity.dto.team.TeamMember;
 import com.codeforcommunity.dto.team.TeamResponse;
@@ -19,7 +20,6 @@ import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.NoSuchTeamException;
 import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
 import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
-import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import com.codeforcommunity.requester.Emailer;
 import java.math.BigDecimal;
@@ -48,11 +48,6 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
   @Override
   public TeamResponse createTeam(JWTData userData, CreateTeamRequest teamRequest) {
     teamRequest.validate();
-
-    boolean userOnTeam = db.fetchExists(USER_TEAM, USER_TEAM.USER_ID.eq(userData.getUserId()));
-    if (userOnTeam) {
-      throw new UserAlreadyOnTeamException(userData.getUserId());
-    }
 
     TeamRecord teamRecord = db.newRecord(TEAM);
     teamRecord.setName(teamRequest.getName());
@@ -85,10 +80,6 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
   @Override
   public void joinTeam(JWTData userData, int teamId) {
-    boolean userOnTeam = db.fetchExists(USER_TEAM, USER_TEAM.USER_ID.eq(userData.getUserId()));
-    if (userOnTeam) {
-      throw new UserAlreadyOnTeamException(userData.getUserId());
-    }
 
     Team teamPojo = db.selectFrom(TEAM).where(TEAM.ID.eq(teamId)).fetchOneInto(Team.class);
     if (teamPojo == null) {
@@ -240,6 +231,20 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
         reservedBlocks,
         userTeamRole,
         teamMembers);
+  }
+
+  @Override
+  public GetUserTeamsResponse getUserTeams(JWTData userdata) {
+    List<TeamResponse> ret = new ArrayList<TeamResponse>();
+    List<UserTeamRecord> userTeamRecords =
+        db.selectFrom(USER_TEAM).where(USER_TEAM.USER_ID.eq(userdata.getUserId())).fetch();
+
+    for (UserTeamRecord record : userTeamRecords) {
+      int teamid = record.getTeamId();
+      ret.add(getSingleTeam(userdata, teamid));
+    }
+
+    return new GetUserTeamsResponse(ret);
   }
 
   private List<TeamMember> getTeamMembers(int teamId) {
