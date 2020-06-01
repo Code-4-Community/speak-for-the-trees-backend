@@ -3,3 +3,4 @@ database.url = jdbc:postgresql://localhost:5432/speak-for-the-trees?autoreconnec
 database.username = postgres
 database.password = place-holder
 
+
