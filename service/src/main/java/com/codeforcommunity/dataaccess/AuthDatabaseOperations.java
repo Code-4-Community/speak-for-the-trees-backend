@@ -20,7 +20,6 @@ import java.util.Optional;
 import java.util.Properties;
 import org.jooq.DSLContext;
 import org.jooq.generated.Tables;
-import org.jooq.generated.tables.pojos.UserTeam;
 import org.jooq.generated.tables.pojos.Users;
 import org.jooq.generated.tables.records.UsersRecord;
 import org.jooq.generated.tables.records.VerificationKeysRecord;
@@ -58,17 +57,8 @@ public class AuthDatabaseOperations {
 
     if (maybeUser.isPresent()) {
       Users user = maybeUser.get();
-      Integer userId = user.getId();
 
-      Optional<UserTeam> mayberUserTeam = // loop into array of teams
-          Optional.ofNullable(
-              db.selectFrom(USER_TEAM)
-                  .where(USER_TEAM.USER_ID.eq(userId))
-                  .fetchOneInto(UserTeam.class));
-      return mayberUserTeam
-          .map(
-              userTeam -> new JWTData(userId, user.getPrivilegeLevel())) // , userTeam.getTeamId()))
-          .orElseGet(() -> new JWTData(user.getId(), user.getPrivilegeLevel())); // , -1)); // array
+      return new JWTData(user.getId(), user.getPrivilegeLevel());
     } else {
       throw new UserDoesNotExistException(email);
     }
