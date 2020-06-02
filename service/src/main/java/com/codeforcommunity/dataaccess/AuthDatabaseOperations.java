@@ -75,12 +75,13 @@ public class AuthDatabaseOperations {
     }
 
     /**
-     * TODO: Refactor this method to take in a DTO / POJO instance
-     * Creates a new row in the USER table with the given values.
+     * TODO: Refactor this method to take in a DTO / POJO instance Creates a new row in the USER table
+     * with the given values.
      *
-     * @throws EmailAlreadyInUseException if the given username and email are already used in the USER table.
+     * @throws EmailAlreadyInUseException if the given username and email are already used in the USER
+     *     table.
      */
-    public void createNewUser(String username, String email, String password, String firstName, String lastName) {
+    public UsersRecord createNewUser(String username, String email, String password, String firstName, String lastName) {
         boolean emailUsed = db.fetchExists(db.selectFrom(USERS).where(USERS.EMAIL.eq(email)));
         if (emailUsed) {
             throw new EmailAlreadyInUseException(email);
@@ -99,7 +100,7 @@ public class AuthDatabaseOperations {
         newUser.setPrivilegeLevel(PrivilegeLevel.STANDARD);
         newUser.store();
 
-        // TODO: Send verification email
+        return newUser;
     }
 
     /**
