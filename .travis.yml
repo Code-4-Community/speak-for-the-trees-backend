@@ -25,7 +25,6 @@ before_deploy:
   - rm input.properties
   - cp map.properties input.properties
   - awk -F"=" -v updatedVal="=$MAP_FEATURE_LAYER_URL" '/feature_layer_route=/{$2=updatedVal}1' input.properties > map.properties
-  - cat map.properties
   - cd /home/travis/build/Code-4-Community/speak-for-the-trees-backend/
   - mvn clean install
   - zip build.zip Dockerfile service/target/service-1.0-SNAPSHOT-jar-with-dependencies.jar
