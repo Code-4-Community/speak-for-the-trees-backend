@@ -1,6 +1,7 @@
 package com.codeforcommunity.requester;
 
 import com.codeforcommunity.enums.BlockStatus;
+import com.codeforcommunity.propertiesLoader.PropertiesLoader;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
@@ -10,6 +11,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import java.util.List;
+import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,8 +20,20 @@ public class MapRequester {
   private final WebClient client;
   private Future<String> tokenFuture;
 
+  private final String featureLayerRoute;
+  private final String tokenRoute;
+  private final String clientId;
+  private final String clientSecret;
+
   public MapRequester(Vertx vertx) {
     client = WebClient.create(vertx);
+
+    Properties mapProperties = PropertiesLoader.getMapProperties();
+    this.featureLayerRoute = PropertiesLoader.loadProperty(mapProperties, "feature_layer_route");
+    this.tokenRoute = PropertiesLoader.loadProperty(mapProperties, "token_route");
+    this.clientId = PropertiesLoader.loadProperty(mapProperties, "client_id");
+    this.clientSecret = PropertiesLoader.loadProperty(mapProperties, "client_secret");
+
     this.tokenFuture = updateToken();
   }
 
@@ -34,29 +48,9 @@ public class MapRequester {
     updateLayers(streetIds, updateTo, this.tokenFuture);
   }
 
+  /** Make a request to update the ArcGIS feature layer */
   private Future<Void> updateLayers(
       List<String> streetIds, BlockStatus updateTo, Future<String> tokenFuture) {
-    /*
-    var settings = {
-      "url": "https://services7.arcgis.com/iIw2JoTaLFMnHLgW/arcgis/rest/services/boston_street_segments_2/FeatureServer/0/applyEdits",
-      "method": "POST",
-      "timeout": 0,
-      "headers": {
-          "Content-Type": "application/x-www-form-urlencoded"
-      },
-      "data": {
-          "f": "json",
-          "updates": "[
-              {
-                  \"attributes\" : {
-                  \"FID\" : \"17894\",
-                  \"ST_NAME\" : \"EXAMPLE\",
-                  \"RESERVED\": \"1\"
-                  }
-              }
-          ]"
-      }
-     */
     logger.info("Making request to update blocks to " + updateTo.name());
 
     JsonArray updateJson = new JsonArray();
@@ -77,8 +71,7 @@ public class MapRequester {
               return Future.future(
                   promise -> {
                     client
-                        .postAbs(
-                            "https://services7.arcgis.com/iIw2JoTaLFMnHLgW/arcgis/rest/services/boston_street_segments_2/FeatureServer/0/applyEdits")
+                        .postAbs(featureLayerRoute)
                         .putHeader("content-type", "multipart/form-data")
                         .sendForm(
                             formData,
@@ -86,12 +79,6 @@ public class MapRequester {
                               if (ar.succeeded()) {
                                 HttpResponse<Buffer> httpResponse = ar.result();
 
-                                /*
-                                 * Invalid Token
-                                 *  {"error":{"code":498,"message":"Invalid token.","details":["Invalid token."]}}
-                                 * Success
-                                 *  {"addResults":[],"updateResults":[{"objectId":2,"uniqueId":2,"globalId":null,"success":true}],"deleteResults":[]}
-                                 */
                                 if (httpResponse.statusCode() == 200) {
                                   JsonObject responseBody = httpResponse.bodyAsJsonObject();
                                   if (responseBody.containsKey("error")
@@ -130,34 +117,22 @@ public class MapRequester {
     return updateFuture;
   }
 
+  /**
+   * Query ArcGIS to get a new API token that can be used to make privileged feature layer calls.
+   */
   private Future<String> updateToken() {
-    /*
-    var settings = {
-      "url": "https://www.arcgis.com/sharing/rest/oauth2/token",
-      "method": "POST",
-      "timeout": 0,
-      "headers": {
-          "Content-Type": "application/x-www-form-urlencoded"
-      },
-      "data": {
-          "client_id": "I0YjQpduKSwoHave",
-          "client_secret": "ac11027fcd904482828636bce3fbe517",
-          "grant_type": "client_credentials"
-      }
-    };
-    */
     logger.info("Making request get an ArcGIS API token");
     MultiMap formData =
         MultiMap.caseInsensitiveMultiMap()
-            .add("client_id", "I0YjQpduKSwoHave")
-            .add("client_secret", "ac11027fcd904482828636bce3fbe517")
+            .add("client_id", clientId)
+            .add("client_secret", clientSecret)
             .add("grant_type", "client_credentials");
 
     Future<String> newTokenFuture =
         Future.future(
             promise -> {
               client
-                  .postAbs("https://www.arcgis.com/sharing/rest/oauth2/token")
+                  .postAbs(tokenRoute)
                   .putHeader("content-type", "multipart/form-data")
                   .sendForm(
                       formData,
