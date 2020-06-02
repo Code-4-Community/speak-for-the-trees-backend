@@ -64,6 +64,7 @@ public class ProtectedUserProcessorImplTest {
         assertEquals(1, mockDb.getSqlBindings().get("DELETE").get(2)[0]);
         // user_id from user_team
         assertEquals(1, mockDb.getSqlBindings().get("SELECT").get(0)[0]);
+
     }
 
     // successfully deletes user when user is a leader
