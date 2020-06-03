@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 import org.jooq.DSLContext;
 import org.jooq.Result;
 import org.jooq.generated.tables.records.BlockRecord;
-import org.jooq.impl.DSL;
 
 public class BlocksProcessorImpl implements IBlockProcessor {
 
@@ -121,8 +120,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
       List<String> sublist = blockFids.subList(i, Math.min(blockFids.size(), i + 3000));
       mapRequester.updateStreets(sublist, BlockStatus.OPEN);
     }
-    db.update(BLOCK).set(BLOCK.STATUS, BlockStatus.OPEN)
-        .execute();
+    db.update(BLOCK).set(BLOCK.STATUS, BlockStatus.OPEN).execute();
   }
 
   /**
