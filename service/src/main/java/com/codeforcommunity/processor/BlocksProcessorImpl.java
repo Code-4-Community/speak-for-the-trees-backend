@@ -7,6 +7,7 @@ import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blocks.BlockResponse;
 import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.PrivilegeLevel;
+import com.codeforcommunity.exceptions.AdminOnlyRouteException;
 import com.codeforcommunity.requester.MapRequester;
 import java.util.ArrayList;
 import java.util.List;
@@ -106,6 +107,20 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     return getUserReservedBlocks(jwtData.getUserId(), includeDone).stream()
         .map(BlockRecord::getFid)
         .collect(Collectors.toList());
+  }
+
+  @Override
+  public void resetAllBlocks(JWTData jwtData) {
+    if (jwtData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
+      throw new AdminOnlyRouteException();
+    }
+
+    List<String> blockFids = db.selectFrom(BLOCK).fetch(BLOCK.FID);
+    for (int i = 0; i < blockFids.size(); i += 3000) {
+      List<String> sublist = blockFids.subList(i, Math.min(blockFids.size(), i + 3000));
+      mapRequester.updateStreets(sublist, BlockStatus.OPEN);
+    }
+    db.update(BLOCK).set(BLOCK.STATUS, BlockStatus.OPEN).execute();
   }
 
   /**
