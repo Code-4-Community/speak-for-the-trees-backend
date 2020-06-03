@@ -33,6 +33,7 @@ public class BlocksRouter implements IRouter {
     registerRelease(router);
     registerReset(router);
     registerGetReserved(router);
+    registerResetAllBlocks(router);
 
     return router;
   }
@@ -60,6 +61,11 @@ public class BlocksRouter implements IRouter {
   private void registerGetReserved(Router router) {
     Route reserveRoute = router.get("/reserved");
     reserveRoute.handler(this::handleGetReserved);
+  }
+
+  private void registerResetAllBlocks(Router router) {
+    Route resetAllRoute = router.post("/reset/hard");
+    resetAllRoute.handler(this::handleResetAll);
   }
 
   private void handleReserveRoute(RoutingContext ctx) {
@@ -109,5 +115,13 @@ public class BlocksRouter implements IRouter {
     List<String> response = processor.getUserReservedBlocks(userData, includeDone);
 
     end(ctx.response(), 200, new JsonArray(response).encode());
+  }
+
+  private void handleResetAll(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+
+    processor.resetAllBlocks(userData);
+
+    end(ctx.response(), 200);
   }
 }
