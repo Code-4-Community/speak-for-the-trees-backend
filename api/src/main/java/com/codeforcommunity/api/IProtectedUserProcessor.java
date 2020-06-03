@@ -1,6 +1,7 @@
 package com.codeforcommunity.api;
 
 import com.codeforcommunity.auth.JWTData;
+import com.codeforcommunity.dto.user.ChangeEmailRequest;
 import com.codeforcommunity.dto.user.ChangePasswordRequest;
 import com.codeforcommunity.dto.user.UserDataResponse;
 
@@ -17,4 +18,7 @@ public interface IProtectedUserProcessor {
 
   /** Get the user's data for use in the site. */
   UserDataResponse getUserData(JWTData userData);
+
+  /** Change the user's email to the provided one */
+  void changeEmail(JWTData userData, ChangeEmailRequest changeEmailRequest);
 }

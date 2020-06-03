@@ -4,6 +4,7 @@ import static com.codeforcommunity.rest.ApiRouter.end;
 
 import com.codeforcommunity.api.IProtectedUserProcessor;
 import com.codeforcommunity.auth.JWTData;
+import com.codeforcommunity.dto.user.ChangeEmailRequest;
 import com.codeforcommunity.dto.user.ChangePasswordRequest;
 import com.codeforcommunity.dto.user.UserDataResponse;
 import com.codeforcommunity.rest.IRouter;
@@ -29,6 +30,7 @@ public class ProtectedUserRouter implements IRouter {
     registerDeleteUser(router);
     registerChangePassword(router);
     registerGetUserData(router);
+    registerChangeEmail(router);
 
     return router;
   }
@@ -46,6 +48,11 @@ public class ProtectedUserRouter implements IRouter {
   private void registerGetUserData(Router router) {
     Route getUserDataRoute = router.get("/data");
     getUserDataRoute.handler(this::handleGetUserDataRoute);
+  }
+
+  private void registerChangeEmail(Router router) {
+    Route changePasswordRoute = router.post("/change_email");
+    changePasswordRoute.handler(this::handleChangeEmailRoute);
   }
 
   private void handleDeleteUserRoute(RoutingContext ctx) {
@@ -72,5 +79,15 @@ public class ProtectedUserRouter implements IRouter {
     UserDataResponse response = processor.getUserData(userData);
 
     end(ctx.response(), 200, JsonObject.mapFrom(response).toString());
+  }
+
+  private void handleChangeEmailRoute(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+    ChangeEmailRequest changeEmailRequest =
+        RestFunctions.getJsonBodyAsClass(ctx, ChangeEmailRequest.class);
+
+    processor.changeEmail(userData, changeEmailRequest);
+
+    end(ctx.response(), 200);
   }
 }
