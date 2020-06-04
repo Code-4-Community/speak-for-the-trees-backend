@@ -1,6 +1,7 @@
 package com.codeforcommunity.rest;
 
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
+import com.codeforcommunity.exceptions.ExistingTeamRequestException;
 import com.codeforcommunity.exceptions.ExpiredSecretKeyException;
 import com.codeforcommunity.exceptions.HandledException;
 import com.codeforcommunity.exceptions.InvalidSecretKeyException;
@@ -8,6 +9,8 @@ import com.codeforcommunity.exceptions.MalformedParameterException;
 import com.codeforcommunity.exceptions.MissingHeaderException;
 import com.codeforcommunity.exceptions.MissingParameterException;
 import com.codeforcommunity.exceptions.NoSuchTeamException;
+import com.codeforcommunity.exceptions.NoSuchTeamRequestException;
+import com.codeforcommunity.exceptions.NoUserForRequestException;
 import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
 import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
 import com.codeforcommunity.exceptions.TokenInvalidException;
@@ -130,8 +133,32 @@ public class FailureHandler {
     end(ctx, message, 401);
   }
 
+  public void handleExistingTeamRequest(RoutingContext ctx, ExistingTeamRequestException e) {
+    String message =
+        String.format(
+            "User <%d> has a pending application to team <%d> and cannot make a new request",
+            e.getUserId(), e.getTeamId());
+    end(ctx, message, 400);
+  }
+
+  public void handleNoSuchTeamRequest(RoutingContext ctx, NoSuchTeamRequestException e) {
+    String message =
+        String.format("There is no request <%d> for team <%d>", e.getRequestId(), e.getTeamId());
+    end(ctx, message, 400);
+  }
+
+  public void handleNoUserForRequest(RoutingContext ctx, NoUserForRequestException e) {
+    String message =
+        String.format(
+            "The request exists but there is no user <%d> associated with it", e.getUserId());
+    end(ctx, message, 400);
+  }
+
   public void handleUserAlreadyOnTeam(RoutingContext ctx, UserAlreadyOnTeamException e) {
-    String message = String.format("User <%d> is already on a team", e.getUserId());
+    String message =
+        String.format(
+            "User <%d> is already on team <%d> and cannot make a new request",
+            e.getUserId(), e.getTeamId());
     end(ctx, message, 400);
   }
 

@@ -3,19 +3,19 @@ package com.codeforcommunity.exceptions;
 import com.codeforcommunity.rest.FailureHandler;
 import io.vertx.ext.web.RoutingContext;
 
-public class UserAlreadyOnTeamException extends RuntimeException implements HandledException {
+public class NoSuchTeamRequestException extends RuntimeException implements HandledException {
 
-  private int userId;
+  private int requestId;
   private int teamId;
 
-  public UserAlreadyOnTeamException(int userId, int teamId) {
+  public NoSuchTeamRequestException(int requestId, int teamId) {
     super();
-    this.userId = userId;
+    this.requestId = requestId;
     this.teamId = teamId;
   }
 
-  public int getUserId() {
-    return userId;
+  public int getRequestId() {
+    return requestId;
   }
 
   public int getTeamId() {
@@ -24,6 +24,6 @@ public class UserAlreadyOnTeamException extends RuntimeException implements Hand
 
   @Override
   public void callHandler(FailureHandler handler, RoutingContext ctx) {
-    handler.handleUserAlreadyOnTeam(ctx, this);
+    handler.handleNoSuchTeamRequest(ctx, this);
   }
 }

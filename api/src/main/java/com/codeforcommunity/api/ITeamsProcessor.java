@@ -5,13 +5,21 @@ import com.codeforcommunity.dto.team.CreateTeamRequest;
 import com.codeforcommunity.dto.team.GetAllTeamsResponse;
 import com.codeforcommunity.dto.team.GetUserTeamsResponse;
 import com.codeforcommunity.dto.team.InviteMembersRequest;
+import com.codeforcommunity.dto.team.TeamApplicant;
 import com.codeforcommunity.dto.team.TeamResponse;
+import java.util.List;
 
 public interface ITeamsProcessor {
 
   TeamResponse createTeam(JWTData userData, CreateTeamRequest teamRequest);
 
-  void joinTeam(JWTData userData, int teamId);
+  void applyForTeam(JWTData userData, int teamId);
+
+  List<TeamApplicant> getTeamApplicants(JWTData userData, int teamId);
+
+  void approveTeamRequest(JWTData userData, int teamId, int requestId);
+
+  void rejectTeamRequest(JWTData userData, int teamId, int requestId);
 
   void leaveTeam(JWTData userData, int teamId);
 
