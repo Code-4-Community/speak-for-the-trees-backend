@@ -31,7 +31,7 @@ public class TeamInvitationRequest extends ApiDto {
     if (isEmpty(name)) {
       fields.add(fieldName + "name");
     }
-    if (isEmpty(email)) {
+    if (emailInvalid(email)) {
       fields.add(fieldName + "email");
     }
     return fields;

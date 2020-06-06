@@ -70,6 +70,9 @@ public class NewUserRequest extends ApiDto {
     if (isEmpty(lastName)) {
       fields.add(fieldName + "last_name");
     }
+    if (password == null) {
+      fields.add(fieldName + "password");
+    }
     // Only throw this exception if there are no issues with other fields
     if (passwordInvalid(password) && fields.size() == 0) {
       throw new InvalidPasswordException();

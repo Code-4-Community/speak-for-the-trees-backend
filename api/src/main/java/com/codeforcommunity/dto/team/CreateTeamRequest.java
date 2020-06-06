@@ -85,7 +85,11 @@ public class CreateTeamRequest extends ApiDto {
       fields.add(fieldName + "invites");
     } else {
       for (TeamInvitationRequest invite : invites) {
-        fields.addAll(invite.validateFields(fieldName));
+        if (invite == null) {
+          fields.add(fieldName + "invites.invite");
+        } else {
+          fields.addAll(invite.validateFields(fieldName + "invites."));
+        }
       }
     }
     return fields;

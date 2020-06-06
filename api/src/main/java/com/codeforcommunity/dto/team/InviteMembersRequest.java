@@ -44,7 +44,7 @@ public class InviteMembersRequest extends ApiDto {
       fields.add(fieldName + "emails");
     } else {
       for (String email : emails) {
-        if (isEmpty(email)) {
+        if (emailInvalid(email)) {
           fields.add(fieldName + "emails.email");
         }
       }

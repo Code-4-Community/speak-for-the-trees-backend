@@ -41,6 +41,9 @@ public class ChangePasswordRequest extends ApiDto {
     if (currentPassword == null) {
       fields.add(fieldName + "current_password");
     }
+    if (newPassword == null) {
+      fields.add(fieldName + "new_password");
+    }
     // Only throw this exception if there are no issues with other fields
     if (passwordInvalid(newPassword) && fields.size() == 0) {
       throw new InvalidPasswordException();
