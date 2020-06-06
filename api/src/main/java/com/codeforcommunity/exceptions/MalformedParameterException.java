@@ -3,7 +3,7 @@ package com.codeforcommunity.exceptions;
 import com.codeforcommunity.rest.FailureHandler;
 import io.vertx.ext.web.RoutingContext;
 
-public class MalformedParameterException extends RuntimeException implements HandledException {
+public class MalformedParameterException extends HandledException {
 
   private final String parameterName;
 

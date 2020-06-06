@@ -1,6 +1,10 @@
 package com.codeforcommunity.dto.auth;
 
-public class NewUserRequest {
+import com.codeforcommunity.api.ApiDto;
+import java.util.ArrayList;
+import java.util.List;
+
+public class NewUserRequest extends ApiDto {
 
   private String email;
   private String username;
@@ -46,5 +50,11 @@ public class NewUserRequest {
 
   public void setLastName(String lastName) {
     this.lastName = lastName;
+  }
+
+  @Override
+  public List<String> validateFields(String fieldPrefix) {
+    String fieldName = fieldPrefix + "new_user_request.";
+    List<String> fields = new ArrayList<>();
   }
 }

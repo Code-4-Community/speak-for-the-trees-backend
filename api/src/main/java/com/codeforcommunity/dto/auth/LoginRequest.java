@@ -1,6 +1,10 @@
 package com.codeforcommunity.dto.auth;
 
-public class LoginRequest {
+import com.codeforcommunity.api.ApiDto;
+import java.util.ArrayList;
+import java.util.List;
+
+public class LoginRequest extends ApiDto {
 
   private String email;
   private String password;
@@ -19,5 +23,18 @@ public class LoginRequest {
 
   public void setPassword(String password) {
     this.password = password;
+  }
+
+  @Override
+  public List<String> validateFields(String fieldPrefix) {
+    String fieldName = fieldPrefix + "login_request.";
+    List<String> fields = new ArrayList<>();
+    if (emailInvalid(email)) {
+      fields.add(fieldName + "email");
+    }
+    if (password == null) {
+      fields.add(fieldName + "password");
+    }
+    return fields;
   }
 }

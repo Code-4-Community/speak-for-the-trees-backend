@@ -4,7 +4,7 @@ import com.codeforcommunity.enums.VerificationKeyType;
 import com.codeforcommunity.rest.FailureHandler;
 import io.vertx.ext.web.RoutingContext;
 
-public class InvalidSecretKeyException extends RuntimeException implements HandledException {
+public class InvalidSecretKeyException extends HandledException {
 
   private final VerificationKeyType type;
 
