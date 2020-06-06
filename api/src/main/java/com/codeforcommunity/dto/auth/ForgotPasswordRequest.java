@@ -24,7 +24,7 @@ public class ForgotPasswordRequest extends ApiDto {
 
   @Override
   public List<String> validateFields(String fieldPrefix) {
-    String fieldName = fieldPrefix +"forgot_password_request.";
+    String fieldName = fieldPrefix + "forgot_password_request.";
     List<String> fields = new ArrayList<>();
     if (emailInvalid(email)) {
       fields.add(fieldName + "email");

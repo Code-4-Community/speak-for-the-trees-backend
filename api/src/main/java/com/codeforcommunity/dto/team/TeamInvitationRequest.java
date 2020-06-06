@@ -1,6 +1,10 @@
 package com.codeforcommunity.dto.team;
 
-public class TeamInvitationRequest {
+import com.codeforcommunity.api.ApiDto;
+import java.util.ArrayList;
+import java.util.List;
+
+public class TeamInvitationRequest extends ApiDto {
   private String name;
   private String email;
 
@@ -17,5 +21,19 @@ public class TeamInvitationRequest {
 
   public String getEmail() {
     return this.email;
+  }
+
+  @Override
+  public List<String> validateFields(String fieldPrefix) {
+    String fieldName = fieldPrefix + "team_invitation_request.";
+    List<String> fields = new ArrayList<>();
+
+    if (isEmpty(name)) {
+      fields.add(fieldName + "name");
+    }
+    if (isEmpty(email)) {
+      fields.add(fieldName + "email");
+    }
+    return fields;
   }
 }

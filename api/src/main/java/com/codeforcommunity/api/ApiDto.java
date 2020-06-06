@@ -10,8 +10,10 @@ public abstract class ApiDto {
    *
    * @return A list of strings containing the fields that are invalid. Return a non-null an empty
    *     list if all fields are valid.
+   * @throws HandledException if an issue comes up with a field that would not otherwise fall under
+   *     a {@link MalformedParameterException}.
    */
-  private List<String> validateFields() {
+  private List<String> validateFields() throws HandledException {
     return validateFields("");
   }
 
@@ -22,13 +24,14 @@ public abstract class ApiDto {
    *     be of the form "OBJECT.".
    * @return A list of strings containing the fields that are invalid. Return a non-null empty list
    *     if all fields are valid.
+   * @throws HandledException if an issue comes up with a field that would not otherwise fall under
+   *     a {@link MalformedParameterException}.
    */
-  public abstract List<String> validateFields(String fieldPrefix);
+  public abstract List<String> validateFields(String fieldPrefix) throws HandledException;
 
   /**
    * Verify if the extending DTO is a valid object. This version should be overridden if this object
-   * has sometimes-optional fields. For an example, see {@link
-   * com.codeforcommunity.dto.userEvents.components.EventDetails}.
+   * has sometimes-optional fields. For an example, see {@code EventDetails} in Lucy's Love Bus.
    *
    * @param fieldPrefix A string to prefix each field with 9for use if this is a sub-field). Should
    *     be of the form "OBJECT.".
@@ -36,8 +39,10 @@ public abstract class ApiDto {
    *     sometimes-optional fields.
    * @return A list of strings containing the fields that are invalid. Return a non-null empty list
    *     if all fields are valid.
+   * @throws HandledException if an issue comes up with a field that would not otherwise fall under
+   *     a {@link MalformedParameterException}.
    */
-  public List<String> validateFields(String fieldPrefix, boolean nullable) {
+  public List<String> validateFields(String fieldPrefix, boolean nullable) throws HandledException {
     return validateFields(fieldPrefix);
   }
 
@@ -46,7 +51,8 @@ public abstract class ApiDto {
    * HandledException} containing the field(s) that caused the issue. Can be overridden if another
    * {@link HandledException} should be thrown.
    *
-   * @throws HandledException Containing the error fields.
+   * @throws HandledException Containing the error fields or corresponding to any other C4C defined
+   *     and handled errors that may come up.
    */
   public void validate() throws HandledException {
     List<String> fields = this.validateFields();

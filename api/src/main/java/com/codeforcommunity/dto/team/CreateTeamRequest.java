@@ -1,10 +1,11 @@
 package com.codeforcommunity.dto.team;
 
-import com.codeforcommunity.exceptions.MalformedParameterException;
+import com.codeforcommunity.api.ApiDto;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
-public class CreateTeamRequest {
+public class CreateTeamRequest extends ApiDto {
   private String name;
   private String bio;
   private Integer goal;
@@ -66,14 +67,27 @@ public class CreateTeamRequest {
     this.invites = invites;
   }
 
-  /**
-   * Validates the request.
-   *
-   * @throws MalformedParameterException if any of the request parameters are invalid
-   */
-  public void validate() {
-    if (goal != null && goal < 0) {
-      throw new MalformedParameterException("goal");
+  @Override
+  public List<String> validateFields(String fieldPrefix) {
+    String fieldName = fieldPrefix + "create_team_request.";
+    List<String> fields = new ArrayList<>();
+
+    if (isEmpty(name)) {
+      fields.add(fieldName + "name");
     }
+    if (bio == null) {
+      fields.add(fieldName + "bio");
+    }
+    if (goal != null && goal < 0) {
+      fields.add(fieldName + "goal");
+    }
+    if (invites == null) {
+      fields.add(fieldName + "invites");
+    } else {
+      for (TeamInvitationRequest invite : invites) {
+        fields.addAll(invite.validateFields(fieldName));
+      }
+    }
+    return fields;
   }
 }

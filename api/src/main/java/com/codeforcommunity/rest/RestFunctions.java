@@ -14,8 +14,8 @@ import java.util.Optional;
 public interface RestFunctions {
 
   /**
-   * Gets the JSON body from the given routing context, validates it, and parses it into the
-   * given class.
+   * Gets the JSON body from the given routing context, validates it, and parses it into the given
+   * class.
    *
    * @throws RequestBodyMappingException if the given request cannot be successfully mapped into the
    *     given class.

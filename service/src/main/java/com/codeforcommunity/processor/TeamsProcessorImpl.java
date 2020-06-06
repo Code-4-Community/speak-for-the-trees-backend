@@ -47,8 +47,6 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
   @Override
   public TeamResponse createTeam(JWTData userData, CreateTeamRequest teamRequest) {
-    teamRequest.validate();
-
     TeamRecord teamRecord = db.newRecord(TEAM);
     teamRecord.setName(teamRequest.getName());
     teamRecord.setBio(teamRequest.getBio());

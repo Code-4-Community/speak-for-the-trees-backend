@@ -1,6 +1,11 @@
 package com.codeforcommunity.dto.user;
 
-public class ChangePasswordRequest {
+import com.codeforcommunity.api.ApiDto;
+import com.codeforcommunity.exceptions.InvalidPasswordException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ChangePasswordRequest extends ApiDto {
 
   private String currentPassword;
   private String newPassword;
@@ -26,5 +31,20 @@ public class ChangePasswordRequest {
 
   public void setNewPassword(String newPassword) {
     this.newPassword = newPassword;
+  }
+
+  @Override
+  public List<String> validateFields(String fieldPrefix) {
+    String fieldName = fieldPrefix + "change_password_request.";
+    List<String> fields = new ArrayList<>();
+
+    if (currentPassword == null) {
+      fields.add(fieldName + "current_password");
+    }
+    // Only throw this exception if there are no issues with other fields
+    if (passwordInvalid(newPassword) && fields.size() == 0) {
+      throw new InvalidPasswordException();
+    }
+    return fields;
   }
 }
