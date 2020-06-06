@@ -72,7 +72,7 @@ public class CreateTeamRequest {
    * @throws MalformedParameterException if any of the request parameters are invalid
    */
   public void validate() {
-    if (goal != null && goal < 0) {
+    if (goal == null && goal < 0) {
       throw new MalformedParameterException("goal");
     }
   }
