@@ -6,6 +6,7 @@ import com.codeforcommunity.dto.team.GetAllTeamsResponse;
 import com.codeforcommunity.dto.team.GetUserTeamsResponse;
 import com.codeforcommunity.dto.team.InviteMembersRequest;
 import com.codeforcommunity.dto.team.TeamResponse;
+import com.codeforcommunity.dto.team.TransferOwnershipRequest;
 
 public interface ITeamsProcessor {
 
@@ -26,4 +27,6 @@ public interface ITeamsProcessor {
   TeamResponse getSingleTeam(JWTData userData, int teamId);
 
   GetUserTeamsResponse getUserTeams(JWTData userData);
+
+  void transferOwnership(JWTData userData, TransferOwnershipRequest request);
 }
