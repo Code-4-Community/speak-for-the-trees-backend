@@ -28,7 +28,6 @@ import com.codeforcommunity.requester.Emailer;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record5;
@@ -37,7 +36,6 @@ import org.jooq.generated.tables.pojos.Team;
 import org.jooq.generated.tables.pojos.Users;
 import org.jooq.generated.tables.records.TeamRecord;
 import org.jooq.generated.tables.records.UserTeamRecord;
-import org.jooq.generated.tables.records.UsersRecord;
 import org.jooq.impl.DSL;
 
 public class TeamsProcessorImpl implements ITeamsProcessor {
@@ -296,43 +294,44 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
   @Override
   public void transferOwnership(JWTData userData, TransferOwnershipRequest request) {
-    int ownerId = userData.getUserId();
+    int currentLeaderId = userData.getUserId();
+    int newLeaderId = request.getNewLeaderId();
+    int teamId = request.getTeamId();
 
-    UserTeamRecord userTeamRecordOwner =
+    UserTeamRecord currentLeaderTeam =
         db.selectFrom(USER_TEAM)
-            .where(USER_TEAM.USER_ID.eq(ownerId))
-            .and(USER_TEAM.TEAM_ID.eq(request.getTeamId()))
+            .where(USER_TEAM.USER_ID.eq(currentLeaderId))
+            .and(USER_TEAM.TEAM_ID.eq(teamId))
             .fetchOneInto(UserTeamRecord.class);
 
-    if (userTeamRecordOwner == null || userTeamRecordOwner.getTeamRole() != TeamRole.LEADER) {
-      throw new TeamLeaderOnlyRouteException(request.getTeamId());
+    if (currentLeaderTeam == null || currentLeaderTeam.getTeamRole() != TeamRole.LEADER) {
+      throw new TeamLeaderOnlyRouteException(currentLeaderId);
     }
 
-    Optional<UsersRecord> newOwnerOptional =
-        db.selectFrom(USERS).where(USERS.EMAIL.eq(request.getNewOwnerEmail())).fetchOptional();
+    boolean newOwnerExists = db.fetchExists(db.selectFrom(USERS).where(USERS.ID.eq(newLeaderId)));
 
-    UsersRecord newOwner =
-        newOwnerOptional.orElseThrow(
-            () -> new UserDoesNotExistException(request.getNewOwnerEmail()));
+    if (!newOwnerExists) {
+      throw new UserDoesNotExistException(request.getNewLeaderId());
+    }
 
     boolean userOnTeam =
         db.fetchExists(
             db.selectFrom(USER_TEAM)
-                .where(USER_TEAM.USER_ID.eq(newOwner.getId()))
-                .and(USER_TEAM.TEAM_ID.eq(request.getTeamId())));
+                .where(USER_TEAM.USER_ID.eq(newLeaderId))
+                .and(USER_TEAM.TEAM_ID.eq(teamId)));
 
     if (!userOnTeam) {
-      throw new UserNotOnTeamException(newOwner.getId(), request.getTeamId());
+      throw new UserNotOnTeamException(newLeaderId, request.getTeamId());
     }
 
     db.update(USER_TEAM)
         .set(USER_TEAM.TEAM_ROLE, TeamRole.MEMBER)
-        .where(USER_TEAM.USER_ID.eq(ownerId))
+        .where(USER_TEAM.USER_ID.eq(currentLeaderId))
         .and(USER_TEAM.TEAM_ID.eq(request.getTeamId()))
         .execute();
     db.update(USER_TEAM)
         .set(USER_TEAM.TEAM_ROLE, TeamRole.LEADER)
-        .where(USER_TEAM.USER_ID.eq(newOwner.getId()))
+        .where(USER_TEAM.USER_ID.eq(newLeaderId))
         .and(USER_TEAM.TEAM_ID.eq(request.getTeamId()))
         .execute();
   }
