@@ -15,7 +15,6 @@ import com.codeforcommunity.dto.auth.SessionResponse;
 import com.codeforcommunity.enums.VerificationKeyType;
 import com.codeforcommunity.exceptions.AuthException;
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
-import com.codeforcommunity.exceptions.InvalidPasswordException;
 import com.codeforcommunity.exceptions.TokenInvalidException;
 import java.util.Optional;
 import org.jooq.DSLContext;
@@ -39,10 +38,6 @@ public class AuthProcessorImpl implements IAuthProcessor {
    */
   @Override
   public SessionResponse signUp(NewUserRequest request) {
-    if (isPasswordInvalid(request.getPassword())) {
-      throw new InvalidPasswordException();
-    }
-
     UsersRecord user =
         authDatabaseOperations.createNewUser(
             request.getUsername(),
@@ -128,10 +123,6 @@ public class AuthProcessorImpl implements IAuthProcessor {
    */
   @Override
   public void resetPassword(ResetPasswordRequest request) {
-    if (isPasswordInvalid(request.getNewPassword())) {
-      throw new InvalidPasswordException();
-    }
-
     UsersRecord user =
         authDatabaseOperations.validateSecretKey(
             request.getSecretKey(), VerificationKeyType.FORGOT_PASSWORD);
@@ -169,14 +160,6 @@ public class AuthProcessorImpl implements IAuthProcessor {
       // If this is thrown there is probably an error in our JWT creation / validation logic
       throw new IllegalStateException("Newly created refresh token was deemed invalid");
     }
-  }
-
-  /**
-   * Returns true if the given password is invalid. A password is invalid if it is less than 8
-   * characters.
-   */
-  private boolean isPasswordInvalid(String password) {
-    return password.length() < 8;
   }
 
   /**

@@ -3,7 +3,7 @@ package com.codeforcommunity.exceptions;
 import com.codeforcommunity.rest.FailureHandler;
 import io.vertx.ext.web.RoutingContext;
 
-public class UserAlreadyOnTeamException extends RuntimeException implements HandledException {
+public class UserAlreadyOnTeamException extends HandledException {
 
   private int userId;
 
