@@ -275,6 +275,29 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
    * Performs the following query:
    *
    * <pre>
+   * SELECT id, username, COUNT(completed_raw) AS completed, COUNT(reserved_raw) AS reserved
+   * FROM (SELECT uc.id, uc.username, c.fid AS completed_raw, null AS reserved_raw
+   * FROM team uc
+   * JOIN block c ON uc.id = c.assigned_to AND c.status = 2
+   * UNION
+   * SELECT ur.id, ur.username, null AS completed_raw, r.fid AS reserved_raw
+   * FROM users ur
+   * JOIN block r ON ur.id = r.assigned_to AND r.status = 1) s
+   * GROUP BY id, username
+   * ORDER BY completed DESC, reserved DESC
+   * LIMIT 10;
+   * </pre>
+   *
+   * @return a List of {@link Individual} as represented by the query above
+   */
+  public List<Individual> getUsersStats() {
+    return composeFullQuery(USERS, false, null).fetchInto(Individual.class);
+  }
+
+  /**
+   * Performs the following query:
+   *
+   * <pre>
    * SELECT id, name, COUNT(completed_raw) AS completed, COUNT(reserved_raw) AS reserved
    * FROM (SELECT tc.id, tc.name, c.fid AS completed_raw, null AS reserved_raw
    * FROM team tc
@@ -291,6 +314,30 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
    */
   public List<Team> getTeamStats() {
     return composeFullQuery(TEAM, true, null).fetchInto(Team.class);
+  }
+
+  /**
+   * Performs the following query:
+   *
+   * <pre>
+   * SELECT id, username, COUNT(completed_raw) AS completed, COUNT(reserved_raw) AS reserved
+   * FROM (SELECT uc.id, uc.username, c.fid AS completed_raw, null AS reserved_raw
+   * FROM team uc
+   * JOIN block c ON uc.id = c.assigned_to AND c.status = 2
+   * UNION
+   * SELECT ur.id, ur.username, null AS completed_raw, r.fid AS reserved_raw
+   * FROM users ur
+   * JOIN block r ON ur.id = r.assigned_to AND r.status = 1) s
+   * GROUP BY id, username
+   * ORDER BY completed DESC, reserved DESC
+   * LIMIT 10;
+   * </pre>
+   *
+   * @param userId the userId to select info for
+   * @return a List of {@link Individual} as represented by the query above
+   */
+  public Individual getUsersStats(int userId) {
+    return composeFullQuery(USERS, false, userId).fetchOneInto(Individual.class);
   }
 
   /**
