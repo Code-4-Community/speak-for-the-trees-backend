@@ -37,7 +37,7 @@ public class InviteMembersRequest extends ApiDto {
     String fieldName = fieldPrefix + "invite_members_request.";
     List<String> fields = new ArrayList<>();
 
-    if (teamId == null || teamId < 0) {
+    if (teamId != null && teamId < 0) {
       fields.add(fieldName + "team_id");
     }
     if (emails == null) {
