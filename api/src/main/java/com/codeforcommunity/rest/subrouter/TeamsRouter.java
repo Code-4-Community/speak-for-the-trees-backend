@@ -9,6 +9,7 @@ import com.codeforcommunity.dto.team.GetAllTeamsResponse;
 import com.codeforcommunity.dto.team.GetUserTeamsResponse;
 import com.codeforcommunity.dto.team.InviteMembersRequest;
 import com.codeforcommunity.dto.team.TeamResponse;
+import com.codeforcommunity.dto.team.TransferOwnershipRequest;
 import com.codeforcommunity.rest.IRouter;
 import com.codeforcommunity.rest.RestFunctions;
 import io.vertx.core.Vertx;
@@ -38,6 +39,7 @@ public class TeamsRouter implements IRouter {
     registerInvite(router);
     registerGetAllTeams(router);
     registerGetSingleTeam(router);
+    registerTransferOwnership(router);
 
     return router;
   }
@@ -85,6 +87,11 @@ public class TeamsRouter implements IRouter {
   private void registerInvite(Router router) {
     Route inviteRoute = router.post("/:team_id/invite");
     inviteRoute.handler(this::handleInviteRoute);
+  }
+
+  private void registerTransferOwnership(Router router) {
+    Route transferRoute = router.post("/:team_id/transfer_ownership");
+    transferRoute.handler(this::transferOwnershipRoute);
   }
 
   private void handleGetUserTeams(RoutingContext ctx) {
@@ -161,6 +168,18 @@ public class TeamsRouter implements IRouter {
     inviteMembersRequest.setTeamId(teamId);
 
     processor.inviteToTeam(userData, inviteMembersRequest);
+
+    end(ctx.response(), 200);
+  }
+
+  private void transferOwnershipRoute(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+    int teamId = RestFunctions.getRequestParameterAsInt(ctx.request(), "team_id");
+    TransferOwnershipRequest transferOwnershipRequest =
+        RestFunctions.getJsonBodyAsClass(ctx, TransferOwnershipRequest.class);
+    transferOwnershipRequest.setTeamId(teamId);
+
+    processor.transferOwnership(userData, transferOwnershipRequest);
 
     end(ctx.response(), 200);
   }

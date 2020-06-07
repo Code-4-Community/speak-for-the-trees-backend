@@ -15,16 +15,20 @@ import com.codeforcommunity.dto.team.InviteMembersRequest;
 import com.codeforcommunity.dto.team.TeamMember;
 import com.codeforcommunity.dto.team.TeamResponse;
 import com.codeforcommunity.dto.team.TeamSummary;
+import com.codeforcommunity.dto.team.TransferOwnershipRequest;
 import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.NoSuchTeamException;
 import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
 import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
+import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
+import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import com.codeforcommunity.requester.Emailer;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record;
@@ -33,6 +37,7 @@ import org.jooq.generated.tables.pojos.Team;
 import org.jooq.generated.tables.pojos.Users;
 import org.jooq.generated.tables.records.TeamRecord;
 import org.jooq.generated.tables.records.UserTeamRecord;
+import org.jooq.generated.tables.records.UsersRecord;
 import org.jooq.impl.DSL;
 
 public class TeamsProcessorImpl implements ITeamsProcessor {
@@ -84,6 +89,16 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     Team teamPojo = db.selectFrom(TEAM).where(TEAM.ID.eq(teamId)).fetchOneInto(Team.class);
     if (teamPojo == null) {
       throw new NoSuchTeamException(teamId);
+    }
+
+    boolean alreadyOnTeam =
+        db.fetchExists(
+            db.selectFrom(USER_TEAM)
+                .where(USER_TEAM.TEAM_ID.eq(teamId))
+                .and(USER_TEAM.USER_ID.eq(userData.getUserId())));
+
+    if (alreadyOnTeam) {
+      throw new UserAlreadyOnTeamException(userData.getUserId(), teamId);
     }
 
     db.insertInto(USER_TEAM)
@@ -279,5 +294,48 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
               record.getValue(USER_TEAM.TEAM_ROLE)));
     }
     return teamMembers;
+  }
+
+  @Override
+  public void transferOwnership(JWTData userData, TransferOwnershipRequest request) {
+    int ownerId = userData.getUserId();
+
+    UserTeamRecord userTeamRecordOwner =
+        db.selectFrom(USER_TEAM)
+            .where(USER_TEAM.USER_ID.eq(ownerId))
+            .and(USER_TEAM.TEAM_ID.eq(request.getTeamId()))
+            .fetchOneInto(UserTeamRecord.class);
+
+    if (userTeamRecordOwner == null || userTeamRecordOwner.getTeamRole() != TeamRole.LEADER) {
+      throw new TeamLeaderOnlyRouteException(request.getTeamId());
+    }
+
+    Optional<UsersRecord> newOwnerOptional =
+        db.selectFrom(USERS).where(USERS.EMAIL.eq(request.getNewOwnerEmail())).fetchOptional();
+
+    UsersRecord newOwner =
+        newOwnerOptional.orElseThrow(
+            () -> new UserDoesNotExistException(request.getNewOwnerEmail()));
+
+    boolean userOnTeam =
+        db.fetchExists(
+            db.selectFrom(USER_TEAM)
+                .where(USER_TEAM.USER_ID.eq(newOwner.getId()))
+                .and(USER_TEAM.TEAM_ID.eq(request.getTeamId())));
+
+    if (!userOnTeam) {
+      throw new UserNotOnTeamException(newOwner.getId(), request.getTeamId());
+    }
+
+    db.update(USER_TEAM)
+        .set(USER_TEAM.TEAM_ROLE, TeamRole.MEMBER)
+        .where(USER_TEAM.USER_ID.eq(ownerId))
+        .and(USER_TEAM.TEAM_ID.eq(request.getTeamId()))
+        .execute();
+    db.update(USER_TEAM)
+        .set(USER_TEAM.TEAM_ROLE, TeamRole.LEADER)
+        .where(USER_TEAM.USER_ID.eq(newOwner.getId()))
+        .and(USER_TEAM.TEAM_ID.eq(request.getTeamId()))
+        .execute();
   }
 }
