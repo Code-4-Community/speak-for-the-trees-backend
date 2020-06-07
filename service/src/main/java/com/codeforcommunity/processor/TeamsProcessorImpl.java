@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import org.jooq.DSLContext;
 import org.jooq.Field;
-import org.jooq.Record;
+import org.jooq.Record5;
 import org.jooq.Result;
 import org.jooq.generated.tables.pojos.Team;
 import org.jooq.generated.tables.pojos.Users;
@@ -52,8 +52,6 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
   @Override
   public TeamResponse createTeam(JWTData userData, CreateTeamRequest teamRequest) {
-    teamRequest.validate();
-
     TeamRecord teamRecord = db.newRecord(TEAM);
     teamRecord.setName(teamRequest.getName());
     teamRecord.setBio(teamRequest.getBio());
@@ -263,7 +261,7 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
   }
 
   private List<TeamMember> getTeamMembers(int teamId) {
-    Result<?> userResult =
+    Result<Record5<Integer, String, BigDecimal, BigDecimal, TeamRole>> userResult =
         db.select(
                 USERS.ID,
                 USERS.USERNAME,
@@ -284,13 +282,13 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
     List<TeamMember> teamMembers = new ArrayList<>();
 
-    for (Record record : userResult) {
+    for (Record5<Integer, String, BigDecimal, BigDecimal, TeamRole> record : userResult) {
       teamMembers.add(
           new TeamMember(
               record.getValue(USERS.ID),
               record.getValue(USERS.USERNAME),
-              ((BigDecimal) record.getValue("blocksCompleted")).intValue(),
-              ((BigDecimal) record.getValue("blocksReserved")).intValue(),
+              record.value3().intValue(),
+              record.value4().intValue(),
               record.getValue(USER_TEAM.TEAM_ROLE)));
     }
     return teamMembers;

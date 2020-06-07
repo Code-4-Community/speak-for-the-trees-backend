@@ -66,7 +66,8 @@ public class FailureHandler {
   }
 
   public void handleMalformedParameter(RoutingContext ctx, MalformedParameterException exception) {
-    String message = String.format("Given parameter %s is malformed", exception.getParameterName());
+    String message =
+        String.format("Given parameter(s) %s is (are) malformed", exception.getParameterName());
     end(ctx, message, 400);
   }
 

@@ -3,7 +3,7 @@ package com.codeforcommunity.exceptions;
 import com.codeforcommunity.rest.FailureHandler;
 import io.vertx.ext.web.RoutingContext;
 
-public class TokenInvalidException extends RuntimeException implements HandledException {
+public class TokenInvalidException extends HandledException {
 
   private String tokenType;
 
