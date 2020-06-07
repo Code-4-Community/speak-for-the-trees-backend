@@ -15,7 +15,7 @@ public class CreateTeamRequest extends ApiDto {
   public CreateTeamRequest(
       String name,
       String bio,
-      int goal,
+      Integer goal,
       Timestamp goalCompletionDate,
       List<TeamInvitationRequest> invites) {
     this.name = name;
@@ -43,11 +43,11 @@ public class CreateTeamRequest extends ApiDto {
     this.bio = bio;
   }
 
-  public int getGoal() {
+  public Integer getGoal() {
     return goal;
   }
 
-  public void setGoal(int goal) {
+  public void setGoal(Integer goal) {
     this.goal = goal;
   }
 
