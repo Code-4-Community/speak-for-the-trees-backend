@@ -74,7 +74,7 @@ public class TeamsRouter implements IRouter {
   }
 
   private void registerGetApplicants(Router router) {
-    Route applicantsRoute = router.post("/:team_id/applicants");
+    Route applicantsRoute = router.get("/:team_id/applicants");
     applicantsRoute.handler(this::handleGetApplicants);
   }
 
