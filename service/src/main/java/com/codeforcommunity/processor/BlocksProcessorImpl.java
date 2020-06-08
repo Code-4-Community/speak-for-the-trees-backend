@@ -5,9 +5,9 @@ import static org.jooq.generated.Tables.USERS;
 
 import com.codeforcommunity.api.IBlockProcessor;
 import com.codeforcommunity.auth.JWTData;
+import com.codeforcommunity.dto.blocks.AssignedBlock;
 import com.codeforcommunity.dto.blocks.BlockResponse;
 import com.codeforcommunity.dto.blocks.GetAssignedBlocksResponse;
-import com.codeforcommunity.dto.blocks.AssignedBlock;
 import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.exceptions.AdminOnlyRouteException;
@@ -124,7 +124,8 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     return getAssignedBlocksWithStatus(jwtData, BlockStatus.DONE);
   }
 
-  private GetAssignedBlocksResponse getAssignedBlocksWithStatus(JWTData jwtData, BlockStatus status) {
+  private GetAssignedBlocksResponse getAssignedBlocksWithStatus(
+      JWTData jwtData, BlockStatus status) {
     if (jwtData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
       throw new AdminOnlyRouteException();
     }
