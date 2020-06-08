@@ -110,7 +110,7 @@ public class FailureHandler {
   public void handleUserDoesNotExist(RoutingContext ctx, UserDoesNotExistException exception) {
     String message =
         String.format("No user with property <%s> exists", exception.getIdentifierMessage());
-    end(ctx, message, 404);
+    end(ctx, message, 400);
   }
 
   public void handleAdminOnlyRoute(RoutingContext ctx) {
