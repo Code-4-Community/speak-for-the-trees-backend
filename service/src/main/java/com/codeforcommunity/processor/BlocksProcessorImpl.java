@@ -4,11 +4,14 @@ import static org.jooq.generated.Tables.BLOCK;
 
 import com.codeforcommunity.api.IBlockProcessor;
 import com.codeforcommunity.auth.JWTData;
+import com.codeforcommunity.dto.blocks.BlockReservation;
 import com.codeforcommunity.dto.blocks.BlockResponse;
+import com.codeforcommunity.dto.blocks.GetReservedAdminResponse;
 import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.exceptions.AdminOnlyRouteException;
 import com.codeforcommunity.requester.MapRequester;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -110,6 +113,25 @@ public class BlocksProcessorImpl implements IBlockProcessor {
   }
 
   @Override
+  public GetReservedAdminResponse getAllReservedBlocks(JWTData jwtData) {
+    if (jwtData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
+      throw new AdminOnlyRouteException();
+    }
+    List<BlockRecord> blockRecords =
+        db.selectFrom(BLOCK)
+            .where(BLOCK.STATUS.equal(BlockStatus.RESERVED))
+            .orderBy(BLOCK.UPDATED_TIMESTAMP.desc())
+            .fetch();
+
+    return new GetReservedAdminResponse(
+        blockRecords.stream()
+            .map(
+                br ->
+                    new BlockReservation(br.getFid(), br.getAssignedTo(), br.getUpdatedTimestamp()))
+            .collect(Collectors.toList()));
+  }
+
+  @Override
   public void resetAllBlocks(JWTData jwtData) {
     if (jwtData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
       throw new AdminOnlyRouteException();
@@ -190,6 +212,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
           br.setAssignedTo(setToId);
           br.setStatus(newStatus);
+          br.setUpdatedTimestamp(new Timestamp(System.currentTimeMillis()));
           br.store();
         });
   }
