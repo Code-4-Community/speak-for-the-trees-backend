@@ -1,12 +1,13 @@
 package com.codeforcommunity.processor;
 
 import static org.jooq.generated.Tables.BLOCK;
+import static org.jooq.generated.Tables.USERS;
 
 import com.codeforcommunity.api.IBlockProcessor;
 import com.codeforcommunity.auth.JWTData;
-import com.codeforcommunity.dto.blocks.BlockReservation;
 import com.codeforcommunity.dto.blocks.BlockResponse;
 import com.codeforcommunity.dto.blocks.GetReservedAdminResponse;
+import com.codeforcommunity.dto.blocks.ReservedBlock;
 import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.exceptions.AdminOnlyRouteException;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.jooq.DSLContext;
+import org.jooq.Record3;
 import org.jooq.Result;
 import org.jooq.generated.tables.records.BlockRecord;
 
@@ -117,17 +119,18 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     if (jwtData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
       throw new AdminOnlyRouteException();
     }
-    List<BlockRecord> blockRecords =
-        db.selectFrom(BLOCK)
+    List<Record3<String, String, Timestamp>> blockRecords =
+        db.select(BLOCK.FID, USERS.USERNAME, BLOCK.UPDATED_TIMESTAMP)
+            .from(BLOCK)
+            .innerJoin(USERS)
+            .on(BLOCK.ASSIGNED_TO.eq(USERS.ID))
             .where(BLOCK.STATUS.equal(BlockStatus.RESERVED))
             .orderBy(BLOCK.UPDATED_TIMESTAMP.desc())
             .fetch();
 
     return new GetReservedAdminResponse(
         blockRecords.stream()
-            .map(
-                br ->
-                    new BlockReservation(br.getFid(), br.getAssignedTo(), br.getUpdatedTimestamp()))
+            .map(br -> new ReservedBlock(br.component1(), br.component2(), br.component3()))
             .collect(Collectors.toList()));
   }
 

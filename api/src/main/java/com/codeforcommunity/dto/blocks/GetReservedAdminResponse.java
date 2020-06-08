@@ -4,15 +4,15 @@ import java.util.List;
 
 public class GetReservedAdminResponse {
 
-  private List<BlockReservation> blocks;
+  private List<ReservedBlock> blocks;
 
   public GetReservedAdminResponse() {}
 
-  public GetReservedAdminResponse(List<BlockReservation> blocks) {
+  public GetReservedAdminResponse(List<ReservedBlock> blocks) {
     this.blocks = blocks;
   }
 
-  public List<BlockReservation> getBlocks() {
+  public List<ReservedBlock> getBlocks() {
     return blocks;
   }
 }
