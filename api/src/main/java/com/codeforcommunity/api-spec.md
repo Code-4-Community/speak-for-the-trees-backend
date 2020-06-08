@@ -246,6 +246,61 @@ Gets the information for this specific team. Including the members with how many
 }
 ```
 
+## `GET /teams/user_teams`
+
+Gets the teams and teaminfo that the current user is on
+
+## Responses
+
+##### `200 OK`
+
+```json
+{
+    "teams": [
+        {
+            "id": 2,
+            "name": "t2",
+            "bio": "none",
+            "goal": 7,
+            "goalCompleteDate": 1553918400000,
+            "blocksCompleted": 0,
+            "blocksReserved": 0,
+            "userTeamRole": "MEMBER",
+            "members": [
+                {
+                    "id": 5,
+                    "username": null,
+                    "blocksCompleted": 0,
+                    "blocksReserved": 0,
+                    "role": "MEMBER"
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "name": "bestteam",
+            "bio": "none",
+            "goal": 5,
+            "goalCompleteDate": 1578182400000,
+            "blocksCompleted": 0,
+            "blocksReserved": 0,
+            "userTeamRole": "MEMBER",
+            "members": [
+                {
+                    "id": 5,
+                    "username": null,
+                    "blocksCompleted": 0,
+                    "blocksReserved": 0,
+                    "role": "LEADER"
+                }
+            ]
+        },
+        ...
+    ]
+}
+```
+
+
 The `members` list is sorted in descending order of number of blocks completed.
 
 `teamRole` is an indicator of the member's role on the team. Currently there are only two roles: general member and team leader.
