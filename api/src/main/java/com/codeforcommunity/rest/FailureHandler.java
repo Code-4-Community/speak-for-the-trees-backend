@@ -10,7 +10,6 @@ import com.codeforcommunity.exceptions.MissingHeaderException;
 import com.codeforcommunity.exceptions.MissingParameterException;
 import com.codeforcommunity.exceptions.NoSuchTeamException;
 import com.codeforcommunity.exceptions.NoSuchTeamRequestException;
-import com.codeforcommunity.exceptions.NoUserForRequestException;
 import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
 import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
 import com.codeforcommunity.exceptions.TokenInvalidException;
@@ -144,13 +143,6 @@ public class FailureHandler {
   public void handleNoSuchTeamRequest(RoutingContext ctx, NoSuchTeamRequestException e) {
     String message =
         String.format("There is no request <%d> for team <%d>", e.getRequestId(), e.getTeamId());
-    end(ctx, message, 400);
-  }
-
-  public void handleNoUserForRequest(RoutingContext ctx, NoUserForRequestException e) {
-    String message =
-        String.format(
-            "The request exists but there is no user <%d> associated with it", e.getUserId());
     end(ctx, message, 400);
   }
 

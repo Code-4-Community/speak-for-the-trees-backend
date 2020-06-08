@@ -17,9 +17,9 @@ public interface ITeamsProcessor {
 
   List<TeamApplicant> getTeamApplicants(JWTData userData, int teamId);
 
-  void approveTeamRequest(JWTData userData, int teamId, int requestId);
+  void approveTeamRequest(JWTData userData, int teamId, int applicantId);
 
-  void rejectTeamRequest(JWTData userData, int teamId, int requestId);
+  void rejectTeamRequest(JWTData userData, int teamId, int applicantId);
 
   void leaveTeam(JWTData userData, int teamId);
 

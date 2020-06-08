@@ -1,5 +1,10 @@
-CREATE TABLE IF NOT EXISTS team_applicants (
-    id SERIAL PRIMARY KEY,
-    team_id INTEGER REFERENCES team(id),
-    user_id INTEGER REFERENCES users(id)
-)
+
+ALTER TABLE user_team
+    ALTER COLUMN user_id SET NOT NULL;
+
+ALTER TABLE user_team
+    ALTER COLUMN team_id SET NOT NULL;
+
+
+ALTER TABLE user_team
+    ADD PRIMARY KEY (user_id, team_id);

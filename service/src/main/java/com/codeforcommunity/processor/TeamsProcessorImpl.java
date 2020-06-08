@@ -2,7 +2,6 @@ package com.codeforcommunity.processor;
 
 import static org.jooq.generated.Tables.BLOCK;
 import static org.jooq.generated.Tables.TEAM;
-import static org.jooq.generated.Tables.TEAM_APPLICANTS;
 import static org.jooq.generated.Tables.USERS;
 import static org.jooq.generated.Tables.USER_TEAM;
 
@@ -22,7 +21,6 @@ import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.ExistingTeamRequestException;
 import com.codeforcommunity.exceptions.NoSuchTeamException;
 import com.codeforcommunity.exceptions.NoSuchTeamRequestException;
-import com.codeforcommunity.exceptions.NoUserForRequestException;
 import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
 import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
 import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
@@ -31,13 +29,13 @@ import com.codeforcommunity.requester.Emailer;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.Result;
 import org.jooq.generated.tables.pojos.Team;
 import org.jooq.generated.tables.pojos.Users;
-import org.jooq.generated.tables.records.TeamApplicantsRecord;
 import org.jooq.generated.tables.records.TeamRecord;
 import org.jooq.generated.tables.records.UserTeamRecord;
 import org.jooq.impl.DSL;
@@ -96,19 +94,24 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     }
 
     int userId = userData.getUserId();
-    if (db.fetchExists(USER_TEAM, USER_TEAM.TEAM_ID.eq(teamId).and(USER_TEAM.USER_ID.eq(userId)))) {
-      throw new UserAlreadyOnTeamException(userData.getUserId(), teamId);
+    Optional<UserTeamRecord> maybeUserTeam =
+        Optional.ofNullable(
+            db.selectFrom(USER_TEAM)
+                .where(USER_TEAM.TEAM_ID.eq(teamId))
+                .and(USER_TEAM.USER_ID.eq(userId))
+                .fetchOne());
+
+    if (maybeUserTeam.isPresent()) {
+      if (maybeUserTeam.get().getTeamRole() == TeamRole.PENDING) {
+        throw new ExistingTeamRequestException(userData.getUserId(), teamId);
+      } else if (maybeUserTeam.get().getTeamRole() != TeamRole.NONE) {
+        throw new UserAlreadyOnTeamException(userData.getUserId(), teamId);
+      }
     }
 
-    if (db.fetchExists(
-        TEAM_APPLICANTS,
-        TEAM_APPLICANTS.TEAM_ID.eq(teamId).and(TEAM_APPLICANTS.USER_ID.eq(userId)))) {
-      throw new ExistingTeamRequestException(userData.getUserId(), teamId);
-    }
-
-    db.insertInto(TEAM_APPLICANTS)
-        .columns(TEAM_APPLICANTS.TEAM_ID, TEAM_APPLICANTS.USER_ID)
-        .values(teamId, userId)
+    db.insertInto(USER_TEAM)
+        .columns(USER_TEAM.TEAM_ID, USER_TEAM.USER_ID, USER_TEAM.TEAM_ROLE)
+        .values(teamId, userId, TeamRole.PENDING)
         .execute();
   }
 
@@ -129,15 +132,16 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     }
 
     List<TeamApplicant> applicants =
-        db.select(TEAM_APPLICANTS.ID, USERS.USERNAME, USERS.FIRST_NAME, USERS.LAST_NAME)
-            .from(TEAM_APPLICANTS.join(USERS).onKey())
-            .where(TEAM_APPLICANTS.TEAM_ID.eq(teamId))
+        db.select(USER_TEAM.USER_ID, USERS.USERNAME, USERS.FIRST_NAME, USERS.LAST_NAME)
+            .from(USER_TEAM.join(USERS).onKey())
+            .where(USER_TEAM.TEAM_ID.eq(teamId))
+            .and(USER_TEAM.TEAM_ROLE.eq(TeamRole.PENDING))
             .fetchInto(TeamApplicant.class);
     return applicants;
   }
 
   @Override
-  public void approveTeamRequest(JWTData userData, int teamId, int requestId) {
+  public void approveTeamRequest(JWTData userData, int teamId, int applicantId) {
     // Check user is a team leader of this team
     // Make sure this request exists for this team
     // Make sure the request's user exists
@@ -154,33 +158,26 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
       throw new TeamLeaderOnlyRouteException(teamId);
     }
 
-    TeamApplicantsRecord applicantRecord =
-        db.selectFrom(TEAM_APPLICANTS)
-            .where(TEAM_APPLICANTS.TEAM_ID.eq(teamId))
-            .and(TEAM_APPLICANTS.ID.eq(requestId))
+    UserTeamRecord applicantRecord =
+        db.selectFrom(USER_TEAM)
+            .where(USER_TEAM.TEAM_ID.eq(teamId))
+            .and(USER_TEAM.USER_ID.eq(applicantId))
             .fetchOne();
 
     if (applicantRecord == null) {
-      throw new NoSuchTeamRequestException(requestId, teamId);
+      throw new NoSuchTeamRequestException(applicantId, teamId);
     }
 
-    if (!db.fetchExists(USERS, USERS.ID.eq(applicantRecord.getUserId()))) {
-      applicantRecord.delete();
-      throw new NoUserForRequestException(applicantRecord.getUserId());
+    if (applicantRecord.getTeamRole() != TeamRole.PENDING) {
+      throw new UserAlreadyOnTeamException(applicantId, teamId);
     }
 
-    // Check if user is already on team?
-
-    db.insertInto(USER_TEAM)
-        .columns(USER_TEAM.fields())
-        .values(applicantRecord.getUserId(), teamId, TeamRole.MEMBER)
-        .execute();
-
-    applicantRecord.delete();
+    applicantRecord.setTeamRole(TeamRole.MEMBER);
+    applicantRecord.store();
   }
 
   @Override
-  public void rejectTeamRequest(JWTData userData, int teamId, int requestId) {
+  public void rejectTeamRequest(JWTData userData, int teamId, int applicantId) {
     // Check user is a team leader of this team
     // Make sure this request exists for this team
     // Delete this request from team applicants table
@@ -196,14 +193,18 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
       throw new TeamLeaderOnlyRouteException(teamId);
     }
 
-    TeamApplicantsRecord applicantRecord =
-        db.selectFrom(TEAM_APPLICANTS)
-            .where(TEAM_APPLICANTS.TEAM_ID.eq(teamId))
-            .and(TEAM_APPLICANTS.ID.eq(requestId))
+    UserTeamRecord applicantRecord =
+        db.selectFrom(USER_TEAM)
+            .where(USER_TEAM.TEAM_ID.eq(teamId))
+            .and(USER_TEAM.USER_ID.eq(applicantId))
             .fetchOne();
 
     if (applicantRecord == null) {
-      throw new NoSuchTeamRequestException(requestId, teamId);
+      throw new NoSuchTeamRequestException(applicantId, teamId);
+    }
+
+    if (applicantRecord.getTeamRole() != TeamRole.PENDING) {
+      throw new UserAlreadyOnTeamException(applicantId, teamId);
     }
 
     applicantRecord.delete();
