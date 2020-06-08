@@ -5,7 +5,7 @@ import static com.codeforcommunity.rest.ApiRouter.end;
 import com.codeforcommunity.api.IBlockProcessor;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blocks.BlockResponse;
-import com.codeforcommunity.dto.blocks.GetReservedAdminResponse;
+import com.codeforcommunity.dto.blocks.GetAssignedBlocksResponse;
 import com.codeforcommunity.dto.blocks.StandardBlockRequest;
 import com.codeforcommunity.rest.IRouter;
 import com.codeforcommunity.rest.RestFunctions;
@@ -36,6 +36,7 @@ public class BlocksRouter implements IRouter {
     registerGetReserved(router);
     registerResetAllBlocks(router);
     registerGetReservedAdmin(router);
+    registerGetDone(router);
 
     return router;
   }
@@ -68,6 +69,11 @@ public class BlocksRouter implements IRouter {
   private void registerGetReservedAdmin(Router router) {
     Route reservedAdminRoute = router.get("/reserved/admin");
     reservedAdminRoute.handler(this::handleGetReservedAdmin);
+  }
+
+  private void registerGetDone(Router router) {
+    Route doneRoute = router.get("/done");
+    doneRoute.handler(this::handleGetDone);
   }
 
   private void registerResetAllBlocks(Router router) {
@@ -127,7 +133,15 @@ public class BlocksRouter implements IRouter {
   private void handleGetReservedAdmin(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
 
-    GetReservedAdminResponse response = processor.getAllReservedBlocks(userData);
+    GetAssignedBlocksResponse response = processor.getAllReservedBlocks(userData);
+
+    end(ctx.response(), 200, JsonObject.mapFrom(response).encode());
+  }
+
+  private void handleGetDone(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+
+    GetAssignedBlocksResponse response = processor.getAllDoneBlocks(userData);
 
     end(ctx.response(), 200, JsonObject.mapFrom(response).encode());
   }

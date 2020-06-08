@@ -6,8 +6,8 @@ import static org.jooq.generated.Tables.USERS;
 import com.codeforcommunity.api.IBlockProcessor;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blocks.BlockResponse;
-import com.codeforcommunity.dto.blocks.GetReservedAdminResponse;
-import com.codeforcommunity.dto.blocks.ReservedBlock;
+import com.codeforcommunity.dto.blocks.GetAssignedBlocksResponse;
+import com.codeforcommunity.dto.blocks.AssignedBlock;
 import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.exceptions.AdminOnlyRouteException;
@@ -115,7 +115,16 @@ public class BlocksProcessorImpl implements IBlockProcessor {
   }
 
   @Override
-  public GetReservedAdminResponse getAllReservedBlocks(JWTData jwtData) {
+  public GetAssignedBlocksResponse getAllReservedBlocks(JWTData jwtData) {
+    return getAssignedBlocksWithStatus(jwtData, BlockStatus.RESERVED);
+  }
+
+  @Override
+  public GetAssignedBlocksResponse getAllDoneBlocks(JWTData jwtData) {
+    return getAssignedBlocksWithStatus(jwtData, BlockStatus.DONE);
+  }
+
+  private GetAssignedBlocksResponse getAssignedBlocksWithStatus(JWTData jwtData, BlockStatus status) {
     if (jwtData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
       throw new AdminOnlyRouteException();
     }
@@ -124,13 +133,13 @@ public class BlocksProcessorImpl implements IBlockProcessor {
             .from(BLOCK)
             .innerJoin(USERS)
             .on(BLOCK.ASSIGNED_TO.eq(USERS.ID))
-            .where(BLOCK.STATUS.equal(BlockStatus.RESERVED))
+            .where(BLOCK.STATUS.equal(status))
             .orderBy(BLOCK.UPDATED_TIMESTAMP.desc())
             .fetch();
 
-    return new GetReservedAdminResponse(
+    return new GetAssignedBlocksResponse(
         blockRecords.stream()
-            .map(br -> new ReservedBlock(br.component1(), br.component2(), br.component3()))
+            .map(br -> new AssignedBlock(br.component1(), br.component2(), br.component3()))
             .collect(Collectors.toList()));
   }
 

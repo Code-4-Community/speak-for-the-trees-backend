@@ -2,18 +2,18 @@ package com.codeforcommunity.dto.blocks;
 
 import java.sql.Timestamp;
 
-public class ReservedBlock {
+public class AssignedBlock {
 
   private String fid;
   private String username;
-  private Timestamp reserveDate;
+  private Timestamp date;
 
-  public ReservedBlock() {}
+  public AssignedBlock() {}
 
-  public ReservedBlock(String fid, String username, Timestamp reserveDate) {
+  public AssignedBlock(String fid, String username, Timestamp date) {
     this.fid = fid;
     this.username = username;
-    this.reserveDate = reserveDate;
+    this.date = date;
   }
 
   public String getFid() {
@@ -24,7 +24,7 @@ public class ReservedBlock {
     return username;
   }
 
-  public Timestamp getReserveDate() {
-    return reserveDate;
+  public Timestamp getDate() {
+    return date;
   }
 }
