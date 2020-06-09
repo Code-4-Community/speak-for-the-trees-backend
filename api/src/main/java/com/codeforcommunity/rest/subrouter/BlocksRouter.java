@@ -36,7 +36,7 @@ public class BlocksRouter implements IRouter {
     registerGetReserved(router);
     registerResetAllBlocks(router);
     registerGetReservedAdmin(router);
-    registerGetDone(router);
+    registerGetDoneAdmin(router);
 
     return router;
   }
@@ -71,9 +71,9 @@ public class BlocksRouter implements IRouter {
     reservedAdminRoute.handler(this::handleGetReservedAdmin);
   }
 
-  private void registerGetDone(Router router) {
-    Route doneRoute = router.get("/done");
-    doneRoute.handler(this::handleGetDone);
+  private void registerGetDoneAdmin(Router router) {
+    Route doneAdminRoute = router.get("/done/admin");
+    doneAdminRoute.handler(this::handleGetDoneAdmin);
   }
 
   private void registerResetAllBlocks(Router router) {
@@ -138,7 +138,7 @@ public class BlocksRouter implements IRouter {
     end(ctx.response(), 200, JsonObject.mapFrom(response).encode());
   }
 
-  private void handleGetDone(RoutingContext ctx) {
+  private void handleGetDoneAdmin(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
 
     GetAssignedBlocksResponse response = processor.getAllDoneBlocks(userData);

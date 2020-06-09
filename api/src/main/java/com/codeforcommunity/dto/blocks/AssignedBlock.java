@@ -6,14 +6,14 @@ public class AssignedBlock {
 
   private String fid;
   private String username;
-  private Timestamp date;
+  private Timestamp dateUpdated;
 
   public AssignedBlock() {}
 
-  public AssignedBlock(String fid, String username, Timestamp date) {
+  public AssignedBlock(String fid, String username, Timestamp dateUpdated) {
     this.fid = fid;
     this.username = username;
-    this.date = date;
+    this.dateUpdated = dateUpdated;
   }
 
   public String getFid() {
@@ -24,7 +24,7 @@ public class AssignedBlock {
     return username;
   }
 
-  public Timestamp getDate() {
-    return date;
+  public Timestamp getDateUpdated() {
+    return dateUpdated;
   }
 }

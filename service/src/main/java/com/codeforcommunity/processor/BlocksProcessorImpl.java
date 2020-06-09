@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.jooq.DSLContext;
-import org.jooq.Record3;
 import org.jooq.Result;
 import org.jooq.generated.tables.records.BlockRecord;
 
@@ -116,32 +115,29 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
   @Override
   public GetAssignedBlocksResponse getAllReservedBlocks(JWTData jwtData) {
-    return getAssignedBlocksWithStatus(jwtData, BlockStatus.RESERVED);
+    if (jwtData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
+      throw new AdminOnlyRouteException();
+    }
+    return getAssignedBlocksWithStatus(BlockStatus.RESERVED);
   }
 
   @Override
   public GetAssignedBlocksResponse getAllDoneBlocks(JWTData jwtData) {
-    return getAssignedBlocksWithStatus(jwtData, BlockStatus.DONE);
-  }
-
-  private GetAssignedBlocksResponse getAssignedBlocksWithStatus(
-      JWTData jwtData, BlockStatus status) {
     if (jwtData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
       throw new AdminOnlyRouteException();
     }
-    List<Record3<String, String, Timestamp>> blockRecords =
+    return getAssignedBlocksWithStatus(BlockStatus.DONE);
+  }
+
+  private GetAssignedBlocksResponse getAssignedBlocksWithStatus(BlockStatus status) {
+    return new GetAssignedBlocksResponse(
         db.select(BLOCK.FID, USERS.USERNAME, BLOCK.UPDATED_TIMESTAMP)
             .from(BLOCK)
             .innerJoin(USERS)
             .on(BLOCK.ASSIGNED_TO.eq(USERS.ID))
             .where(BLOCK.STATUS.equal(status))
             .orderBy(BLOCK.UPDATED_TIMESTAMP.desc())
-            .fetch();
-
-    return new GetAssignedBlocksResponse(
-        blockRecords.stream()
-            .map(br -> new AssignedBlock(br.component1(), br.component2(), br.component3()))
-            .collect(Collectors.toList()));
+            .fetchInto(AssignedBlock.class));
   }
 
   @Override
