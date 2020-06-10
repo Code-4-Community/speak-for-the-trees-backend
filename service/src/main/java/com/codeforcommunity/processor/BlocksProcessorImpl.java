@@ -1,14 +1,18 @@
 package com.codeforcommunity.processor;
 
 import static org.jooq.generated.Tables.BLOCK;
+import static org.jooq.generated.Tables.USERS;
 
 import com.codeforcommunity.api.IBlockProcessor;
 import com.codeforcommunity.auth.JWTData;
+import com.codeforcommunity.dto.blocks.AssignedBlock;
 import com.codeforcommunity.dto.blocks.BlockResponse;
+import com.codeforcommunity.dto.blocks.GetAssignedBlocksResponse;
 import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.exceptions.AdminOnlyRouteException;
 import com.codeforcommunity.requester.MapRequester;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -110,6 +114,33 @@ public class BlocksProcessorImpl implements IBlockProcessor {
   }
 
   @Override
+  public GetAssignedBlocksResponse getAllReservedBlocks(JWTData jwtData) {
+    if (jwtData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
+      throw new AdminOnlyRouteException();
+    }
+    return getAssignedBlocksWithStatus(BlockStatus.RESERVED);
+  }
+
+  @Override
+  public GetAssignedBlocksResponse getAllDoneBlocks(JWTData jwtData) {
+    if (jwtData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
+      throw new AdminOnlyRouteException();
+    }
+    return getAssignedBlocksWithStatus(BlockStatus.DONE);
+  }
+
+  private GetAssignedBlocksResponse getAssignedBlocksWithStatus(BlockStatus status) {
+    return new GetAssignedBlocksResponse(
+        db.select(BLOCK.FID, USERS.USERNAME, BLOCK.UPDATED_TIMESTAMP)
+            .from(BLOCK)
+            .innerJoin(USERS)
+            .on(BLOCK.ASSIGNED_TO.eq(USERS.ID))
+            .where(BLOCK.STATUS.equal(status))
+            .orderBy(BLOCK.UPDATED_TIMESTAMP.desc())
+            .fetchInto(AssignedBlock.class));
+  }
+
+  @Override
   public void resetAllBlocks(JWTData jwtData) {
     if (jwtData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
       throw new AdminOnlyRouteException();
@@ -190,6 +221,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
           br.setAssignedTo(setToId);
           br.setStatus(newStatus);
+          br.setUpdatedTimestamp(new Timestamp(System.currentTimeMillis()));
           br.store();
         });
   }

@@ -68,7 +68,8 @@ public class FailureHandler {
   }
 
   public void handleMalformedParameter(RoutingContext ctx, MalformedParameterException exception) {
-    String message = String.format("Given parameter %s is malformed", exception.getParameterName());
+    String message =
+        String.format("Given parameter(s) %s is (are) malformed", exception.getParameterName());
     end(ctx, message, 400);
   }
 
@@ -155,14 +156,13 @@ public class FailureHandler {
   }
 
   public void handleNoSuchTeam(RoutingContext ctx, NoSuchTeamException e) {
-    String message = String.format("There is no team with the id <%d>", e.getTeamId());
+    String message = String.format("There is no team with id <%d>", e.getTeamId());
     end(ctx, message, 400);
   }
 
   public void handleUserNotOnTeam(RoutingContext ctx, UserNotOnTeamException e) {
     String message =
-        String.format(
-            "The user <%d> is not on a team with the id <%d>", e.getUserId(), e.getTeamId());
+        String.format("The user <%d> is not on a team with id <%d>", e.getUserId(), e.getTeamId());
     end(ctx, message, 400);
   }
 

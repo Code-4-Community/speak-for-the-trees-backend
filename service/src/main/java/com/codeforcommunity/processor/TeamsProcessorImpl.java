@@ -16,6 +16,7 @@ import com.codeforcommunity.dto.team.TeamApplicant;
 import com.codeforcommunity.dto.team.TeamMember;
 import com.codeforcommunity.dto.team.TeamResponse;
 import com.codeforcommunity.dto.team.TeamSummary;
+import com.codeforcommunity.dto.team.TransferOwnershipRequest;
 import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.ExistingTeamRequestException;
@@ -24,6 +25,7 @@ import com.codeforcommunity.exceptions.NoSuchTeamRequestException;
 import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
 import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
 import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
+import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import com.codeforcommunity.requester.Emailer;
 import java.math.BigDecimal;
@@ -34,7 +36,7 @@ import java.util.stream.Collectors;
 
 import org.jooq.DSLContext;
 import org.jooq.Field;
-import org.jooq.Record;
+import org.jooq.Record5;
 import org.jooq.Result;
 import org.jooq.generated.tables.pojos.Team;
 import org.jooq.generated.tables.pojos.Users;
@@ -54,8 +56,6 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
   @Override
   public TeamResponse createTeam(JWTData userData, CreateTeamRequest teamRequest) {
-    teamRequest.validate();
-
     TeamRecord teamRecord = db.newRecord(TEAM);
     teamRecord.setName(teamRequest.getName());
     teamRecord.setBio(teamRequest.getBio());
@@ -373,7 +373,7 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
   }
 
   private List<TeamMember> getTeamMembers(int teamId) {
-    Result<?> userResult =
+    Result<Record5<Integer, String, BigDecimal, BigDecimal, TeamRole>> userResult =
         db.select(
                 USERS.ID,
                 USERS.USERNAME,
@@ -394,15 +394,59 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
     List<TeamMember> teamMembers = new ArrayList<>();
 
-    for (Record record : userResult) {
+    for (Record5<Integer, String, BigDecimal, BigDecimal, TeamRole> record : userResult) {
       teamMembers.add(
           new TeamMember(
               record.getValue(USERS.ID),
               record.getValue(USERS.USERNAME),
-              ((BigDecimal) record.getValue("blocksCompleted")).intValue(),
-              ((BigDecimal) record.getValue("blocksReserved")).intValue(),
+              record.value3().intValue(),
+              record.value4().intValue(),
               record.getValue(USER_TEAM.TEAM_ROLE)));
     }
     return teamMembers;
+  }
+
+  @Override
+  public void transferOwnership(JWTData userData, TransferOwnershipRequest request) {
+    int currentLeaderId = userData.getUserId();
+    int newLeaderId = request.getNewLeaderId();
+    int teamId = request.getTeamId();
+
+    UserTeamRecord currentLeaderTeam =
+        db.selectFrom(USER_TEAM)
+            .where(USER_TEAM.USER_ID.eq(currentLeaderId))
+            .and(USER_TEAM.TEAM_ID.eq(teamId))
+            .fetchOneInto(UserTeamRecord.class);
+
+    if (currentLeaderTeam == null || currentLeaderTeam.getTeamRole() != TeamRole.LEADER) {
+      throw new TeamLeaderOnlyRouteException(currentLeaderId);
+    }
+
+    boolean newOwnerExists = db.fetchExists(db.selectFrom(USERS).where(USERS.ID.eq(newLeaderId)));
+
+    if (!newOwnerExists) {
+      throw new UserDoesNotExistException(request.getNewLeaderId());
+    }
+
+    boolean userOnTeam =
+        db.fetchExists(
+            db.selectFrom(USER_TEAM)
+                .where(USER_TEAM.USER_ID.eq(newLeaderId))
+                .and(USER_TEAM.TEAM_ID.eq(teamId)));
+
+    if (!userOnTeam) {
+      throw new UserNotOnTeamException(newLeaderId, request.getTeamId());
+    }
+
+    db.update(USER_TEAM)
+        .set(USER_TEAM.TEAM_ROLE, TeamRole.MEMBER)
+        .where(USER_TEAM.USER_ID.eq(currentLeaderId))
+        .and(USER_TEAM.TEAM_ID.eq(request.getTeamId()))
+        .execute();
+    db.update(USER_TEAM)
+        .set(USER_TEAM.TEAM_ROLE, TeamRole.LEADER)
+        .where(USER_TEAM.USER_ID.eq(newLeaderId))
+        .and(USER_TEAM.TEAM_ID.eq(request.getTeamId()))
+        .execute();
   }
 }

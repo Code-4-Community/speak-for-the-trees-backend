@@ -2,6 +2,7 @@ package com.codeforcommunity.api;
 
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blocks.BlockResponse;
+import com.codeforcommunity.dto.blocks.GetAssignedBlocksResponse;
 import java.util.List;
 
 public interface IBlockProcessor {
@@ -14,6 +15,10 @@ public interface IBlockProcessor {
   BlockResponse resetBlocks(JWTData jwtData, List<String> blockIds);
 
   List<String> getUserReservedBlocks(JWTData jwtData, boolean includeDone);
+
+  GetAssignedBlocksResponse getAllReservedBlocks(JWTData jwtData);
+
+  GetAssignedBlocksResponse getAllDoneBlocks(JWTData jwtData);
 
   void resetAllBlocks(JWTData jwtData);
 }

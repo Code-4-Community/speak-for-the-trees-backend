@@ -1,13 +1,15 @@
 package com.codeforcommunity.dto.team;
 
+import com.codeforcommunity.api.ApiDto;
+import java.util.ArrayList;
 import java.util.List;
 
-public class InviteMembersRequest {
+public class InviteMembersRequest extends ApiDto {
 
   private List<String> emails;
-  private int teamId;
+  private Integer teamId;
 
-  public InviteMembersRequest(List<String> emails, int teamId) {
+  public InviteMembersRequest(List<String> emails, Integer teamId) {
     this.emails = emails;
     this.teamId = teamId;
   }
@@ -22,11 +24,31 @@ public class InviteMembersRequest {
     this.emails = emails;
   }
 
-  public int getTeamId() {
+  public Integer getTeamId() {
     return teamId;
   }
 
-  public void setTeamId(int teamId) {
+  public void setTeamId(Integer teamId) {
     this.teamId = teamId;
+  }
+
+  @Override
+  public List<String> validateFields(String fieldPrefix) {
+    String fieldName = fieldPrefix + "invite_members_request.";
+    List<String> fields = new ArrayList<>();
+
+    if (teamId != null && teamId < 0) {
+      fields.add(fieldName + "team_id");
+    }
+    if (emails == null) {
+      fields.add(fieldName + "emails");
+    } else {
+      for (String email : emails) {
+        if (emailInvalid(email)) {
+          fields.add(fieldName + "emails.email");
+        }
+      }
+    }
+    return fields;
   }
 }

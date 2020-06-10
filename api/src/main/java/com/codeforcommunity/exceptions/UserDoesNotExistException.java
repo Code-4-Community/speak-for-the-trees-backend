@@ -3,7 +3,7 @@ package com.codeforcommunity.exceptions;
 import com.codeforcommunity.rest.FailureHandler;
 import io.vertx.ext.web.RoutingContext;
 
-public class UserDoesNotExistException extends RuntimeException implements HandledException {
+public class UserDoesNotExistException extends HandledException {
   private String identifierMessage;
 
   public UserDoesNotExistException(int userId) {
