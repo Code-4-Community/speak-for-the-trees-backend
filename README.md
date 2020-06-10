@@ -20,6 +20,8 @@ You should only have to change the username and password.
 
 #### Compile the code base
 1. Run `mvn clean install` from the root directory
+  - Run `mvn spotless:apply` to apply code formatting corrections to your code if 
+  your build is failing because of `spotless:check`
 
 #### Run the API
 1. The `ServiceMain.java` class has the main method for running the code, this can be run directly in IntelliJ.

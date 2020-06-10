@@ -1,50 +1,82 @@
 package com.codeforcommunity.dto.auth;
 
-public class NewUserRequest {
+import com.codeforcommunity.api.ApiDto;
+import com.codeforcommunity.exceptions.InvalidPasswordException;
+import java.util.ArrayList;
+import java.util.List;
 
-    private String email;
-    private String username;
-    private String password;
-    private String firstName;
-    private String lastName;
+public class NewUserRequest extends ApiDto {
 
-    public String getEmail() {
-        return email;
+  private String email;
+  private String username;
+  private String password;
+  private String firstName;
+  private String lastName;
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
+  public String getUsername() {
+    return username;
+  }
+
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
+  public String getPassword() {
+    return password;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
+  }
+
+  public String getFirstName() {
+    return firstName;
+  }
+
+  public void setFirstName(String firstName) {
+    this.firstName = firstName;
+  }
+
+  public String getLastName() {
+    return lastName;
+  }
+
+  public void setLastName(String lastName) {
+    this.lastName = lastName;
+  }
+
+  @Override
+  public List<String> validateFields(String fieldPrefix) {
+    String fieldName = fieldPrefix + "new_user_request.";
+    List<String> fields = new ArrayList<>();
+
+    if (isEmpty(username)) {
+      fields.add(fieldName + "username");
     }
-
-    public void setEmail(String email) {
-        this.email = email;
+    if (emailInvalid(email)) {
+      fields.add(fieldName + "email");
     }
-
-    public String getUsername() {
-        return username;
+    if (isEmpty(firstName)) {
+      fields.add(fieldName + "first_name");
     }
-
-    public void setUsername(String username) {
-        this.username = username;
+    if (isEmpty(lastName)) {
+      fields.add(fieldName + "last_name");
     }
-
-    public String getPassword() {
-        return password;
+    if (password == null) {
+      fields.add(fieldName + "password");
     }
-
-    public void setPassword(String password) {
-        this.password = password;
+    // Only throw this exception if there are no issues with other fields
+    if (passwordInvalid(password) && fields.size() == 0) {
+      throw new InvalidPasswordException();
     }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
+    return fields;
+  }
 }

@@ -3,3 +3,7 @@
 *.iml
 *.properties
 *.log
+*.project
+*.settings
+*.classpath
+*.factorypath

@@ -1,7 +1,9 @@
 package com.codeforcommunity.enums;
 
 public enum TeamRole {
-  MEMBER(1), LEADER(2);
+  NONE(0),
+  MEMBER(1),
+  LEADER(2);
 
   private int val;
 
@@ -19,6 +21,7 @@ public enum TeamRole {
         return role;
       }
     }
-    throw new IllegalArgumentException(String.format("Given num (%d) that doesn't correspond to any TeamRole", val));
+    throw new IllegalArgumentException(
+        String.format("Given num (%d) that doesn't correspond to any TeamRole", val));
   }
 }

@@ -2,13 +2,12 @@ package com.codeforcommunity.requester;
 
 import com.codeforcommunity.email.EmailOperations;
 import com.codeforcommunity.propertiesLoader.PropertiesLoader;
-import org.jooq.generated.tables.pojos.Team;
-import org.jooq.generated.tables.pojos.Users;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import org.jooq.generated.tables.pojos.Team;
+import org.jooq.generated.tables.pojos.Users;
 
 public class Emailer {
   private final EmailOperations emailOperations;
@@ -22,10 +21,13 @@ public class Emailer {
     String emailHost = emailProperties.getProperty("emailHost");
     int emailPort = Integer.parseInt(emailProperties.getProperty("emailPort"));
 
-    this.emailOperations = new EmailOperations(senderName, sendEmail, sendPassword, emailHost, emailPort);
+    this.emailOperations =
+        new EmailOperations(senderName, sendEmail, sendPassword, emailHost, emailPort);
 
     Properties frontendProperties = PropertiesLoader.getFrontendProperties();
-    this.teamPageUrlTemplate = frontendProperties.getProperty("base_url") + frontendProperties.getProperty("team_page_route");
+    this.teamPageUrlTemplate =
+        frontendProperties.getProperty("base_url")
+            + frontendProperties.getProperty("team_page_route");
   }
 
   public void sendWelcomeEmail(String sendToEmail, String sendToName, String verificationLink) {
@@ -40,12 +42,15 @@ public class Emailer {
     emailBody.ifPresent(s -> emailOperations.sendEmail(sendToName, sendToEmail, subjectLine, s));
   }
 
-  public void sendInviteEmail(String sendToEmail, String sendToName, Users inviter, Team invitedTeam) {
+  public void sendInviteEmail(
+      String sendToEmail, String sendToName, Users inviter, Team invitedTeam) {
     String filePath = "/emails/InviteEmail.html";
-    String subjectLine = String.format("You've Been Invited to Join %s's Team!", inviter.getFirstName());
+    String subjectLine =
+        String.format("You've Been Invited to Join %s's Team!", inviter.getFirstName());
 
     Map<String, String> templateValues = new HashMap<>();
-    templateValues.put("inviter name", String.format("%s %s", inviter.getFirstName(), inviter.getLastName()));
+    templateValues.put(
+        "inviter name", String.format("%s %s", inviter.getFirstName(), inviter.getLastName()));
     templateValues.put("link", String.format(this.teamPageUrlTemplate, invitedTeam.getId()));
     Optional<String> emailBody = emailOperations.getTemplateString(filePath, templateValues);
 
