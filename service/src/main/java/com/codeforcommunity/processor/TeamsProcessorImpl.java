@@ -310,7 +310,7 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     List<TeamSummary> teams =
         db.select(TEAM.ID, TEAM.NAME, DSL.count().as("memberCount"), userTeamRole)
             .from(TEAM)
-            .innerJoin(USER_TEAM)
+            .leftJoin(USER_TEAM)
             .on(TEAM.ID.eq(USER_TEAM.TEAM_ID))
             .where(
                 USER_TEAM.TEAM_ROLE.eq(TeamRole.LEADER).or(USER_TEAM.TEAM_ROLE.eq(TeamRole.MEMBER)))
