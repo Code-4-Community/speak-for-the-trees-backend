@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record5;
@@ -313,8 +312,8 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
             .from(TEAM)
             .innerJoin(USER_TEAM)
             .on(TEAM.ID.eq(USER_TEAM.TEAM_ID))
-            .where(USER_TEAM.TEAM_ROLE.eq(TeamRole.LEADER)
-                .or(USER_TEAM.TEAM_ROLE.eq(TeamRole.MEMBER)))
+            .where(
+                USER_TEAM.TEAM_ROLE.eq(TeamRole.LEADER).or(USER_TEAM.TEAM_ROLE.eq(TeamRole.MEMBER)))
             .groupBy(TEAM.ID)
             .orderBy(TEAM.NAME.asc())
             .fetchInto(TeamSummary.class);
@@ -334,10 +333,11 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
             .map(TeamMember::getRole)
             .findFirst()
             .orElse(TeamRole.NONE);
-    teamMembers = teamMembers.stream()
-        .filter(tm -> tm.getRole().equals(TeamRole.MEMBER)
-            || tm.getRole().equals(TeamRole.LEADER))
-        .collect(Collectors.toList());
+    teamMembers =
+        teamMembers.stream()
+            .filter(
+                tm -> tm.getRole().equals(TeamRole.MEMBER) || tm.getRole().equals(TeamRole.LEADER))
+            .collect(Collectors.toList());
     int doneBlocks =
         teamMembers.stream().map(Individual::getBlocksCompleted).reduce(0, Integer::sum);
     int reservedBlocks =
@@ -360,8 +360,8 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     List<UserTeamRecord> userTeamRecords =
         db.selectFrom(USER_TEAM)
             .where(USER_TEAM.USER_ID.eq(userdata.getUserId()))
-            .and(USER_TEAM.TEAM_ROLE.eq(TeamRole.MEMBER)
-                .or(USER_TEAM.TEAM_ROLE.eq(TeamRole.LEADER)))
+            .and(
+                USER_TEAM.TEAM_ROLE.eq(TeamRole.MEMBER).or(USER_TEAM.TEAM_ROLE.eq(TeamRole.LEADER)))
             .fetch();
 
     for (UserTeamRecord record : userTeamRecords) {

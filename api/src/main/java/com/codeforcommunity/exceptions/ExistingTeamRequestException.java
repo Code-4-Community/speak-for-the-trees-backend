@@ -3,7 +3,7 @@ package com.codeforcommunity.exceptions;
 import com.codeforcommunity.rest.FailureHandler;
 import io.vertx.ext.web.RoutingContext;
 
-public class ExistingTeamRequestException extends RuntimeException implements HandledException {
+public class ExistingTeamRequestException extends HandledException {
 
   private int userId;
   private int teamId;
