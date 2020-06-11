@@ -21,4 +21,6 @@ public interface IBlockProcessor {
   GetAssignedBlocksResponse getAllDoneBlocks(JWTData jwtData);
 
   void resetAllBlocks(JWTData jwtData);
+
+  String getBlockExportCSV(JWTData jwtData);
 }

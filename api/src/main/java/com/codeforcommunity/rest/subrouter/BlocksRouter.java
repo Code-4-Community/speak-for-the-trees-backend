@@ -37,6 +37,7 @@ public class BlocksRouter implements IRouter {
     registerResetAllBlocks(router);
     registerGetReservedAdmin(router);
     registerGetDoneAdmin(router);
+    registerGetBlocksCSV(router);
 
     return router;
   }
@@ -79,6 +80,11 @@ public class BlocksRouter implements IRouter {
   private void registerResetAllBlocks(Router router) {
     Route resetAllRoute = router.post("/reset/hard");
     resetAllRoute.handler(this::handleResetAll);
+  }
+
+  private void registerGetBlocksCSV(Router router) {
+    Route resetAllRoute = router.get("/export");
+    resetAllRoute.handler(this::handleExportCSV);
   }
 
   private void handleReserveRoute(RoutingContext ctx) {
@@ -152,5 +158,13 @@ public class BlocksRouter implements IRouter {
     processor.resetAllBlocks(userData);
 
     end(ctx.response(), 200);
+  }
+
+  private void handleExportCSV(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+
+    String csv = processor.getBlockExportCSV(userData);
+
+    end(ctx.response(), 200, csv, "text/csv");
   }
 }

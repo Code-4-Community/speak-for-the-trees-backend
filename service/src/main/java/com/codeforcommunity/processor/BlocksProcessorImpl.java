@@ -2,10 +2,13 @@ package com.codeforcommunity.processor;
 
 import static org.jooq.generated.Tables.BLOCK;
 import static org.jooq.generated.Tables.USERS;
+import static org.jooq.generated.Tables.USER_TEAM;
+import static org.jooq.generated.tables.Team.TEAM;
 
 import com.codeforcommunity.api.IBlockProcessor;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blocks.AssignedBlock;
+import com.codeforcommunity.dto.blocks.BlockExport;
 import com.codeforcommunity.dto.blocks.BlockResponse;
 import com.codeforcommunity.dto.blocks.GetAssignedBlocksResponse;
 import com.codeforcommunity.enums.BlockStatus;
@@ -152,6 +155,44 @@ public class BlocksProcessorImpl implements IBlockProcessor {
       mapRequester.updateStreets(sublist, BlockStatus.OPEN);
     }
     db.update(BLOCK).set(BLOCK.STATUS, BlockStatus.OPEN).execute();
+  }
+
+  @Override
+  public String getBlockExportCSV(JWTData jwtData) {
+    List<BlockExport> blockExports =
+        db.select(
+                BLOCK.FID,
+                BLOCK.STATUS,
+                BLOCK.UPDATED_TIMESTAMP,
+                USERS.FIRST_NAME,
+                USERS.LAST_NAME,
+                USERS.EMAIL,
+                USERS.USERNAME,
+                USERS.ID)
+            .from(BLOCK)
+            .leftJoin(USERS)
+            .on(USERS.ID.eq(BLOCK.ASSIGNED_TO))
+            .orderBy(BLOCK.STATUS.desc(), USERS.ID)
+            .fetchInto(BlockExport.class);
+
+    Map<Integer, List<String>> userTeams =
+        db.select(USERS.ID, TEAM.NAME)
+            .from(USERS)
+            .leftJoin(USER_TEAM)
+            .on(USERS.ID.eq(USER_TEAM.USER_ID))
+            .leftJoin(TEAM)
+            .on(USER_TEAM.TEAM_ID.eq(TEAM.ID))
+            .fetchGroups(USERS.ID, TEAM.NAME);
+
+    StringBuilder builder = new StringBuilder();
+    builder.append(BlockExport.getHeaderCSV());
+    for (BlockExport export : blockExports) {
+      List<String> teamList = userTeams.get(export.getUserId());
+      export.setTeamNames(teamList);
+      builder.append(export.getRowCSV());
+    }
+
+    return builder.toString();
   }
 
   /**
