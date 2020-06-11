@@ -1,198 +1,160 @@
 package com.codeforcommunity.dataaccess;
 
-import static org.jooq.generated.Tables.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.codeforcommunity.JooqMock;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.auth.Passwords;
 import com.codeforcommunity.enums.PrivilegeLevel;
-import com.codeforcommunity.enums.VerificationKeyType;
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
-import com.codeforcommunity.exceptions.ExpiredSecretKeyException;
-import com.codeforcommunity.exceptions.InvalidSecretKeyException;
-import com.codeforcommunity.exceptions.UsedSecretKeyException;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
-import com.codeforcommunity.exceptions.UsernameAlreadyInUseException;
-import com.codeforcommunity.processor.AuthProcessorImpl;
-import com.codeforcommunity.propertiesLoader.PropertiesLoader;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.Optional;
-import java.util.Properties;
-import org.jooq.DSLContext;
+import java.util.ArrayList;
 import org.jooq.generated.Tables;
-import org.jooq.generated.tables.pojos.Users;
 import org.jooq.generated.tables.records.UsersRecord;
-import org.jooq.generated.tables.records.VerificationKeysRecord;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-/** Encapsulates all the database operations that are required for {@link AuthProcessorImpl}. */
-public class AuthDatabaseOperations {
+// Contains tests for AuthDatabaseOperations.java
+public class AuthDatabaseOperationsTest {
+  JooqMock myJooqMock;
+  AuthDatabaseOperations myAuthDatabaseOperations;
 
-    private final DSLContext db;
+  // set up all the mocks
+  @BeforeEach
+  public void setup() {
+    this.myJooqMock = new JooqMock();
+    this.myAuthDatabaseOperations = new AuthDatabaseOperations(myJooqMock.getContext());
+  }
 
-    private final int secondsVerificationEmailValid;
-    private final int secondsForgotPasswordValid;
-    private final int msRefreshExpiration;
+  // proper exception is thrown when user doesn't exist in DB
+  @Test
+  public void testGetUserJWTData1() {
+    String myEmail = "kimin@example.com";
 
-    public AuthDatabaseOperations(DSLContext db) {
-        this.db = db;
+    // no users in DB
+    myJooqMock.addReturn("SELECT", new ArrayList<UsersRecord>());
 
-        Properties expirationProperties = PropertiesLoader.getExpirationProperties();
-        this.secondsVerificationEmailValid =
-                Integer.parseInt(expirationProperties.getProperty("seconds_verification_email_valid"));
-        this.secondsForgotPasswordValid =
-                Integer.parseInt(expirationProperties.getProperty("seconds_forgot_password_valid"));
-        this.msRefreshExpiration =
-                Integer.parseInt(expirationProperties.getProperty("ms_refresh_expiration"));
+    try {
+      myAuthDatabaseOperations.getUserJWTData(myEmail);
+      fail();
+    } catch (UserDoesNotExistException e) {
+      assertEquals(e.getIdentifierMessage(), "email = " + myEmail);
     }
+  }
 
-    /**
-     * Creates a JWTData object for the user with the given email if they exist.
-     *
-     * @throws UserDoesNotExistException if given email does not match a user.
-     */
-    public JWTData getUserJWTData(String email) {
-        Optional<Users> maybeUser =
-                Optional.ofNullable(
-                        db.selectFrom(USERS).where(USERS.EMAIL.eq(email)).fetchOneInto(Users.class));
+  // works as expected when user does indeed exist
+  @Test
+  public void testGetUserJWTData2() {
+    String myEmail = "kimin@example.com";
 
-        if (maybeUser.isPresent()) {
-            Users user = maybeUser.get();
+    // one user in DB
+    UsersRecord myUser = myJooqMock.getContext().newRecord(Tables.USERS);
+    myUser.setUsername("kiminusername");
+    myUser.setEmail(myEmail);
+    myUser.setId(1);
+    myUser.setPrivilegeLevel(PrivilegeLevel.STANDARD);
+    myJooqMock.addReturn("SELECT", myUser);
 
-            return new JWTData(user.getId(), user.getPrivilegeLevel());
-        } else {
-            throw new UserDoesNotExistException(email);
-        }
+    JWTData userData = myAuthDatabaseOperations.getUserJWTData(myEmail);
+
+    assertEquals(userData.getUserId(), myUser.getId());
+    assertEquals(userData.getPrivilegeLevel(), myUser.getPrivilegeLevel());
+  }
+
+  // returns false for incorrect login
+  @Test
+  public void testIsValidLogin1() {
+    String myEmail = "kimin@example.com";
+
+    // one user in DB
+    UsersRecord myUser = myJooqMock.getContext().newRecord(Tables.USERS);
+    myUser.setUsername("kiminusername");
+    myUser.setEmail(myEmail);
+    myUser.setPassHash(Passwords.createHash("password"));
+    myUser.setId(1);
+    myUser.setPrivilegeLevel(PrivilegeLevel.STANDARD);
+    myJooqMock.addReturn("SELECT", myUser);
+
+    assertFalse(myAuthDatabaseOperations.isValidLogin(myEmail, "wrongPassword"));
+  }
+
+  // returns true for correct login
+  @Test
+  public void testIsValidLogin2() {
+    String myEmail = "kimin@example.com";
+
+    // one user in DB
+    UsersRecord myUser = myJooqMock.getContext().newRecord(Tables.USERS);
+    myUser.setUsername("kiminusername");
+    myUser.setEmail(myEmail);
+    myUser.setPassHash(Passwords.createHash("password"));
+    myUser.setId(1);
+    myUser.setPrivilegeLevel(PrivilegeLevel.STANDARD);
+    myJooqMock.addReturn("SELECT", myUser);
+
+    assertTrue(myAuthDatabaseOperations.isValidLogin(myEmail, "password"));
+  }
+
+  // creating a new user fails when the email is already in use
+  @Test
+  public void testCreateNewUser1() {
+    String myEmail = "kimin@example.com";
+
+    // one user in DB
+    UsersRecord myUser = myJooqMock.getContext().newRecord(Tables.USERS);
+    myUser.setUsername("kiminusername");
+    myUser.setEmail(myEmail);
+    myUser.setPassHash(Passwords.createHash("password"));
+    myUser.setId(1);
+    myUser.setPrivilegeLevel(PrivilegeLevel.STANDARD);
+    myJooqMock.addReturn("SELECT", myUser);
+
+    try {
+      myAuthDatabaseOperations.createNewUser("diffusername", myEmail, "password", "Kimin", "Lee");
+      fail();
+    } catch (EmailAlreadyInUseException e) {
+      assertEquals(e.getEmail(), "kimin@example.com");
     }
+  }
 
-    /**
-     * Returns true if the given username and password correspond to a user in the USER table and
-     * false otherwise.
-     */
-    public boolean isValidLogin(String email, String pass) {
-        Optional<Users> maybeUser =
-                Optional.ofNullable(
-                        db.selectFrom(USERS).where(USERS.EMAIL.eq(email)).fetchOneInto(Users.class));
+  // creating a new user fails when the username is already in use
+  @Test
+  public void testCreateNewUser2() {
+    String myEmail = "kimin@example.com";
+    String myUsername = "kiminusername";
 
-        return maybeUser
-                .filter(user -> Passwords.isExpectedPassword(pass, user.getPassHash()))
-                .isPresent();
+    // one user in DB
+    UsersRecord myUser = myJooqMock.getContext().newRecord(Tables.USERS);
+    myUser.setUsername(myUsername);
+    myUser.setEmail(myEmail);
+    myUser.setPassHash(Passwords.createHash("password"));
+    myUser.setId(1);
+    myUser.setPrivilegeLevel(PrivilegeLevel.STANDARD);
+    myJooqMock.addReturn("SELECT", myUser);
+
+    try {
+      myAuthDatabaseOperations.createNewUser(
+          myUsername, "diff@example.com", "password", "Kimin", "Lee");
+      fail();
+    } catch (EmailAlreadyInUseException e) {
+      assertEquals(e.getEmail(), "diff@example.com");
     }
+  }
 
-    /**
-     * TODO: Refactor this method to take in a DTO / POJO instance Creates a new row in the USER table
-     * with the given values.
-     *
-     * @throws EmailAlreadyInUseException if the given username and email are already used in the USER
-     *     table.
-     */
-    public UsersRecord createNewUser(
-            String username, String email, String password, String firstName, String lastName) {
-        boolean emailUsed = db.fetchExists(db.selectFrom(USERS).where(USERS.EMAIL.eq(email)));
-        if (emailUsed) {
-            throw new EmailAlreadyInUseException(email);
-        }
-        boolean usernameUsed = db.fetchExists(db.selectFrom(USERS).where(USERS.USERNAME.eq(username)));
-        if (usernameUsed) {
-            throw new UsernameAlreadyInUseException(username);
-        }
+  // creating a new user succeeds when the email and username isn't already in use
+  @Test
+  public void testCreateNewUser3() {
+    // no users in DB
+    myJooqMock.addEmptyReturn("SELECT");
 
-        UsersRecord newUser = db.newRecord(USERS);
-        newUser.setUsername(username);
-        newUser.setEmail(email);
-        newUser.setPassHash(Passwords.createHash(password));
-        newUser.setFirstName(firstName);
-        newUser.setLastName(lastName);
-        newUser.setPrivilegeLevel(PrivilegeLevel.STANDARD);
-        newUser.store();
-
-        return newUser;
-    }
-
-    /** Given a JWT signature, store it in the BLACKLISTED_REFRESHES table. */
-    public void addToBlackList(String signature) {
-        Timestamp expirationTimestamp = Timestamp.from(Instant.now().plusMillis(msRefreshExpiration));
-        db.newRecord(Tables.BLACKLISTED_REFRESHES).values(signature, expirationTimestamp).store();
-    }
-
-    /** Given a JWT signature return true if it is stored in the BLACKLISTED_REFRESHES table. */
-    public boolean isOnBlackList(String signature) {
-        return db.fetchExists(
-                Tables.BLACKLISTED_REFRESHES.where(
-                        Tables.BLACKLISTED_REFRESHES.REFRESH_HASH.eq(signature)));
-    }
-
-    /**
-     * Validates the secret key for the user it was created for and returns the appropriate user.
-     *
-     * @throws InvalidSecretKeyException if the given token does not exist.
-     * @throws UsedSecretKeyException if the given token has already been used.
-     * @throws ExpiredSecretKeyException if the given token is expired.
-     */
-    public UsersRecord validateSecretKey(String secretKey, VerificationKeyType type) {
-        VerificationKeysRecord verificationKey =
-                db.selectFrom(Tables.VERIFICATION_KEYS)
-                        .where(Tables.VERIFICATION_KEYS.ID.eq(secretKey).and(VERIFICATION_KEYS.TYPE.eq(type)))
-                        .fetchOneInto(VerificationKeysRecord.class);
-
-        if (verificationKey == null) {
-            throw new InvalidSecretKeyException(type);
-        }
-
-        if (verificationKey.getUsed()) {
-            throw new UsedSecretKeyException(type);
-        }
-
-        if (!isTokenDateValid(verificationKey, type)) {
-            throw new ExpiredSecretKeyException(type);
-        }
-
-        verificationKey.setUsed(true);
-        verificationKey.store();
-
-        return db.selectFrom(USERS).where(USERS.ID.eq(verificationKey.getUserId())).fetchOne();
-    }
-
-    /**
-     * TODO: This method should be called as part of sign-up flow
-     *
-     * <p>Given a userId and token, stores the token in the verification_keys table for the user and
-     * invalidates all other keys of this type for this user.
-     */
-    public String createSecretKey(int userId, VerificationKeyType type) {
-
-        // Maybe add a different column besides used?
-        db.update(VERIFICATION_KEYS)
-                .set(VERIFICATION_KEYS.USED, true)
-                .where(VERIFICATION_KEYS.USER_ID.eq(userId))
-                .and(VERIFICATION_KEYS.TYPE.eq(type))
-                .execute();
-
-        String token = Passwords.generateRandomToken(50);
-
-        VerificationKeysRecord keysRecord = db.newRecord(Tables.VERIFICATION_KEYS);
-        keysRecord.setId(token);
-        keysRecord.setUserId(userId);
-        keysRecord.setType(type);
-        keysRecord.store();
-
-        return token;
-    }
-
-    /**
-     * Determines if given token of a specified type is still valid.
-     *
-     * @return true if it is within the time specified in the expiration.properties file.
-     */
-    private boolean isTokenDateValid(VerificationKeysRecord tokenResult, VerificationKeyType type) {
-        Timestamp cutoffDate;
-        if (type == VerificationKeyType.VERIFY_EMAIL) {
-            cutoffDate = Timestamp.from(Instant.now().minusSeconds(secondsVerificationEmailValid));
-        } else if (type == VerificationKeyType.FORGOT_PASSWORD) {
-            cutoffDate = Timestamp.from(Instant.now().minusSeconds(secondsForgotPasswordValid));
-        } else {
-            throw new IllegalStateException(
-                    String.format("Verification type %s not implemented", type.name()));
-        }
-        return tokenResult.getCreated().after(cutoffDate);
-    }
+    UsersRecord returned =
+        myAuthDatabaseOperations.createNewUser(
+            "connerusername", "conner@example.com", "password", "Conner", "Nilsen");
+    assertEquals("Conner", returned.getFirstName());
+    assertEquals("Nilsen", returned.getLastName());
+    assertEquals("conner@example.com", returned.getEmail());
+    assertEquals("connerusername", returned.getUsername());
+    assertEquals(2, myJooqMock.timesCalled("SELECT"));
+  }
 }

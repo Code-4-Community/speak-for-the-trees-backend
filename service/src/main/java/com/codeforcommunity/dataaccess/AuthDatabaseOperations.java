@@ -62,46 +62,6 @@ public class AuthDatabaseOperations {
     } else {
       throw new UserDoesNotExistException(email);
     }
-<<<<<<< HEAD
-
-    /**
-     * TODO: Refactor this method to take in a DTO / POJO instance Creates a new row in the USER table
-     * with the given values.
-     *
-     * @throws EmailAlreadyInUseException if the given username and email are already used in the USER
-     *     table.
-     */
-    public UsersRecord createNewUser(String username, String email, String password, String firstName, String lastName) {
-        boolean emailUsed = db.fetchExists(db.selectFrom(USERS).where(USERS.EMAIL.eq(email)));
-        if (emailUsed) {
-            throw new EmailAlreadyInUseException(email);
-        }
-        boolean usernameUsed = db.fetchExists(db.selectFrom(USERS).where(USERS.USERNAME.eq(username)));
-        if (usernameUsed) {
-            throw new UsernameAlreadyInUseException(username);
-        }
-
-        UsersRecord newUser = db.newRecord(USERS);
-        newUser.setUsername(username);
-        newUser.setEmail(email);
-        newUser.setPassHash(Passwords.createHash(password));
-        newUser.setFirstName(firstName);
-        newUser.setLastName(lastName);
-        newUser.setPrivilegeLevel(PrivilegeLevel.STANDARD);
-        newUser.store();
-
-        return newUser;
-    }
-
-    /**
-     * Given a JWT signature, store it in the BLACKLISTED_REFRESHES table.
-     */
-    public void addToBlackList(String signature) {
-        Timestamp expirationTimestamp = Timestamp.from(Instant.now().plusMillis(msRefreshExpiration));
-        db.newRecord(Tables.BLACKLISTED_REFRESHES)
-            .values(signature, expirationTimestamp)
-            .store();
-=======
   }
 
   /**
@@ -130,7 +90,6 @@ public class AuthDatabaseOperations {
     boolean emailUsed = db.fetchExists(db.selectFrom(USERS).where(USERS.EMAIL.eq(email)));
     if (emailUsed) {
       throw new EmailAlreadyInUseException(email);
->>>>>>> c5f7c06f4429ad842ef9f7bf3819bd891cd77879
     }
     boolean usernameUsed = db.fetchExists(db.selectFrom(USERS).where(USERS.USERNAME.eq(username)));
     if (usernameUsed) {
