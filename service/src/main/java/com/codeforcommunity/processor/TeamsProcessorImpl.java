@@ -282,9 +282,9 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
                 USERS.USERNAME,
                 USERS.EMAIL,
                 USERS.PRIVILEGE_LEVEL,
-                DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).else_(0))
+                DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).otherwise(0))
                     .as("blocksReserved"),
-                DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.DONE), 1).else_(0))
+                DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.DONE), 1).otherwise(0))
                     .as("blocksCompleted"))
             .from(USER_TEAM)
             .join(USERS)
