@@ -83,10 +83,15 @@ public class ProtectedUserProcessorImplTest {
     this.processor.deleteUser(jwtData);
     assertEquals(1, mockDb.timesCalled("SELECT"));
     assertEquals(4, mockDb.timesCalled("DELETE"));
+    // user_id
     assertEquals(1, mockDb.getSqlBindings().get("DELETE").get(0)[0]);
+    // user_id from user_team
     assertEquals(5, mockDb.getSqlBindings().get("DELETE").get(1)[0]);
+    // user_id from users
     assertEquals(1, mockDb.getSqlBindings().get("DELETE").get(2)[0]);
+    // team_id from team
     assertEquals(5, mockDb.getSqlBindings().get("DELETE").get(3)[0]);
+    // user_id from user_team
     assertEquals(1, mockDb.getSqlBindings().get("SELECT").get(0)[0]);
   }
 
@@ -100,7 +105,6 @@ public class ProtectedUserProcessorImplTest {
     myUser.setId(1);
     myUser.setPrivilegeLevel(PrivilegeLevel.STANDARD);
     mockDb.addEmptyReturn("SELECT");
-    mockDb.addEmptyReturn("DELETE");
     mockDb.addEmptyReturn("DELETE");
 
     JWTData jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
