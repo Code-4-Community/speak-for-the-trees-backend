@@ -16,10 +16,7 @@ import org.jooq.SQLDialect;
 import org.jooq.Table;
 import org.jooq.generated.DefaultSchema;
 import org.jooq.impl.DSL;
-import org.jooq.tools.jdbc.MockConnection;
-import org.jooq.tools.jdbc.MockDataProvider;
-import org.jooq.tools.jdbc.MockExecuteContext;
-import org.jooq.tools.jdbc.MockResult;
+import org.jooq.tools.jdbc.*;
 
 /** A class to mock database interactions. */
 public class JooqMock implements MockDataProvider {
@@ -193,9 +190,9 @@ public class JooqMock implements MockDataProvider {
     context = DSL.using(connection, SQLDialect.POSTGRES);
 
     // create the recordReturns object and add the 'UNKNOWN' and 'DROP/CREATE' operations
-    recordReturns = new HashMap<>();
-    recordReturns.put("UNKNOWN", new Operations());
-    recordReturns.put("DROP/CREATE", new Operations());
+    this.recordReturns = new HashMap<>();
+    this.recordReturns.put("UNKNOWN", new Operations());
+    this.recordReturns.put("DROP/CREATE", new Operations());
 
     // create the classMap object and seed with database tables
     classMap = new HashMap<>();
@@ -230,7 +227,7 @@ public class JooqMock implements MockDataProvider {
   private Result<? extends Record> createResult(List<? extends Record> r) {
     if (r.parallelStream().anyMatch(Objects::isNull)) {
       throw new IllegalArgumentException(
-              "Record in provided list was null. No records " + "should be null in a list of returns.");
+          "Record in provided list was null. No records " + "should be null in a list of returns.");
     }
     if (r.size() == 0) {
       return context.newResult();
@@ -308,11 +305,11 @@ public class JooqMock implements MockDataProvider {
    */
   public void addReturn(Map<String, List<? extends Record>> records) {
     records.forEach(
-            (k, v) -> {
-              for (Record record : v) {
-                addReturn(k, record);
-              }
-            });
+        (k, v) -> {
+          for (Record record : v) {
+            addReturn(k, record);
+          }
+        });
   }
 
   /**
@@ -347,13 +344,13 @@ public class JooqMock implements MockDataProvider {
   public Map<String, List<String>> getSqlStrings() {
     Map<String, List<String>> result = new HashMap<>();
     recordReturns.forEach(
-            (k, v) -> {
-              List<String> opResult = new ArrayList<>();
-              for (List<String> list : v.getSqlStrings()) {
-                opResult.addAll(list);
-              }
-              result.put(k, opResult);
-            });
+        (k, v) -> {
+          List<String> opResult = new ArrayList<>();
+          for (List<String> list : v.getSqlStrings()) {
+            opResult.addAll(list);
+          }
+          result.put(k, opResult);
+        });
     return result;
   }
 
@@ -366,13 +363,13 @@ public class JooqMock implements MockDataProvider {
   public Map<String, List<Object[]>> getSqlBindings() {
     Map<String, List<Object[]>> result = new HashMap<>();
     recordReturns.forEach(
-            (k, v) -> {
-              List<Object[]> opResult = new ArrayList<>();
-              for (List<Object[]> list : v.getSqlBindings()) {
-                opResult.addAll(list);
-              }
-              result.put(k, opResult);
-            });
+        (k, v) -> {
+          List<Object[]> opResult = new ArrayList<>();
+          for (List<Object[]> list : v.getSqlBindings()) {
+            opResult.addAll(list);
+          }
+          result.put(k, opResult);
+        });
     return result;
   }
 
@@ -440,16 +437,11 @@ public class JooqMock implements MockDataProvider {
       result = recordReturns.get(operation).call(ctx);
     } catch (NullPointerException e) {
       System.out.println(
-              "WARNING: JooqMock could not find a primed result for the given operation,"
-                      + "so an empty result is being returned. Provided SQL string was '"
-                      + ctx.sql()
-                      + "'");
+          "WARNING: JooqMock could not find a primed result for the given operation,"
+              + "so an empty result is being returned. Provided SQL string was '"
+              + ctx.sql()
+              + "'");
       result = context.newResult();
-    }
-    try {
-      result.toString();
-    } catch (Exception e) {
-      e.printStackTrace();
     }
     return new MockResult(result.size(), result);
   }
