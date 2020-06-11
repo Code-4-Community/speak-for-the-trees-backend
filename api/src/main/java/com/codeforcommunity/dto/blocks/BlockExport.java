@@ -14,10 +14,7 @@ public class BlockExport {
   private int userId;
   private String teamNames;
 
-  /**
-   * Constructor for Block & User query.
-   * User Team names must be set separately.
-   */
+  /** Constructor for Block & User query. User Team names must be set separately. */
   public BlockExport(
       String fid,
       String status,
