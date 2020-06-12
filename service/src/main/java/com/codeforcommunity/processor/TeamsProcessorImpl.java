@@ -12,13 +12,16 @@ import com.codeforcommunity.dto.team.CreateTeamRequest;
 import com.codeforcommunity.dto.team.GetAllTeamsResponse;
 import com.codeforcommunity.dto.team.GetUserTeamsResponse;
 import com.codeforcommunity.dto.team.InviteMembersRequest;
+import com.codeforcommunity.dto.team.TeamApplicant;
 import com.codeforcommunity.dto.team.TeamMember;
 import com.codeforcommunity.dto.team.TeamResponse;
 import com.codeforcommunity.dto.team.TeamSummary;
 import com.codeforcommunity.dto.team.TransferOwnershipRequest;
 import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.TeamRole;
+import com.codeforcommunity.exceptions.ExistingTeamRequestException;
 import com.codeforcommunity.exceptions.NoSuchTeamException;
+import com.codeforcommunity.exceptions.NoSuchTeamRequestException;
 import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
 import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
 import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
@@ -28,6 +31,8 @@ import com.codeforcommunity.requester.Emailer;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record5;
@@ -80,27 +85,130 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
   }
 
   @Override
-  public void joinTeam(JWTData userData, int teamId) {
+  public void applyForTeam(JWTData userData, int teamId) {
+    // Check team exists
+    // Check user isn't already on team or already has a pending application
+    // Add user to team applicants table
 
-    Team teamPojo = db.selectFrom(TEAM).where(TEAM.ID.eq(teamId)).fetchOneInto(Team.class);
-    if (teamPojo == null) {
+    if (!db.fetchExists(TEAM, TEAM.ID.eq(teamId))) {
       throw new NoSuchTeamException(teamId);
     }
 
-    boolean alreadyOnTeam =
-        db.fetchExists(
+    int userId = userData.getUserId();
+    Optional<UserTeamRecord> maybeUserTeam =
+        Optional.ofNullable(
             db.selectFrom(USER_TEAM)
                 .where(USER_TEAM.TEAM_ID.eq(teamId))
-                .and(USER_TEAM.USER_ID.eq(userData.getUserId())));
+                .and(USER_TEAM.USER_ID.eq(userId))
+                .fetchOne());
 
-    if (alreadyOnTeam) {
-      throw new UserAlreadyOnTeamException(userData.getUserId(), teamId);
+    if (maybeUserTeam.isPresent()) {
+      if (maybeUserTeam.get().getTeamRole() == TeamRole.PENDING) {
+        throw new ExistingTeamRequestException(userData.getUserId(), teamId);
+      } else if (maybeUserTeam.get().getTeamRole() != TeamRole.NONE) {
+        throw new UserAlreadyOnTeamException(userData.getUserId(), teamId);
+      }
     }
 
     db.insertInto(USER_TEAM)
-        .columns(USER_TEAM.fields())
-        .values(userData.getUserId(), teamPojo.getId(), TeamRole.MEMBER)
+        .columns(USER_TEAM.TEAM_ID, USER_TEAM.USER_ID, USER_TEAM.TEAM_ROLE)
+        .values(teamId, userId, TeamRole.PENDING)
         .execute();
+  }
+
+  @Override
+  public List<TeamApplicant> getTeamApplicants(JWTData userData, int teamId) {
+    // Check user is a team leader of this team
+    // Get all applicant pojos for this team
+    // Get info for each applicant
+
+    if (!db.fetchExists(
+        USER_TEAM,
+        USER_TEAM
+            .TEAM_ID
+            .eq(teamId)
+            .and(USER_TEAM.TEAM_ROLE.eq(TeamRole.LEADER))
+            .and(USER_TEAM.USER_ID.eq(userData.getUserId())))) {
+      throw new TeamLeaderOnlyRouteException(teamId);
+    }
+
+    List<TeamApplicant> applicants =
+        db.select(USER_TEAM.USER_ID, USERS.USERNAME)
+            .from(USER_TEAM.join(USERS).onKey())
+            .where(USER_TEAM.TEAM_ID.eq(teamId))
+            .and(USER_TEAM.TEAM_ROLE.eq(TeamRole.PENDING))
+            .fetchInto(TeamApplicant.class);
+    return applicants;
+  }
+
+  @Override
+  public void approveTeamRequest(JWTData userData, int teamId, int applicantId) {
+    // Check user is a team leader of this team
+    // Make sure this request exists for this team
+    // Make sure the request's user exists
+    // Add the user to the team
+    // Delete the team application row
+
+    if (!db.fetchExists(
+        USER_TEAM,
+        USER_TEAM
+            .TEAM_ID
+            .eq(teamId)
+            .and(USER_TEAM.TEAM_ROLE.eq(TeamRole.LEADER))
+            .and(USER_TEAM.USER_ID.eq(userData.getUserId())))) {
+      throw new TeamLeaderOnlyRouteException(teamId);
+    }
+
+    UserTeamRecord applicantRecord =
+        db.selectFrom(USER_TEAM)
+            .where(USER_TEAM.TEAM_ID.eq(teamId))
+            .and(USER_TEAM.USER_ID.eq(applicantId))
+            .fetchOne();
+
+    if (applicantRecord == null) {
+      throw new NoSuchTeamRequestException(applicantId, teamId);
+    }
+
+    if (applicantRecord.getTeamRole() != TeamRole.PENDING) {
+      throw new UserAlreadyOnTeamException(applicantId, teamId);
+    }
+
+    applicantRecord.setTeamRole(TeamRole.MEMBER);
+    applicantRecord.store();
+  }
+
+  @Override
+  public void rejectTeamRequest(JWTData userData, int teamId, int applicantId) {
+    // Check user is a team leader of this team
+    // Make sure this request exists for this team
+    // Delete this request from team applicants table
+    // Delete the team application row
+
+    if (!db.fetchExists(
+        USER_TEAM,
+        USER_TEAM
+            .TEAM_ID
+            .eq(teamId)
+            .and(USER_TEAM.TEAM_ROLE.eq(TeamRole.LEADER))
+            .and(USER_TEAM.USER_ID.eq(userData.getUserId())))) {
+      throw new TeamLeaderOnlyRouteException(teamId);
+    }
+
+    UserTeamRecord applicantRecord =
+        db.selectFrom(USER_TEAM)
+            .where(USER_TEAM.TEAM_ID.eq(teamId))
+            .and(USER_TEAM.USER_ID.eq(applicantId))
+            .fetchOne();
+
+    if (applicantRecord == null) {
+      throw new NoSuchTeamRequestException(applicantId, teamId);
+    }
+
+    if (applicantRecord.getTeamRole() != TeamRole.PENDING) {
+      throw new UserAlreadyOnTeamException(applicantId, teamId);
+    }
+
+    applicantRecord.delete();
   }
 
   @Override
@@ -134,12 +242,7 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
             .and(USER_TEAM.TEAM_ID.eq(teamId))
             .fetchOne();
 
-    if (userTeamRecord == null) {
-      // Maybe just ignore?
-      throw new UserNotOnTeamException(userData.getUserId(), teamId);
-    }
-
-    if (userTeamRecord.getTeamRole() != TeamRole.LEADER) {
+    if (userTeamRecord == null || userTeamRecord.getTeamRole() != TeamRole.LEADER) {
       throw new TeamLeaderOnlyRouteException(teamId);
     }
 
@@ -207,8 +310,10 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     List<TeamSummary> teams =
         db.select(TEAM.ID, TEAM.NAME, DSL.count().as("memberCount"), userTeamRole)
             .from(TEAM)
-            .innerJoin(USER_TEAM)
+            .leftJoin(USER_TEAM)
             .on(TEAM.ID.eq(USER_TEAM.TEAM_ID))
+            .where(
+                USER_TEAM.TEAM_ROLE.eq(TeamRole.LEADER).or(USER_TEAM.TEAM_ROLE.eq(TeamRole.MEMBER)))
             .groupBy(TEAM.ID)
             .orderBy(TEAM.NAME.asc())
             .fetchInto(TeamSummary.class);
@@ -222,16 +327,26 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
       throw new NoSuchTeamException(teamId);
     }
     List<TeamMember> teamMembers = getTeamMembers(teamId);
-    int doneBlocks =
-        teamMembers.stream().map(Individual::getBlocksCompleted).reduce(0, Integer::sum);
-    int reservedBlocks =
-        teamMembers.stream().map(Individual::getBlocksReserved).reduce(0, Integer::sum);
     TeamRole userTeamRole =
         teamMembers.stream()
             .filter(tm -> tm.getId() == userData.getUserId())
             .map(TeamMember::getRole)
             .findFirst()
             .orElse(TeamRole.NONE);
+
+    boolean applicantsToReview =
+        userTeamRole.equals(TeamRole.LEADER)
+            && teamMembers.stream().anyMatch(tm -> tm.getRole().equals(TeamRole.PENDING));
+
+    List<TeamMember> activeMembers =
+        teamMembers.stream()
+            .filter(
+                tm -> tm.getRole().equals(TeamRole.MEMBER) || tm.getRole().equals(TeamRole.LEADER))
+            .collect(Collectors.toList());
+    int doneBlocks =
+        teamMembers.stream().map(Individual::getBlocksCompleted).reduce(0, Integer::sum);
+    int reservedBlocks =
+        teamMembers.stream().map(Individual::getBlocksReserved).reduce(0, Integer::sum);
     return new TeamResponse(
         teamPojo.getId(),
         teamPojo.getName(),
@@ -241,14 +356,19 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
         doneBlocks,
         reservedBlocks,
         userTeamRole,
-        teamMembers);
+        applicantsToReview,
+        activeMembers);
   }
 
   @Override
   public GetUserTeamsResponse getUserTeams(JWTData userdata) {
     List<TeamResponse> ret = new ArrayList<TeamResponse>();
     List<UserTeamRecord> userTeamRecords =
-        db.selectFrom(USER_TEAM).where(USER_TEAM.USER_ID.eq(userdata.getUserId())).fetch();
+        db.selectFrom(USER_TEAM)
+            .where(USER_TEAM.USER_ID.eq(userdata.getUserId()))
+            .and(
+                USER_TEAM.TEAM_ROLE.eq(TeamRole.MEMBER).or(USER_TEAM.TEAM_ROLE.eq(TeamRole.LEADER)))
+            .fetch();
 
     for (UserTeamRecord record : userTeamRecords) {
       int teamid = record.getTeamId();

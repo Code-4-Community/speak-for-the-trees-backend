@@ -14,6 +14,7 @@ public class TeamResponse {
   private int blocksCompleted;
   private int blocksReserved;
   private TeamRole userTeamRole;
+  private boolean applicantsToReview;
   List<TeamMember> members;
 
   private TeamResponse() {}
@@ -27,6 +28,7 @@ public class TeamResponse {
       int blocksCompleted,
       int blocksReserved,
       TeamRole userTeamRole,
+      boolean applicantsToReview,
       List<TeamMember> members) {
     this.id = id;
     this.name = name;
@@ -36,6 +38,7 @@ public class TeamResponse {
     this.blocksCompleted = blocksCompleted;
     this.blocksReserved = blocksReserved;
     this.userTeamRole = userTeamRole;
+    this.applicantsToReview = applicantsToReview;
     this.members = members;
   }
 
@@ -69,6 +72,10 @@ public class TeamResponse {
 
   public TeamRole getUserTeamRole() {
     return userTeamRole;
+  }
+
+  public boolean isApplicantsToReview() {
+    return applicantsToReview;
   }
 
   public List<TeamMember> getMembers() {
