@@ -133,7 +133,7 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     }
 
     List<TeamApplicant> applicants =
-        db.select(USER_TEAM.USER_ID, USERS.USERNAME, USERS.FIRST_NAME, USERS.LAST_NAME)
+        db.select(USER_TEAM.USER_ID, USERS.USERNAME)
             .from(USER_TEAM.join(USERS).onKey())
             .where(USER_TEAM.TEAM_ID.eq(teamId))
             .and(USER_TEAM.TEAM_ROLE.eq(TeamRole.PENDING))
