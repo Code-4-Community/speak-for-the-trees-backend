@@ -18,7 +18,6 @@ import com.codeforcommunity.dto.team.TeamResponse;
 import com.codeforcommunity.dto.team.TeamSummary;
 import com.codeforcommunity.dto.team.TransferOwnershipRequest;
 import com.codeforcommunity.enums.BlockStatus;
-import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.ExistingTeamRequestException;
 import com.codeforcommunity.exceptions.NoSuchTeamException;
@@ -335,8 +334,9 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
             .findFirst()
             .orElse(TeamRole.NONE);
 
-    boolean applicantsToReview = userTeamRole.equals(TeamRole.LEADER)
-        && teamMembers.stream().anyMatch(tm -> tm.getRole().equals(TeamRole.PENDING));
+    boolean applicantsToReview =
+        userTeamRole.equals(TeamRole.LEADER)
+            && teamMembers.stream().anyMatch(tm -> tm.getRole().equals(TeamRole.PENDING));
 
     List<TeamMember> activeMembers =
         teamMembers.stream()
