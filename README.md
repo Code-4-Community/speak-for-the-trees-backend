@@ -1,5 +1,7 @@
 # Speak for the Trees Backend
 
+[![Build Status](https://travis-ci.org/Code-4-Community/speak-for-the-trees-backend.svg?branch=master)](https://travis-ci.org/Code-4-Community/speak-for-the-trees-backend)
+
 This project is the Java backend api scaffold for speak-for-the-trees.
 
 #### Start a local postgres database
