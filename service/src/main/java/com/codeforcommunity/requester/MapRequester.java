@@ -41,7 +41,7 @@ public class MapRequester {
    * Makes a request to the ArcGIS mapping service to change the status of the all of the blocks in
    * the given list to the specified new block status.
    *
-   * @param streetIds a list of block FIDs.
+   * @param streetIds a list of block IDS.
    * @param updateTo The block status all blocks should be updated to.
    */
   public void updateStreets(List<String> streetIds, BlockStatus updateTo) {
@@ -55,8 +55,8 @@ public class MapRequester {
 
     JsonArray updateJson = new JsonArray();
     streetIds.forEach(
-        (fid) -> {
-          updateJson.add(JsonObject.mapFrom(new MapRequest(fid, updateTo)));
+        (id) -> {
+          updateJson.add(JsonObject.mapFrom(new MapRequest(id, updateTo)));
         });
 
     Future<Void> updateFuture =
@@ -170,8 +170,8 @@ public class MapRequester {
   private class MapRequest {
     private StreetUpdate attributes;
 
-    public MapRequest(String fid, BlockStatus reserved) {
-      this.attributes = new StreetUpdate(fid, reserved);
+    public MapRequest(String id, BlockStatus reserved) {
+      this.attributes = new StreetUpdate(id, reserved);
     }
 
     public StreetUpdate getAttributes() {
@@ -180,16 +180,16 @@ public class MapRequester {
   }
 
   private class StreetUpdate {
-    private String FID;
+    private String ID;
     private String RESERVED;
 
-    public StreetUpdate(String fid, BlockStatus reserved) {
-      this.FID = fid;
+    public StreetUpdate(String id, BlockStatus reserved) {
+      this.ID = id;
       this.RESERVED = String.valueOf(reserved.getVal());
     }
 
-    public String getFID() {
-      return FID;
+    public String getID() {
+      return ID;
     }
 
     public String getRESERVED() {

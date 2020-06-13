@@ -102,16 +102,13 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
           select(
               id,
               name,
-              completed.FID.as("isCompleted"),
-              inline(null, completed.FID).as("isReserved"));
+              completed.ID.as("isCompleted"),
+              inline(null, completed.ID).as("isReserved"));
       selectedBlock = completed;
     } else {
       selectBase =
           select(
-              id,
-              name,
-              inline(null, reserved.FID).as("isCompleted"),
-              reserved.FID.as("isReserved"));
+              id, name, inline(null, reserved.ID).as("isCompleted"), reserved.ID.as("isReserved"));
       selectedBlock = reserved;
     }
 
