@@ -3,7 +3,8 @@ package com.codeforcommunity.enums;
 public enum TeamRole {
   NONE(0),
   MEMBER(1),
-  LEADER(2);
+  LEADER(2),
+  PENDING(3);
 
   private int val;
 
