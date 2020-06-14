@@ -70,7 +70,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
   @Override
   public BlockResponse releaseBlocks(JWTData jwtData, List<String> blockIds) {
-    Map<BlockStatus, Result<BlockRecord>> brs = getBlocksByStatus(blockIds);
+      Map<BlockStatus, Result<BlockRecord>> brs = getBlocksByStatus(blockIds);
 
     List<String> failures = getInvalidBlockStatusIds(brs, BlockStatus.RESERVED);
 
