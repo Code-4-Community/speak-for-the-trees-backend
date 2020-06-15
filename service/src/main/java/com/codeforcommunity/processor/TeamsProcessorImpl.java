@@ -16,9 +16,12 @@ import com.codeforcommunity.dto.team.TeamApplicant;
 import com.codeforcommunity.dto.team.TeamMember;
 import com.codeforcommunity.dto.team.TeamResponse;
 import com.codeforcommunity.dto.team.TeamSummary;
+import com.codeforcommunity.dto.team.TeamsExport;
 import com.codeforcommunity.dto.team.TransferOwnershipRequest;
 import com.codeforcommunity.enums.BlockStatus;
+import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.enums.TeamRole;
+import com.codeforcommunity.exceptions.AdminOnlyRouteException;
 import com.codeforcommunity.exceptions.ExistingTeamRequestException;
 import com.codeforcommunity.exceptions.NoSuchTeamException;
 import com.codeforcommunity.exceptions.NoSuchTeamRequestException;
@@ -29,7 +32,9 @@ import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import com.codeforcommunity.requester.Emailer;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -60,6 +65,7 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     teamRecord.setBio(teamRequest.getBio());
     teamRecord.setGoal(teamRequest.getGoal());
     teamRecord.setGoalCompletionDate(teamRequest.getGoalCompletionDate());
+    teamRecord.setCreatedTimestamp(new Timestamp(System.currentTimeMillis()));
     teamRecord.store();
 
     Users inviter =
@@ -376,6 +382,57 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     }
 
     return new GetUserTeamsResponse(ret);
+  }
+
+  @Override
+  public String getAllTeamsForExport(JWTData userData) {
+    if (userData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
+      throw new AdminOnlyRouteException();
+    }
+
+    List<TeamsExport> teams = db.selectFrom(TEAM).fetchInto(TeamsExport.class);
+
+    List<TeamsExport> users =
+        db.select(
+                USERS.ID,
+                USER_TEAM.TEAM_ID,
+                USER_TEAM.TEAM_ROLE,
+                USERS.FIRST_NAME,
+                USERS.LAST_NAME,
+                USERS.USERNAME,
+                USERS.EMAIL,
+                USERS.PRIVILEGE_LEVEL,
+                DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).otherwise(0))
+                    .as("blocksReserved"),
+                DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.DONE), 1).otherwise(0))
+                    .as("blocksCompleted"))
+            .from(USER_TEAM)
+            .join(USERS)
+            .on(USERS.ID.eq(USER_TEAM.USER_ID))
+            .leftJoin(BLOCK)
+            .on(USERS.ID.eq(BLOCK.ASSIGNED_TO))
+            .groupBy(
+                USERS.ID,
+                USER_TEAM.TEAM_ID,
+                USER_TEAM.TEAM_ROLE,
+                USERS.FIRST_NAME,
+                USERS.LAST_NAME,
+                USERS.USERNAME,
+                USERS.EMAIL,
+                USERS.PRIVILEGE_LEVEL)
+            .orderBy(USER_TEAM.TEAM_ID)
+            .fetchInto(TeamsExport.class);
+
+    teams.addAll(users);
+    teams.sort(Comparator.comparing(TeamsExport::getTeamId));
+
+    StringBuilder builder = new StringBuilder();
+    builder.append(TeamsExport.getHeaderCSV());
+    for (TeamsExport export : teams) {
+      builder.append(export.getRowCSV());
+    }
+
+    return builder.toString();
   }
 
   private List<TeamMember> getTeamMembers(int teamId) {

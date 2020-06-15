@@ -37,4 +37,6 @@ public interface ITeamsProcessor {
   GetUserTeamsResponse getUserTeams(JWTData userData);
 
   void transferOwnership(JWTData userData, TransferOwnershipRequest request);
+
+  String getAllTeamsForExport(JWTData userData);
 }

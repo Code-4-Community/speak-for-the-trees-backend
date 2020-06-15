@@ -35,6 +35,7 @@ public class TeamsRouter implements IRouter {
 
     registerGetUserTeams(router);
     registerCreate(router);
+    registerExportTeams(router);
     registerApply(router);
     registerGetApplicants(router);
     registerApproveApplicant(router);
@@ -68,6 +69,11 @@ public class TeamsRouter implements IRouter {
   private void registerCreate(Router router) {
     Route createRoute = router.post("/");
     createRoute.handler(this::handleCreateRoute);
+  }
+
+  private void registerExportTeams(Router router) {
+    Route exportRoute = router.get("/export");
+    exportRoute.handler(this::handleExportTeams);
   }
 
   private void registerApply(Router router) {
@@ -233,5 +239,13 @@ public class TeamsRouter implements IRouter {
     processor.transferOwnership(userData, transferOwnershipRequest);
 
     end(ctx.response(), 200);
+  }
+
+  private void handleExportTeams(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+
+    String csvResults = processor.getAllTeamsForExport(userData);
+
+    end(ctx.response(), 200, csvResults, "text/csv");
   }
 }
