@@ -107,10 +107,12 @@ public class TeamsProcessorImplTest {
     assertEquals("ex3@example.com", capturedStrings.get(4));
     assertEquals("Team Member", capturedStrings.get(5));
     List<Users> capturedUsers = usersArgs.getAllValues();
-    // code should be fixed
-    // assertEquals("test", capturedUsers.get(0));
-    //        assertEquals("null", capturedUsers.get(1));
-    //        assertEquals("null", capturedUsers.get(2));
+
+    // code should be fixed in this section
+    assertEquals("test", capturedUsers.get(0));
+    assertEquals("inviter", capturedUsers.get(1));
+    assertEquals("inviter", capturedUsers.get(2));
+
     List<Team> capturedTeam = teamArgs.getAllValues();
     assertEquals("teamName", capturedTeam.get(0).getName());
     assertEquals("teamBio", capturedTeam.get(0).getBio());
