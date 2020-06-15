@@ -1,3 +1,5 @@
+dist: xenial
+os: linux
 language: java
 services:
   - postgresql
@@ -14,6 +16,8 @@ before_install:
   - rm input.properties
   - cd /home/travis/build/Code-4-Community/speak-for-the-trees-backend/
   - psql -c 'create database "speak-for-the-trees";' -U postgres
+# Default installation stage runs everything as below but without spotless:check
+# Tests are run as mvn test -B as part of the "script" stage
 install: mvn spotless:check install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 before_deploy:
   - cd common/src/main/resources/properties/
@@ -41,5 +45,5 @@ deploy:
   on:
     repo: Code-4-Community/speak-for-the-trees-backend
     branch: master
-  skip_cleanup: true
+  cleanup: false
 
