@@ -70,10 +70,10 @@
         </configuration>
         <executions>
           <execution>
-            <id>spotless-check</id>
+            <id>spotless-apply</id>
             <phase>validate</phase>
             <goals>
-              <goal>check</goal>
+              <goal>apply</goal>
             </goals>
           </execution>
         </executions>
