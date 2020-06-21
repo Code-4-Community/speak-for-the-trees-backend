@@ -219,6 +219,31 @@ Gets a list of teams, names, member count.
 }
 ```
 
+## `GET /teams/admin`
+
+Gets a list of teams with their goal data.
+
+### Responses
+
+##### `200 OK`
+
+```json
+{
+  "teams": [
+    {
+      "id": INT,
+      "name": STRING,
+      "goalCompletionDate": TIMESTAMP,
+      "blocksCompleted": INT,
+      "blocksReserved": INT,
+      "goal": INT
+    },
+    ...
+  ],
+  "rowCount": INT
+}
+```
+
 ## `GET /teams/:team_id`
 
 Gets the information for this specific team. Including the members with how many blocks each one has completed and reserved.
