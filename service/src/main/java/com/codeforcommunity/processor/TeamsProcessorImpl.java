@@ -343,7 +343,7 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
             .as("blocksReserved"),
         TEAM.GOAL)
         .from(TEAM)
-        .fullJoin(BLOCK)
+        .leftJoin(BLOCK)
         .on(TEAM.ID.eq(BLOCK.ASSIGNED_TO))
         .groupBy(TEAM.ID)
         .fetchInto(AdminTeamSummary.class);
