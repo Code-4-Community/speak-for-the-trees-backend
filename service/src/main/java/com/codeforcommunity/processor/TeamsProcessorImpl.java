@@ -8,7 +8,9 @@ import static org.jooq.generated.Tables.USER_TEAM;
 import com.codeforcommunity.api.ITeamsProcessor;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blockInfo.Individual;
+import com.codeforcommunity.dto.team.AdminTeamSummary;
 import com.codeforcommunity.dto.team.CreateTeamRequest;
+import com.codeforcommunity.dto.team.GetAllTeamsAdminResponse;
 import com.codeforcommunity.dto.team.GetAllTeamsResponse;
 import com.codeforcommunity.dto.team.GetUserTeamsResponse;
 import com.codeforcommunity.dto.team.InviteMembersRequest;
@@ -324,6 +326,28 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
             .orderBy(TEAM.NAME.asc())
             .fetchInto(TeamSummary.class);
     return new GetAllTeamsResponse(teams, teams.size());
+  }
+
+  @Override
+  public GetAllTeamsAdminResponse getAllTeamsAdmin(JWTData userData) {
+    if (userData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
+      throw new AdminOnlyRouteException();
+    }
+    List<AdminTeamSummary> teams = db.select(
+        TEAM.ID,
+        TEAM.NAME,
+        TEAM.GOAL_COMPLETION_DATE,
+        DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.DONE), 1).else_(0))
+            .as("blocksCompleted"),
+        DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).else_(0))
+            .as("blocksReserved"),
+        TEAM.GOAL)
+        .from(TEAM)
+        .fullJoin(BLOCK)
+        .on(TEAM.ID.eq(BLOCK.ASSIGNED_TO))
+        .groupBy(TEAM.ID)
+        .fetchInto(AdminTeamSummary.class);
+    return new GetAllTeamsAdminResponse(teams, teams.size());
   }
 
   @Override
