@@ -333,20 +333,21 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     if (userData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
       throw new AdminOnlyRouteException();
     }
-    List<AdminTeamSummary> teams = db.select(
-        TEAM.ID,
-        TEAM.NAME,
-        TEAM.GOAL_COMPLETION_DATE,
-        DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.DONE), 1).else_(0))
-            .as("blocksCompleted"),
-        DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).else_(0))
-            .as("blocksReserved"),
-        TEAM.GOAL)
-        .from(TEAM)
-        .leftJoin(BLOCK)
-        .on(TEAM.ID.eq(BLOCK.ASSIGNED_TO))
-        .groupBy(TEAM.ID)
-        .fetchInto(AdminTeamSummary.class);
+    List<AdminTeamSummary> teams =
+        db.select(
+                TEAM.ID,
+                TEAM.NAME,
+                TEAM.GOAL_COMPLETION_DATE,
+                DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.DONE), 1).else_(0))
+                    .as("blocksCompleted"),
+                DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).else_(0))
+                    .as("blocksReserved"),
+                TEAM.GOAL)
+            .from(TEAM)
+            .leftJoin(BLOCK)
+            .on(TEAM.ID.eq(BLOCK.ASSIGNED_TO))
+            .groupBy(TEAM.ID)
+            .fetchInto(AdminTeamSummary.class);
     return new GetAllTeamsAdminResponse(teams, teams.size());
   }
 
