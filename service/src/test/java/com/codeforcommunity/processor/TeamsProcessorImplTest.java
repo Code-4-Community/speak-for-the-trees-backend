@@ -16,15 +16,9 @@ import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.*;
 import com.codeforcommunity.requester.Emailer;
-
-import java.io.OutputStream;
-import java.io.Writer;
 import java.math.BigDecimal;
-import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.*;
-import java.util.Comparator;
-
 import org.jooq.*;
 import org.jooq.exception.*;
 import org.jooq.generated.Tables;
@@ -37,9 +31,6 @@ import org.jooq.impl.DSL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.w3c.dom.Document;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
 
 public class TeamsProcessorImplTest {
   // the JooqMock to use for testing
@@ -58,7 +49,7 @@ public class TeamsProcessorImplTest {
     processor = new TeamsProcessorImpl(mockDb.getContext(), emailer);
   }
 
-  void userCreatingTeam() {
+  void createUser() {
     UsersRecord myUser = mockDb.getContext().newRecord(Tables.USERS);
     myUser.setUsername("kiminusername");
     myUser.setEmail("kimin@example.com");
@@ -86,7 +77,7 @@ public class TeamsProcessorImplTest {
   // successfully create a team
   @Test
   public void testCreateTeam1() {
-    userCreatingTeam();
+    createUser();
     team1();
     mockDb.addEmptyReturn("INSERT");
 
@@ -99,12 +90,16 @@ public class TeamsProcessorImplTest {
         new CreateTeamRequest("teamName", "teamBio", 2, timestamp, emailList);
 
     Record5<Integer, String, BigDecimal, BigDecimal, TeamRole> myUserRecord5 =
-            mockDb.getContext().newRecord(Tables.USERS.ID, Tables.USERS.USERNAME,
-                    DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.DONE), 1).else_(0))
-                            .as("blocksCompleted"),
-                    DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).else_(0))
-                            .as("blocksReserved"),
-                    Tables.USER_TEAM.TEAM_ROLE);
+        mockDb
+            .getContext()
+            .newRecord(
+                Tables.USERS.ID,
+                Tables.USERS.USERNAME,
+                DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.DONE), 1).else_(0))
+                    .as("blocksCompleted"),
+                DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).else_(0))
+                    .as("blocksReserved"),
+                Tables.USER_TEAM.TEAM_ROLE);
     myUserRecord5.values(1, "kiminusername", new BigDecimal(1), new BigDecimal(1), TeamRole.LEADER);
     mockDb.addReturn("SELECT", myUserRecord5);
 
@@ -121,7 +116,8 @@ public class TeamsProcessorImplTest {
         .sendInviteEmail(
             stringArgs.capture(), stringArgs.capture(), usersArgs.capture(), teamArgs.capture());
 
-    // Information on invitation request. The email it is sent to, and the name of the email owner / name of the person
+    // Information on invitation request. The email it is sent to, and the name of the email owner /
+    // name of the person
     // who received the email
     List<String> capturedStrings = stringArgs.getAllValues();
     assertEquals("ex1@example.com", capturedStrings.get(0));
@@ -177,7 +173,7 @@ public class TeamsProcessorImplTest {
   // successfully leaves team
   @Test
   public void testLeaveTeam1() {
-    userCreatingTeam();
+    createUser();
     processor.leaveTeam(jwtData, 5);
     assertEquals(1, mockDb.timesCalled("SELECT"));
   }
@@ -203,7 +199,7 @@ public class TeamsProcessorImplTest {
     userTeamRecord.setTeamId(5);
     userTeamRecord.setUserId(1);
     mockDb.addReturn("SELECT", userTeamRecord);
-    userCreatingTeam();
+    createUser();
 
     jwtData = new JWTData(2, PrivilegeLevel.STANDARD);
     try {
@@ -230,7 +226,7 @@ public class TeamsProcessorImplTest {
     userTeamRecord.setTeamId(5);
     userTeamRecord.setUserId(1);
     mockDb.addReturn("SELECT", userTeamRecord);
-    userCreatingTeam();
+    createUser();
     mockDb.addReturn("SELECT", myTeam);
     mockDb.addReturn("DELETE", myTeam);
 
@@ -310,7 +306,7 @@ public class TeamsProcessorImplTest {
     userTeamRecord.setTeamId(5);
     userTeamRecord.setUserId(1);
     mockDb.addReturn("SELECT", userTeamRecord);
-    userCreatingTeam();
+    createUser();
 
     List<String> emailList = Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com");
     InviteMembersRequest imr = new InviteMembersRequest(emailList, 5);
@@ -357,8 +353,13 @@ public class TeamsProcessorImplTest {
   @Test
   public void testGetAllTeams1() {
     Record4<Integer, String, Integer, TeamRole> myTeam =
-            mockDb.getContext().newRecord(Tables.TEAM.ID, Tables.TEAM.NAME,
-                    DSL.count().as("memberCount"), Tables.USER_TEAM.TEAM_ROLE);
+        mockDb
+            .getContext()
+            .newRecord(
+                Tables.TEAM.ID,
+                Tables.TEAM.NAME,
+                DSL.count().as("memberCount"),
+                Tables.USER_TEAM.TEAM_ROLE);
     myTeam.values(5, "kiminTeam", 1, TeamRole.LEADER);
     mockDb.addReturn("SELECT", myTeam);
 
@@ -367,7 +368,7 @@ public class TeamsProcessorImplTest {
 
     assertEquals(allTeamsResponse.getRowCount(), 1);
 
-  //    List<TeamSummary> tsList = Arrays.asList(ts);
+    //    List<TeamSummary> tsList = Arrays.asList(ts);
     assertEquals(5, allTeamsResponse.getTeams().get(0).getId());
     assertEquals(1, allTeamsResponse.getTeams().get(0).getMemberCount());
     assertEquals("kiminTeam", allTeamsResponse.getTeams().get(0).getName());
@@ -378,25 +379,40 @@ public class TeamsProcessorImplTest {
   @Test
   public void testGetAllTeams2() {
     Record4<Integer, String, Integer, TeamRole> myTeam =
-            mockDb.getContext().newRecord(Tables.TEAM.ID, Tables.TEAM.NAME,
-                    DSL.count().as("memberCount"), Tables.USER_TEAM.TEAM_ROLE);
+        mockDb
+            .getContext()
+            .newRecord(
+                Tables.TEAM.ID,
+                Tables.TEAM.NAME,
+                DSL.count().as("memberCount"),
+                Tables.USER_TEAM.TEAM_ROLE);
     myTeam.values(5, "kiminTeam", 1, TeamRole.LEADER);
 
     Record4<Integer, String, Integer, TeamRole> myTeam2 =
-            mockDb.getContext().newRecord(Tables.TEAM.ID, Tables.TEAM.NAME,
-                    DSL.count().as("memberCount"), Tables.USER_TEAM.TEAM_ROLE);
+        mockDb
+            .getContext()
+            .newRecord(
+                Tables.TEAM.ID,
+                Tables.TEAM.NAME,
+                DSL.count().as("memberCount"),
+                Tables.USER_TEAM.TEAM_ROLE);
     myTeam2.values(3, "connerTeam", 6, TeamRole.MEMBER);
 
     Record4<Integer, String, Integer, TeamRole> myTeam3 =
-            mockDb.getContext().newRecord(Tables.TEAM.ID, Tables.TEAM.NAME,
-                    DSL.count().as("memberCount"), Tables.USER_TEAM.TEAM_ROLE);
+        mockDb
+            .getContext()
+            .newRecord(
+                Tables.TEAM.ID,
+                Tables.TEAM.NAME,
+                DSL.count().as("memberCount"),
+                Tables.USER_TEAM.TEAM_ROLE);
     myTeam3.values(7, "jackTeam", 4, TeamRole.LEADER);
 
     jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
     List<Record4> records = Arrays.asList(myTeam, myTeam2, myTeam3);
     mockDb.addReturn("SELECT", records);
     GetAllTeamsResponse allTeamsResponse =
-            processor.getAllTeams(new JWTData(1, PrivilegeLevel.STANDARD));
+        processor.getAllTeams(new JWTData(1, PrivilegeLevel.STANDARD));
 
     assertEquals(3, allTeamsResponse.getRowCount());
 
@@ -433,12 +449,16 @@ public class TeamsProcessorImplTest {
 
     // calls in getTeamMembers()
     Record5<Integer, String, BigDecimal, BigDecimal, TeamRole> myUserRecord5 =
-            mockDb.getContext().newRecord(Tables.USERS.ID, Tables.USERS.USERNAME,
-                    DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.DONE), 1).else_(0))
-                            .as("blocksCompleted"),
-                    DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).else_(0))
-                            .as("blocksReserved"),
-                    Tables.USER_TEAM.TEAM_ROLE);
+        mockDb
+            .getContext()
+            .newRecord(
+                Tables.USERS.ID,
+                Tables.USERS.USERNAME,
+                DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.DONE), 1).else_(0))
+                    .as("blocksCompleted"),
+                DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).else_(0))
+                    .as("blocksReserved"),
+                Tables.USER_TEAM.TEAM_ROLE);
     myUserRecord5.values(1, "kiminusername", new BigDecimal(1), new BigDecimal(1), TeamRole.LEADER);
     mockDb.addReturn("SELECT", myUserRecord5);
 
@@ -474,11 +494,121 @@ public class TeamsProcessorImplTest {
 
   @Test
   public void testGetUserTeams1() {
+    UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
+    userTeamRecord.setTeamRole(TeamRole.LEADER);
+    userTeamRecord.setTeamId(5);
+    userTeamRecord.setUserId(1);
 
+    mockDb.addReturn("SELECT", userTeamRecord);
+
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+    processor.getUserTeams(jwtData);
+    GetUserTeamsResponse userTeamsResponse = processor.getUserTeams(jwtData);
+
+    assertEquals(5, userTeamsResponse.getTeams().get(0).getId());
+    assertEquals(1, userTeamsResponse.getTeams().get(0).getBio());
+    assertEquals("kiminTeam", userTeamsResponse.getTeams().get(0).getName());
+    assertEquals(TeamRole.LEADER, userTeamsResponse.getTeams().get(0).getUserTeamRole());
+    assertEquals(2, userTeamsResponse.getTeams().get(0).getGoal());
+    assertEquals(TeamRole.LEADER, userTeamsResponse.getTeams().get(0).getBlocksCompleted());
+    assertEquals(TeamRole.LEADER, userTeamsResponse.getTeams().get(0).getBlocksReserved());
+    assertEquals(TeamRole.LEADER, userTeamsResponse.getTeams().get(0).getMembers());
   }
 
   @Test
   public void testTransferOwnership1() {
+    UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
+    userTeamRecord.setTeamRole(TeamRole.LEADER);
+    userTeamRecord.setTeamId(5);
+    userTeamRecord.setUserId(1);
+    mockDb.addReturn("SELECT", userTeamRecord);
 
+    //assertEquals(,);
+  }
+
+  // TeamLeaderOnlyRouteException where currentLeaderTeam == null
+  @Test
+  public void testTransferOwnership2() {
+    createUser();
+    team1();
+    TransferOwnershipRequest tor = new TransferOwnershipRequest(5, 1);
+
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+    try {
+      processor.transferOwnership(jwtData, tor);
+      fail();
+    } catch (TeamLeaderOnlyRouteException e) {
+      assertEquals(e.getTeamId(), 1);
+    }
+  }
+
+  // TeamLeaderOnlyRouteException where currentLeaderTeam.getTeamRole() != TeamRole.LEADER
+  @Test
+  public void testTransferOwnership3() {
+    UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
+    userTeamRecord.setTeamRole(TeamRole.MEMBER);
+    userTeamRecord.setTeamId(5);
+    userTeamRecord.setUserId(2);
+    mockDb.addReturn("SELECT", userTeamRecord);
+
+    createUser();
+    team1();
+    TransferOwnershipRequest tor = new TransferOwnershipRequest(5, 2);
+
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+    try {
+      processor.transferOwnership(jwtData, tor);
+      fail();
+    } catch (TeamLeaderOnlyRouteException e) {
+      assertEquals(e.getTeamId(), 1);
+    }
+  }
+
+  // UserDoesNotExistException
+  @Test
+  public void testTransferOwnership4() {
+    UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
+    userTeamRecord.setTeamRole(TeamRole.LEADER);
+    userTeamRecord.setTeamId(5);
+    userTeamRecord.setUserId(1);
+    mockDb.addReturn("SELECT", userTeamRecord);
+
+    mockDb.addEmptyReturn("SELECT");
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+
+    team1();
+    TransferOwnershipRequest tor = new TransferOwnershipRequest(8, 10);
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+
+    try {
+      processor.transferOwnership(jwtData, tor);
+      fail();
+    } catch (UserDoesNotExistException e) {
+      assertEquals(e.getIdentifierMessage(), "id = 10");
+    }
+  }
+
+  // UserNotOnTeamException
+  @Test
+  public void testTransferOwnership5() {
+    UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
+    userTeamRecord.setTeamRole(TeamRole.LEADER);
+    userTeamRecord.setTeamId(9);
+    userTeamRecord.setUserId(1);
+    mockDb.addReturn("SELECT", userTeamRecord);
+
+    createUser();
+    mockDb.addEmptyReturn("SELECT");
+
+    TransferOwnershipRequest tor = new TransferOwnershipRequest(9, 7);
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+
+    try {
+      processor.transferOwnership(jwtData, tor);
+      fail();
+    } catch (UserNotOnTeamException e) {
+      assertEquals(e.getUserId(), 7);
+      assertEquals(e.getTeamId(), 9);
+    }
   }
 }
