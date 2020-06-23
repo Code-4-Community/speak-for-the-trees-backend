@@ -17,8 +17,8 @@ import org.jooq.Record1;
 import org.jooq.Record4;
 import org.jooq.Result;
 import org.jooq.Select;
+import org.jooq.SelectConnectByStep;
 import org.jooq.SelectFinalStep;
-import org.jooq.SelectJoinStep;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.BeforeEach;
@@ -133,7 +133,11 @@ class BlockInfoProcessorImplTest {
 
   // programmatically builds the sql string that results from the buildSubQueryParts method
   private StringBuilder buildSubQueryPartsString(
-      Table<? extends Record> table, BlockStatus status, boolean isTeam, boolean mainQuery) {
+      Table<? extends Record> table,
+      BlockStatus status,
+      boolean isTeam,
+      boolean mainQuery,
+      Integer itemId) {
     String isCompleted;
     String isReserved;
     String block;
@@ -186,8 +190,14 @@ class BlockInfoProcessorImplTest {
       verificationQuery.append(table.getName() + "\".\"id\" ");
     }
 
-    // build query to end
+    // add block assigned_to and block status
     verificationQuery.append("= " + block + ".\"assigned_to\" and " + block + ".\"status\" = ?)");
+
+    // if itemId is present, add where clause
+    if (itemId != null) {
+      verificationQuery.append(" where \"" + table.getName() + "\".\"id\" = ?");
+    }
+
     return verificationQuery;
   }
 
@@ -195,25 +205,56 @@ class BlockInfoProcessorImplTest {
   @ParameterizedTest
   @EnumSource(BlockStatus.class)
   public void testBuildSubQueryPartsUsers(BlockStatus status) {
-    SelectJoinStep<Record4<Integer, String, String, String>> rawResult =
-        processor.buildSubQueryParts(USERS, status, false);
+    SelectConnectByStep<Record4<Integer, String, String, String>> rawResult =
+        processor.buildSubQueryParts(USERS, status, false, null);
     String verificationQuery =
-        this.buildSubQueryPartsString(USERS, status, false, false).toString();
+        this.buildSubQueryPartsString(USERS, status, false, false, null).toString();
     assertEquals(verificationQuery, rawResult.getSQL());
     assertEquals(1, rawResult.getBindValues().size());
     assertEquals(status, rawResult.getBindValues().get(0));
+  }
+
+  // test that buildSubQueryParts returns the correct sql query for USERS with a provided itemId
+  @Test
+  public void testBuildSubQueryPartsUsersId() {
+    BlockStatus status = BlockStatus.DONE;
+    int itemId = 5;
+    SelectConnectByStep<Record4<Integer, String, String, String>> rawResult =
+        processor.buildSubQueryParts(USERS, status, false, itemId);
+    String verificationQuery =
+        this.buildSubQueryPartsString(USERS, status, false, false, itemId).toString();
+    assertEquals(verificationQuery, rawResult.getSQL());
+    assertEquals(2, rawResult.getBindValues().size());
+    assertEquals(status, rawResult.getBindValues().get(0));
+    assertEquals(itemId, rawResult.getBindValues().get(1));
   }
 
   // test that buildSubQueryParts returns the correct sql query for TEAM
   @ParameterizedTest
   @EnumSource(BlockStatus.class)
   public void testBuildSubQueryPartsTeam(BlockStatus status) {
-    SelectJoinStep<Record4<Integer, String, String, String>> rawResult =
-        processor.buildSubQueryParts(TEAM, status, true);
-    String verificationQuery = this.buildSubQueryPartsString(TEAM, status, true, false).toString();
+    SelectConnectByStep<Record4<Integer, String, String, String>> rawResult =
+        processor.buildSubQueryParts(TEAM, status, true, null);
+    String verificationQuery =
+        this.buildSubQueryPartsString(TEAM, status, true, false, null).toString();
     assertEquals(verificationQuery, rawResult.getSQL());
     assertEquals(1, rawResult.getBindValues().size());
     assertEquals(status, rawResult.getBindValues().get(0));
+  }
+
+  // test that buildSubQueryParts returns the correct sql query for TEAM with a provided itemId
+  @Test
+  public void testBuildSubQueryPartsTeamId() {
+    BlockStatus status = BlockStatus.DONE;
+    int itemId = 5;
+    SelectConnectByStep<Record4<Integer, String, String, String>> rawResult =
+        processor.buildSubQueryParts(TEAM, status, true, itemId);
+    String verificationQuery =
+        this.buildSubQueryPartsString(TEAM, status, true, false, itemId).toString();
+    assertEquals(verificationQuery, rawResult.getSQL());
+    assertEquals(2, rawResult.getBindValues().size());
+    assertEquals(status, rawResult.getBindValues().get(0));
+    assertEquals(itemId, rawResult.getBindValues().get(1));
   }
 
   @ParameterizedTest
@@ -221,7 +262,7 @@ class BlockInfoProcessorImplTest {
   public void testBuildSubQueryPartsInvalidTable(boolean isTeam) {
     String errorMessage = "Table must be TEAM or USERS, was: user_team";
     try {
-      processor.buildSubQueryParts(USER_TEAM, BlockStatus.DONE, isTeam);
+      processor.buildSubQueryParts(USER_TEAM, BlockStatus.DONE, isTeam, null);
     } catch (IllegalArgumentException e) {
       assertEquals(errorMessage, e.getMessage());
     }
@@ -229,11 +270,11 @@ class BlockInfoProcessorImplTest {
 
   // programmatically builds the sql string that results from the buildSubQuery method
   private StringBuilder buildSubQueryString(
-      Table<? extends Record> table, boolean isTeam, boolean mainQuery) {
+      Table<? extends Record> table, boolean isTeam, boolean mainQuery, Integer itemId) {
     StringBuilder result = new StringBuilder("(");
-    result.append(buildSubQueryPartsString(table, BlockStatus.DONE, isTeam, mainQuery));
+    result.append(buildSubQueryPartsString(table, BlockStatus.DONE, isTeam, mainQuery, itemId));
     result.append(") union (");
-    result.append(buildSubQueryPartsString(table, BlockStatus.RESERVED, isTeam, mainQuery));
+    result.append(buildSubQueryPartsString(table, BlockStatus.RESERVED, isTeam, mainQuery, itemId));
     result.append(")");
 
     return result;
@@ -245,8 +286,8 @@ class BlockInfoProcessorImplTest {
   public void testBuildSubQuery(boolean isTeam) {
     Table<? extends Record> table = isTeam ? TEAM : USERS;
     Select<Record4<Integer, String, String, String>> subQuery =
-        processor.buildSubQuery(table, isTeam);
-    String verificationQuery = buildSubQueryString(table, isTeam, false).toString();
+        processor.buildSubQuery(table, isTeam, null);
+    String verificationQuery = buildSubQueryString(table, isTeam, false, null).toString();
 
     assertEquals(verificationQuery, subQuery.getSQL());
     assertEquals(2, subQuery.getBindValues().size());
@@ -259,14 +300,15 @@ class BlockInfoProcessorImplTest {
   public void testBuildSubQueryInvalidTable(boolean isTeam) {
     String errorMessage = "Table must be TEAM or USERS, was: user_team";
     try {
-      processor.buildSubQuery(USER_TEAM, isTeam);
+      processor.buildSubQuery(USER_TEAM, isTeam, null);
     } catch (IllegalArgumentException e) {
       assertEquals(errorMessage, e.getMessage());
     }
   }
 
   // programmatically builds the sql string that results from the composeFullQuery method
-  private StringBuilder buildFullQueryString(Table<? extends Record> table, boolean isTeam) {
+  private StringBuilder buildFullQueryString(
+      Table<? extends Record> table, boolean isTeam, Integer itemId) {
     // create wrapper select statement up to from statement
     StringBuilder result =
         new StringBuilder(
@@ -275,12 +317,12 @@ class BlockInfoProcessorImplTest {
                 + "\", count(\"subQuery\".\"isCompleted\") as \"blocksCompleted\", "
                 + "count(\"subQuery\".\"isReserved\") as \"blocksReserved\" from (");
     // select FROM result of buildSubQueryString
-    result.append(buildSubQueryString(table, isTeam, true));
+    result.append(buildSubQueryString(table, isTeam, true, itemId));
     // finish the rest of the sql query
     result.append(
         ") as \"subQuery\" group by \"id\", \""
             + getNameName(table)
-            + "\" order by \"blocksCompleted\" desc, \"blocksReserved\" desc limit ?");
+            + "\" order by \"blocksCompleted\" desc, \"blocksReserved\" desc");
     return result;
   }
 
@@ -290,14 +332,31 @@ class BlockInfoProcessorImplTest {
   public void testComposeFullQuery(boolean isTeam) {
     Table<? extends Record> table = isTeam ? TEAM : USERS;
     SelectFinalStep<Record4<Integer, String, Integer, Integer>> query =
-        processor.composeFullQuery(table, isTeam);
-    String verificationQuery = buildFullQueryString(table, isTeam).toString();
+        processor.composeFullQuery(table, isTeam, null);
+    String verificationQuery = buildFullQueryString(table, isTeam, null).toString();
 
     assertEquals(verificationQuery, query.getSQL());
-    assertEquals(3, query.getBindValues().size());
+    assertEquals(2, query.getBindValues().size());
     assertEquals(BlockStatus.DONE, query.getBindValues().get(0));
     assertEquals(BlockStatus.RESERVED, query.getBindValues().get(1));
-    assertEquals("10", query.getBindValues().get(2).toString());
+  }
+
+  // test that buildQuery returns the correct sql query for TEAM and USERS with a given itemId
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void testComposeFullQueryId(boolean isTeam) {
+    Table<? extends Record> table = isTeam ? TEAM : USERS;
+    int itemId = 5;
+    SelectFinalStep<Record4<Integer, String, Integer, Integer>> query =
+        processor.composeFullQuery(table, isTeam, itemId);
+    String verificationQuery = buildFullQueryString(table, isTeam, itemId).toString();
+
+    assertEquals(verificationQuery, query.getSQL());
+    assertEquals(4, query.getBindValues().size());
+    assertEquals(BlockStatus.DONE, query.getBindValues().get(0));
+    assertEquals(itemId, query.getBindValues().get(1));
+    assertEquals(BlockStatus.RESERVED, query.getBindValues().get(2));
+    assertEquals(itemId, query.getBindValues().get(3));
   }
 
   @ParameterizedTest
@@ -305,7 +364,7 @@ class BlockInfoProcessorImplTest {
   public void testBuildQueryInvalidTable(boolean isTeam) {
     String errorMessage = "Table must be TEAM or USERS, was: user_team";
     try {
-      processor.composeFullQuery(USER_TEAM, isTeam);
+      processor.composeFullQuery(USER_TEAM, isTeam, null);
     } catch (IllegalArgumentException e) {
       assertEquals(errorMessage, e.getMessage());
     }

@@ -611,4 +611,50 @@ public class TeamsProcessorImplTest {
       assertEquals(e.getTeamId(), 9);
     }
   }
+
+  @Test
+  public void testApproveTeamRequest1() {
+
+  }
+
+  // TeamLeaderOnlyRouteException
+  @Test
+  public void testApproveTeamRequest2() {
+
+  }
+
+  // NoSuchTeamRequestException
+  @Test
+  public void testApproveTeamRequest3() {
+
+  }
+
+  // UserAlreadyOnTeamException
+  @Test
+  public void testApproveTeamRequest4() {
+
+  }
+
+  @Test
+  public void testRejectTeamRequest1() {
+
+  }
+
+  // TeamLeaderOnlyRouteException
+  @Test
+  public void testRejectTeamRequest2() {
+
+  }
+
+  // NoSuchTeamRequestException
+  @Test
+  public void testRejectTeamRequest3() {
+
+  }
+
+  // UserAlreadyOnTeamException
+  @Test
+  public void testRejectTeamRequest4() {
+
+  }
 }

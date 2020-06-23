@@ -215,8 +215,8 @@ public class JooqMock implements MockDataProvider {
               id++;
               return object;
             })
-            .when(context)
-            .newRecord(any(Table.class));
+        .when(context)
+        .newRecord(any(Table.class));
 
     // create the recordReturns object and add the 'UNKNOWN' and 'DROP/CREATE' operations
     this.recordReturns = new HashMap<>();
@@ -256,7 +256,7 @@ public class JooqMock implements MockDataProvider {
   private Result<? extends Record> createResult(List<? extends Record> r) {
     if (r.parallelStream().anyMatch(Objects::isNull)) {
       throw new IllegalArgumentException(
-              "Record in provided list was null. No records " + "should be null in a list of returns.");
+          "Record in provided list was null. No records " + "should be null in a list of returns.");
     }
     if (r.size() == 0) {
       return context.newResult();
@@ -334,11 +334,11 @@ public class JooqMock implements MockDataProvider {
    */
   public void addReturn(Map<String, List<? extends Record>> records) {
     records.forEach(
-            (k, v) -> {
-              for (Record record : v) {
-                addReturn(k, record);
-              }
-            });
+        (k, v) -> {
+          for (Record record : v) {
+            addReturn(k, record);
+          }
+        });
   }
 
   /**
@@ -373,13 +373,13 @@ public class JooqMock implements MockDataProvider {
   public Map<String, List<String>> getSqlStrings() {
     Map<String, List<String>> result = new HashMap<>();
     recordReturns.forEach(
-            (k, v) -> {
-              List<String> opResult = new ArrayList<>();
-              for (List<String> list : v.getSqlStrings()) {
-                opResult.addAll(list);
-              }
-              result.put(k, opResult);
-            });
+        (k, v) -> {
+          List<String> opResult = new ArrayList<>();
+          for (List<String> list : v.getSqlStrings()) {
+            opResult.addAll(list);
+          }
+          result.put(k, opResult);
+        });
     return result;
   }
 
@@ -392,13 +392,13 @@ public class JooqMock implements MockDataProvider {
   public Map<String, List<Object[]>> getSqlBindings() {
     Map<String, List<Object[]>> result = new HashMap<>();
     recordReturns.forEach(
-            (k, v) -> {
-              List<Object[]> opResult = new ArrayList<>();
-              for (List<Object[]> list : v.getSqlBindings()) {
-                opResult.addAll(list);
-              }
-              result.put(k, opResult);
-            });
+        (k, v) -> {
+          List<Object[]> opResult = new ArrayList<>();
+          for (List<Object[]> list : v.getSqlBindings()) {
+            opResult.addAll(list);
+          }
+          result.put(k, opResult);
+        });
     return result;
   }
 
@@ -475,10 +475,10 @@ public class JooqMock implements MockDataProvider {
       result = recordReturns.get(operation).call(ctx);
     } catch (NullPointerException e) {
       System.out.println(
-              "WARNING: JooqMock could not find a primed result for the given operation,"
-                      + "so an empty result is being returned. Provided SQL string was '"
-                      + ctx.sql()
-                      + "'");
+          "WARNING: JooqMock could not find a primed result for the given operation,"
+              + "so an empty result is being returned. Provided SQL string was '"
+              + ctx.sql()
+              + "'");
       result = context.newResult();
     }
     return new MockResult(result.size(), result);
