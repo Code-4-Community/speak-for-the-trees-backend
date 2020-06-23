@@ -1,2 +1,0 @@
-ALTER TABLE block
-    ADD COLUMN updated_timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP;

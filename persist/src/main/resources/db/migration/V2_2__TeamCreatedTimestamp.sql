@@ -1,0 +1,2 @@
+ALTER TABLE team
+    ADD COLUMN created_timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP;

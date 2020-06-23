@@ -146,12 +146,12 @@ class BlockInfoProcessorImplTest {
 
     // get block status sql inserts based off of BlockStatus
     if (status == BlockStatus.DONE) {
-      isCompleted = "\"completed\".\"fid\"";
+      isCompleted = "\"completed\".\"id\"";
       isReserved = "null";
       block = "\"completed\"";
     } else {
       isCompleted = "null";
-      isReserved = "\"reserved\".\"fid\"";
+      isReserved = "\"reserved\".\"id\"";
       block = "\"reserved\"";
     }
 

@@ -69,9 +69,14 @@ public class ApiRouter implements IRouter {
   }
 
   public static void end(HttpServerResponse response, int statusCode, String jsonBody) {
+    end(response, statusCode, jsonBody, "application/json");
+  }
+
+  public static void end(
+      HttpServerResponse response, int statusCode, String jsonBody, String contentType) {
     response
         .setStatusCode(statusCode)
-        .putHeader("Content-Type", "application/json")
+        .putHeader("Content-Type", contentType)
         .putHeader("Access-Control-Allow-Origin", "*")
         .putHeader("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
         .putHeader(
