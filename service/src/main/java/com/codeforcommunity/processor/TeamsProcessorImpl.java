@@ -344,9 +344,14 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
                     .as("blocksReserved"),
                 TEAM.GOAL)
             .from(TEAM)
+            .leftJoin(USER_TEAM)
+            .on(TEAM.ID.eq(USER_TEAM.TEAM_ID))
             .leftJoin(BLOCK)
-            .on(TEAM.ID.eq(BLOCK.ASSIGNED_TO))
+            .on(USER_TEAM.USER_ID.eq(BLOCK.ASSIGNED_TO))
+            .where(
+                USER_TEAM.TEAM_ROLE.eq(TeamRole.LEADER).or(USER_TEAM.TEAM_ROLE.eq(TeamRole.MEMBER)))
             .groupBy(TEAM.ID)
+            .orderBy(TEAM.GOAL_COMPLETION_DATE.asc())
             .fetchInto(AdminTeamSummary.class);
     return new GetAllTeamsAdminResponse(teams, teams.size());
   }
