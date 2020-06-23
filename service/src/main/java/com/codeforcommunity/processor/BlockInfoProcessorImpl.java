@@ -148,13 +148,13 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
    * Builds the subquery. Specifically the
    *
    * <pre>
-   *   SELECT <strong>id</strong>, <strong>name</strong>, fid as completed_raw, null as reserved_raw
+   *   SELECT <strong>id</strong>, <strong>name</strong>, id as completed_raw, null as reserved_raw
    *   FROM <strong>table</strong>
    *   (optional) JOIN user_team ON user_team.team_id = <strong>id</strong>
    *   JOIN block ON block.id = <strong>table</strong>.assigned_to AND block.status = 2
    *   (optional) WHERE <strong>id</strong> = <strong>itemId</strong>
    *   UNION
-   *   SELECT <strong>id</strong>, <strong>name</strong>, null as completed_raw, fid as reserved_raw
+   *   SELECT <strong>id</strong>, <strong>name</strong>, null as completed_raw, id as reserved_raw
    *   FROM <strong>table</strong>
    *   (optional) JOIN user_team ON user_team.team_id = <strong>id</strong>
    *   JOIN block ON block.id = <strong>table</strong>.assigned_to AND block.status = 1
@@ -227,11 +227,11 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
    *
    * <pre>
    * SELECT id, username, COUNT(completed_raw) AS completed, COUNT(reserved_raw) AS reserved
-   * FROM (SELECT uc.id, uc.username, c.fid AS completed_raw, null AS reserved_raw
+   * FROM (SELECT uc.id, uc.username, c.id AS completed_raw, null AS reserved_raw
    * FROM team uc
    * JOIN block c ON uc.id = c.assigned_to AND c.status = 2
    * UNION
-   * SELECT ur.id, ur.username, null AS completed_raw, r.fid AS reserved_raw
+   * SELECT ur.id, ur.username, null AS completed_raw, r.id AS reserved_raw
    * FROM users ur
    * JOIN block r ON ur.id = r.assigned_to AND r.status = 1) s
    * GROUP BY id, username
@@ -250,11 +250,11 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
    *
    * <pre>
    * SELECT id, name, COUNT(completed_raw) AS completed, COUNT(reserved_raw) AS reserved
-   * FROM (SELECT tc.id, tc.name, c.fid AS completed_raw, null AS reserved_raw
+   * FROM (SELECT tc.id, tc.name, c.id AS completed_raw, null AS reserved_raw
    * FROM team tc
    * JOIN block c ON uc.id = c.assigned_to AND c.status = 2
    * UNION
-   * SELECT tr.id, tr.name, null AS completed_raw, r.fid AS reserved_raw
+   * SELECT tr.id, tr.name, null AS completed_raw, r.id AS reserved_raw
    * FROM users tr
    * JOIN block r ON tr.id = r.assigned_to AND r.status = 1) s
    * GROUP BY id, name
@@ -273,11 +273,11 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
    *
    * <pre>
    * SELECT id, username, COUNT(completed_raw) AS completed, COUNT(reserved_raw) AS reserved
-   * FROM (SELECT uc.id, uc.username, c.fid AS completed_raw, null AS reserved_raw
+   * FROM (SELECT uc.id, uc.username, c.id AS completed_raw, null AS reserved_raw
    * FROM team uc
    * JOIN block c ON uc.id = c.assigned_to AND c.status = 2
    * UNION
-   * SELECT ur.id, ur.username, null AS completed_raw, r.fid AS reserved_raw
+   * SELECT ur.id, ur.username, null AS completed_raw, r.id AS reserved_raw
    * FROM users ur
    * JOIN block r ON ur.id = r.assigned_to AND r.status = 1) s
    * GROUP BY id, username
@@ -296,11 +296,11 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
    *
    * <pre>
    * SELECT id, name, COUNT(completed_raw) AS completed, COUNT(reserved_raw) AS reserved
-   * FROM (SELECT tc.id, tc.name, c.fid AS completed_raw, null AS reserved_raw
+   * FROM (SELECT tc.id, tc.name, c.id AS completed_raw, null AS reserved_raw
    * FROM team tc
    * JOIN block c ON uc.id = c.assigned_to AND c.status = 2
    * UNION
-   * SELECT tr.id, tr.name, null AS completed_raw, r.fid AS reserved_raw
+   * SELECT tr.id, tr.name, null AS completed_raw, r.id AS reserved_raw
    * FROM users tr
    * JOIN block r ON tr.id = r.assigned_to AND r.status = 1) s
    * GROUP BY id, name
@@ -318,11 +318,11 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
    *
    * <pre>
    * SELECT id, username, COUNT(completed_raw) AS completed, COUNT(reserved_raw) AS reserved
-   * FROM (SELECT uc.id, uc.username, c.fid AS completed_raw, null AS reserved_raw
+   * FROM (SELECT uc.id, uc.username, c.id AS completed_raw, null AS reserved_raw
    * FROM team uc
    * JOIN block c ON uc.id = c.assigned_to AND c.status = 2
    * UNION
-   * SELECT ur.id, ur.username, null AS completed_raw, r.fid AS reserved_raw
+   * SELECT ur.id, ur.username, null AS completed_raw, r.id AS reserved_raw
    * FROM users ur
    * JOIN block r ON ur.id = r.assigned_to AND r.status = 1) s
    * GROUP BY id, username
@@ -342,11 +342,11 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
    *
    * <pre>
    * SELECT id, name, COUNT(completed_raw) AS completed, COUNT(reserved_raw) AS reserved
-   * FROM (SELECT tc.id, tc.name, c.fid AS completed_raw, null AS reserved_raw
+   * FROM (SELECT tc.id, tc.name, c.id AS completed_raw, null AS reserved_raw
    * FROM team tc
    * JOIN block c ON uc.id = c.assigned_to AND c.status = 2
    * UNION
-   * SELECT tr.id, tr.name, null AS completed_raw, r.fid AS reserved_raw
+   * SELECT tr.id, tr.name, null AS completed_raw, r.id AS reserved_raw
    * FROM users tr
    * JOIN block r ON tr.id = r.assigned_to AND r.status = 1) s
    * GROUP BY id, name

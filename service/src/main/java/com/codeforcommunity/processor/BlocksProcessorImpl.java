@@ -149,9 +149,9 @@ public class BlocksProcessorImpl implements IBlockProcessor {
       throw new AdminOnlyRouteException();
     }
 
-    List<String> blockFids = db.selectFrom(BLOCK).fetch(BLOCK.ID);
-    for (int i = 0; i < blockFids.size(); i += 3000) {
-      List<String> sublist = blockFids.subList(i, Math.min(blockFids.size(), i + 3000));
+    List<String> blockIds = db.selectFrom(BLOCK).fetch(BLOCK.ID);
+    for (int i = 0; i < blockIds.size(); i += 3000) {
+      List<String> sublist = blockIds.subList(i, Math.min(blockIds.size(), i + 3000));
       mapRequester.updateStreets(sublist, BlockStatus.OPEN);
     }
     db.update(BLOCK).set(BLOCK.STATUS, BlockStatus.OPEN).execute();
@@ -161,7 +161,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
   public String getBlockExportCSV(JWTData jwtData) {
     List<BlockExport> blockExports =
         db.select(
-                BLOCK.FID,
+                BLOCK.ID,
                 BLOCK.STATUS,
                 BLOCK.UPDATED_TIMESTAMP,
                 USERS.FIRST_NAME,
