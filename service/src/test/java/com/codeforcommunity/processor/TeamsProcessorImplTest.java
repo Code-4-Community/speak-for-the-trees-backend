@@ -409,7 +409,7 @@ public class TeamsProcessorImplTest {
     myTeam3.values(7, "jackTeam", 4, TeamRole.LEADER);
 
     jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
-    List<Record4> records = Arrays.asList(myTeam, myTeam2, myTeam3);
+    List<Record> records = Arrays.asList(myTeam, myTeam2, myTeam3);
     mockDb.addReturn("SELECT", records);
     GetAllTeamsResponse allTeamsResponse =
         processor.getAllTeams(new JWTData(1, PrivilegeLevel.STANDARD));
@@ -523,7 +523,7 @@ public class TeamsProcessorImplTest {
     userTeamRecord.setUserId(1);
     mockDb.addReturn("SELECT", userTeamRecord);
 
-    //assertEquals(,);
+    assertEquals(1,2);
   }
 
   // TeamLeaderOnlyRouteException where currentLeaderTeam == null
@@ -594,7 +594,7 @@ public class TeamsProcessorImplTest {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.LEADER);
     userTeamRecord.setTeamId(9);
-    userTeamRecord.setUserId(1);
+    userTeamRecord.setUserId(18);
     mockDb.addReturn("SELECT", userTeamRecord);
 
     createUser();
@@ -614,47 +614,211 @@ public class TeamsProcessorImplTest {
 
   @Test
   public void testApproveTeamRequest1() {
+    UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
+    userTeamRecord.setTeamRole(TeamRole.PENDING);
+    userTeamRecord.setTeamId(5);
+    userTeamRecord.setUserId(3);
+    mockDb.addReturn("SELECT", userTeamRecord);
+    mockDb.addReturn("SELECT", userTeamRecord);
 
+    jwtData = new JWTData(3, PrivilegeLevel.STANDARD);
+    processor.approveTeamRequest(jwtData, 5, 3);
+
+    assertEquals(2, mockDb.timesCalled("SELECT"));
   }
 
   // TeamLeaderOnlyRouteException
   @Test
   public void testApproveTeamRequest2() {
-
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+    try {
+      processor.approveTeamRequest(jwtData, 9, 2);
+      fail();
+    } catch (TeamLeaderOnlyRouteException e) {
+      assertEquals(e.getTeamId(), 9);
+    }
   }
 
   // NoSuchTeamRequestException
   @Test
   public void testApproveTeamRequest3() {
-
+    UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
+    userTeamRecord.setTeamRole(TeamRole.LEADER);
+    userTeamRecord.setTeamId(5);
+    userTeamRecord.setUserId(3);
+    mockDb.addReturn("SELECT", userTeamRecord);
+    mockDb.addEmptyReturn("SELECT");
+    jwtData = new JWTData(8, PrivilegeLevel.STANDARD);
+    try {
+      processor.approveTeamRequest(jwtData, 1, 8);
+      fail();
+    } catch (NoSuchTeamRequestException e) {
+      assertEquals(e.getTeamId(), 1);
+    }
   }
 
   // UserAlreadyOnTeamException
   @Test
   public void testApproveTeamRequest4() {
-
+    UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
+    userTeamRecord.setTeamRole(TeamRole.LEADER);
+    userTeamRecord.setTeamId(5);
+    userTeamRecord.setUserId(8);
+    mockDb.addReturn("SELECT", userTeamRecord);
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+    try {
+      processor.approveTeamRequest(jwtData, 9, 2);
+      fail();
+    } catch (UserAlreadyOnTeamException e) {
+      assertEquals(e.getTeamId(), 9);
+    }
   }
 
   @Test
   public void testRejectTeamRequest1() {
+    UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
+    userTeamRecord.setTeamRole(TeamRole.PENDING);
+    userTeamRecord.setTeamId(5);
+    userTeamRecord.setUserId(3);
+    mockDb.addReturn("SELECT", userTeamRecord);
+    mockDb.addReturn("SELECT", userTeamRecord);
+    mockDb.addEmptyReturn("DELETE");
 
+    jwtData = new JWTData(3, PrivilegeLevel.STANDARD);
+    processor.rejectTeamRequest(jwtData, 5, 3);
+
+    assertEquals(2, mockDb.timesCalled("SELECT"));
+    assertEquals(1, mockDb.timesCalled("DELETE"));
   }
 
   // TeamLeaderOnlyRouteException
   @Test
   public void testRejectTeamRequest2() {
-
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+    try {
+      processor.rejectTeamRequest(jwtData, 9, 2);
+      fail();
+    } catch (TeamLeaderOnlyRouteException e) {
+      assertEquals(e.getTeamId(), 9);
+    }
   }
 
   // NoSuchTeamRequestException
   @Test
   public void testRejectTeamRequest3() {
-
+    UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
+    userTeamRecord.setTeamRole(TeamRole.LEADER);
+    userTeamRecord.setTeamId(5);
+    userTeamRecord.setUserId(3);
+    mockDb.addReturn("SELECT", userTeamRecord);
+    mockDb.addEmptyReturn("SELECT");
+    jwtData = new JWTData(8, PrivilegeLevel.STANDARD);
+    try {
+      processor.rejectTeamRequest(jwtData, 1, 8);
+      fail();
+    } catch (NoSuchTeamRequestException e) {
+      assertEquals(e.getTeamId(), 1);
+    }
   }
 
   // UserAlreadyOnTeamException
   @Test
   public void testRejectTeamRequest4() {
+    UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
+    userTeamRecord.setTeamRole(TeamRole.LEADER);
+    userTeamRecord.setTeamId(5);
+    userTeamRecord.setUserId(8);
+    mockDb.addReturn("SELECT", userTeamRecord);
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+    try {
+      processor.rejectTeamRequest(jwtData, 9, 2);
+      fail();
+    } catch (UserAlreadyOnTeamException e) {
+      assertEquals(e.getTeamId(), 9);
+    }
+  }
 
+  @Test
+  public void testApplyForTeam1() {
+    team1();
+    mockDb.addEmptyReturn("SELECT");
+    mockDb.addEmptyReturn("INSERT");
+
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+    processor.applyForTeam(jwtData, 5);
+
+    assertEquals(2, mockDb.timesCalled("SELECT"));
+    assertEquals(1, mockDb.timesCalled("INSERT"));
+  }
+
+  // NoSuchTeamException
+  @Test
+  public void testApplyForTeam2() {
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+    try {
+      processor.applyForTeam(jwtData, 3);
+      fail();
+    } catch (NoSuchTeamException e) {
+      assertEquals(e.getTeamId(), 3);
+    }
+  }
+
+  // UserAlreadyOnTeamException
+  @Test
+  public void testApplyForTeam3() {
+    UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
+    userTeamRecord.setTeamRole(TeamRole.LEADER);
+    userTeamRecord.setTeamId(5);
+    userTeamRecord.setUserId(1);
+    mockDb.addReturn("SELECT", userTeamRecord);
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+    try {
+      processor.applyForTeam(jwtData, 5);
+      fail();
+    } catch (UserAlreadyOnTeamException e) {
+      assertEquals(e.getTeamId(), 5);
+    }
+  }
+
+  // ExistingTeamRequestException
+  @Test
+  public void testApplyForTeam4() {
+    UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
+    userTeamRecord.setTeamRole(TeamRole.PENDING);
+    userTeamRecord.setTeamId(5);
+    userTeamRecord.setUserId(1);
+    mockDb.addReturn("SELECT", userTeamRecord);
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+    try {
+      processor.applyForTeam(jwtData, 5);
+      fail();
+    } catch (ExistingTeamRequestException e) {
+      assertEquals(e.getTeamId(), 5);
+    }
+  }
+
+  @Test
+  public void testGetTeamApplicants1() {
+    Record2<Integer, String> myTeam = mockDb.getContext().newRecord(Tables.USER_TEAM.USER_ID, Tables.USERS.USERNAME);
+    myTeam.values(1, "kiminUsername");
+    mockDb.addReturn("SELECT", myTeam);
+
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+    List<TeamApplicant> teamApplicantList = processor.getTeamApplicants(jwtData, 5);
+    assertEquals(1, teamApplicantList.get(0).getUserId());
+    assertEquals("kiminUsername", teamApplicantList.get(0).getUsername());
+  }
+
+  // TeamLeaderOnlyRouteException
+  @Test
+  public void testGetTeamApplicants2() {
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+
+    try {
+      processor.getTeamApplicants(jwtData, 5);
+      fail();
+    } catch (TeamLeaderOnlyRouteException e) {
+      assertEquals(e.getTeamId(), 5);
+    }
   }
 }
