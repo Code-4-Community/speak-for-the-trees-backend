@@ -46,7 +46,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.RESERVED, jwtData.getUserId());
 
     List<String> successfulBlockIds =
-        brs.getOrDefault(BlockStatus.OPEN, db.newResult(BLOCK)).map(BlockRecord::getFid);
+        brs.getOrDefault(BlockStatus.OPEN, db.newResult(BLOCK)).map(BlockRecord::getId);
     mapRequester.updateStreets(successfulBlockIds, BlockStatus.RESERVED);
 
     return new BlockResponse(successfulBlockIds, failures);
@@ -65,7 +65,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.DONE, jwtData.getUserId());
 
     List<String> successfulBlockIds =
-        eligibleBlocks.stream().map(BlockRecord::getFid).collect(Collectors.toList());
+        eligibleBlocks.stream().map(BlockRecord::getId).collect(Collectors.toList());
     mapRequester.updateStreets(successfulBlockIds, BlockStatus.DONE);
 
     return new BlockResponse(successfulBlockIds, failures);
@@ -84,7 +84,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.OPEN, jwtData.getUserId());
 
     List<String> successfulBlockIds =
-        eligibleBlocks.stream().map(BlockRecord::getFid).collect(Collectors.toList());
+        eligibleBlocks.stream().map(BlockRecord::getId).collect(Collectors.toList());
     mapRequester.updateStreets(successfulBlockIds, BlockStatus.OPEN);
 
     return new BlockResponse(successfulBlockIds, failures);
@@ -103,7 +103,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.OPEN, jwtData.getUserId());
 
     List<String> successfulBlockIds =
-        eligibleBlocks.stream().map(BlockRecord::getFid).collect(Collectors.toList());
+        eligibleBlocks.stream().map(BlockRecord::getId).collect(Collectors.toList());
     mapRequester.updateStreets(successfulBlockIds, BlockStatus.OPEN);
 
     return new BlockResponse(successfulBlockIds, failures);
@@ -112,7 +112,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
   @Override
   public List<String> getUserReservedBlocks(JWTData jwtData, boolean includeDone) {
     return getUserReservedBlocks(jwtData.getUserId(), includeDone).stream()
-        .map(BlockRecord::getFid)
+        .map(BlockRecord::getId)
         .collect(Collectors.toList());
   }
 
@@ -134,7 +134,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
   private GetAssignedBlocksResponse getAssignedBlocksWithStatus(BlockStatus status) {
     return new GetAssignedBlocksResponse(
-        db.select(BLOCK.FID, USERS.USERNAME, BLOCK.UPDATED_TIMESTAMP)
+        db.select(BLOCK.ID, USERS.USERNAME, BLOCK.UPDATED_TIMESTAMP)
             .from(BLOCK)
             .innerJoin(USERS)
             .on(BLOCK.ASSIGNED_TO.eq(USERS.ID))
@@ -149,7 +149,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
       throw new AdminOnlyRouteException();
     }
 
-    List<String> blockFids = db.selectFrom(BLOCK).fetch(BLOCK.FID);
+    List<String> blockFids = db.selectFrom(BLOCK).fetch(BLOCK.ID);
     for (int i = 0; i < blockFids.size(); i += 3000) {
       List<String> sublist = blockFids.subList(i, Math.min(blockFids.size(), i + 3000));
       mapRequester.updateStreets(sublist, BlockStatus.OPEN);
@@ -199,7 +199,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
    * Given a list of block ids, return the corresponding block records separated by block status.
    */
   private Map<BlockStatus, Result<BlockRecord>> getBlocksByStatus(List<String> blockIds) {
-    return db.selectFrom(BLOCK).where(BLOCK.FID.in(blockIds)).fetchGroups(BLOCK.STATUS);
+    return db.selectFrom(BLOCK).where(BLOCK.ID.in(blockIds)).fetchGroups(BLOCK.STATUS);
   }
 
   /** Get the list of block ids from the given Map that are not in the correct state. */
@@ -209,7 +209,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     blocks.forEach(
         (blockStatus, blockRecordResult) -> {
           if (!blockStatus.equals(validBlockStatus)) {
-            failures.addAll(blockRecordResult.map(BlockRecord::getFid));
+            failures.addAll(blockRecordResult.map(BlockRecord::getId));
           }
         });
     return failures;
@@ -231,7 +231,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
           if (blockRecord.getAssignedTo().equals(userData.getUserId())) {
             eligibleBlocks.add(blockRecord);
           } else {
-            failures.add(blockRecord.getFid());
+            failures.add(blockRecord.getId());
           }
         });
     return eligibleBlocks;
