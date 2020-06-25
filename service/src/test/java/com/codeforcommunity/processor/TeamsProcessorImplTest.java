@@ -1,6 +1,8 @@
 package com.codeforcommunity.processor;
 
-import static org.jooq.generated.Tables.BLOCK;
+import static io.vertx.ext.web.client.predicate.ResponsePredicateResult.success;
+import static org.jooq.generated.Tables.*;
+import static org.jooq.generated.Tables.USERS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -70,6 +72,7 @@ public class TeamsProcessorImplTest {
     myTeam.setBio("bioTeam");
     myTeam.setGoal(2);
     Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+    myTeam.setCreatedTimestamp(timestamp);
     myTeam.setGoalCompletionDate(timestamp);
     mockDb.addReturn("SELECT", myTeam);
   }
@@ -459,7 +462,7 @@ public class TeamsProcessorImplTest {
                 DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).else_(0))
                     .as("blocksReserved"),
                 Tables.USER_TEAM.TEAM_ROLE);
-    myUserRecord5.values(1, "kiminusername", new BigDecimal(1), new BigDecimal(1), TeamRole.LEADER);
+    myUserRecord5.values(1, "kiminUsername", new BigDecimal(1), new BigDecimal(1), TeamRole.LEADER);
     mockDb.addReturn("SELECT", myUserRecord5);
 
     jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
@@ -473,7 +476,7 @@ public class TeamsProcessorImplTest {
     assertEquals(TeamRole.LEADER, teamResponse.getUserTeamRole());
     assertEquals(1, teamResponse.getBlocksReserved());
     assertEquals(1, teamResponse.getBlocksCompleted());
-    assertEquals("kiminusername", teamResponse.getMembers().get(0).getUsername());
+    assertEquals("kiminUsername", teamResponse.getMembers().get(0).getUsername());
     assertEquals(TeamRole.LEADER, teamResponse.getMembers().get(0).getRole());
     assertEquals(1, teamResponse.getMembers().get(0).getBlocksCompleted());
     assertEquals(1, teamResponse.getMembers().get(0).getBlocksReserved());
@@ -498,21 +501,51 @@ public class TeamsProcessorImplTest {
     userTeamRecord.setTeamRole(TeamRole.LEADER);
     userTeamRecord.setTeamId(5);
     userTeamRecord.setUserId(1);
-
     mockDb.addReturn("SELECT", userTeamRecord);
 
+    TeamRecord myTeam = mockDb.getContext().newRecord(Tables.TEAM);
+    myTeam.setId(5);
+    myTeam.setName("teamKimin");
+    myTeam.setBio("bioTeam");
+    myTeam.setGoal(2);
+    Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+    myTeam.setGoalCompletionDate(timestamp);
+    mockDb.addReturn("SELECT", myTeam);
+
+    Record5<Integer, String, BigDecimal, BigDecimal, TeamRole> myUserRecord5 =
+        mockDb
+            .getContext()
+            .newRecord(
+                Tables.USERS.ID,
+                Tables.USERS.USERNAME,
+                DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.DONE), 1).else_(0))
+                    .as("blocksCompleted"),
+                DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).else_(0))
+                    .as("blocksReserved"),
+                Tables.USER_TEAM.TEAM_ROLE);
+    myUserRecord5.values(1, "kiminUsername", new BigDecimal(1), new BigDecimal(1), TeamRole.LEADER);
+    mockDb.addReturn("SELECT", myUserRecord5);
+
     jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
-    processor.getUserTeams(jwtData);
     GetUserTeamsResponse userTeamsResponse = processor.getUserTeams(jwtData);
 
+    // getTeams
     assertEquals(5, userTeamsResponse.getTeams().get(0).getId());
-    assertEquals(1, userTeamsResponse.getTeams().get(0).getBio());
-    assertEquals("kiminTeam", userTeamsResponse.getTeams().get(0).getName());
+    assertEquals("bioTeam", userTeamsResponse.getTeams().get(0).getBio());
+    assertEquals("teamKimin", userTeamsResponse.getTeams().get(0).getName());
     assertEquals(TeamRole.LEADER, userTeamsResponse.getTeams().get(0).getUserTeamRole());
     assertEquals(2, userTeamsResponse.getTeams().get(0).getGoal());
-    assertEquals(TeamRole.LEADER, userTeamsResponse.getTeams().get(0).getBlocksCompleted());
-    assertEquals(TeamRole.LEADER, userTeamsResponse.getTeams().get(0).getBlocksReserved());
-    assertEquals(TeamRole.LEADER, userTeamsResponse.getTeams().get(0).getMembers());
+    assertEquals(1, userTeamsResponse.getTeams().get(0).getBlocksCompleted());
+    assertEquals(1, userTeamsResponse.getTeams().get(0).getBlocksReserved());
+
+    // getMembers
+    assertEquals(1, userTeamsResponse.getTeams().get(0).getMembers().get(0).getId());
+    assertEquals(1, userTeamsResponse.getTeams().get(0).getMembers().get(0).getBlocksReserved());
+    assertEquals(1, userTeamsResponse.getTeams().get(0).getMembers().get(0).getBlocksCompleted());
+    assertEquals(
+        TeamRole.LEADER, userTeamsResponse.getTeams().get(0).getMembers().get(0).getRole());
+    assertEquals(
+        "kiminUsername", userTeamsResponse.getTeams().get(0).getMembers().get(0).getUsername());
   }
 
   @Test
@@ -523,7 +556,18 @@ public class TeamsProcessorImplTest {
     userTeamRecord.setUserId(1);
     mockDb.addReturn("SELECT", userTeamRecord);
 
-    assertEquals(1,2);
+    userTeamRecord.setTeamRole(TeamRole.MEMBER);
+    mockDb.addReturn("UPDATE", userTeamRecord);
+    userTeamRecord.setTeamRole(TeamRole.LEADER);
+    mockDb.addReturn("UPDATE", userTeamRecord);
+
+    TransferOwnershipRequest tor = new TransferOwnershipRequest(5, 2);
+
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+    processor.transferOwnership(jwtData, tor);
+    // 3 from fetchExist calls
+    assertEquals(3, mockDb.timesCalled("SELECT"));
+    assertEquals(2, mockDb.timesCalled("UPDATE"));
   }
 
   // TeamLeaderOnlyRouteException where currentLeaderTeam == null
@@ -799,7 +843,8 @@ public class TeamsProcessorImplTest {
 
   @Test
   public void testGetTeamApplicants1() {
-    Record2<Integer, String> myTeam = mockDb.getContext().newRecord(Tables.USER_TEAM.USER_ID, Tables.USERS.USERNAME);
+    Record2<Integer, String> myTeam =
+        mockDb.getContext().newRecord(Tables.USER_TEAM.USER_ID, Tables.USERS.USERNAME);
     myTeam.values(1, "kiminUsername");
     mockDb.addReturn("SELECT", myTeam);
 
@@ -819,6 +864,83 @@ public class TeamsProcessorImplTest {
       fail();
     } catch (TeamLeaderOnlyRouteException e) {
       assertEquals(e.getTeamId(), 5);
+    }
+  }
+
+  @Test
+  public void testGetAllTeamsForExport1() {
+    team1();
+
+    Record10<
+            Integer,
+            Integer,
+            TeamRole,
+            String,
+            String,
+            String,
+            String,
+            PrivilegeLevel,
+            BigDecimal,
+            BigDecimal>
+        selected =
+            mockDb
+                .getContext()
+                .newRecord(
+                    Tables.USERS.ID,
+                    Tables.USER_TEAM.TEAM_ID,
+                    USER_TEAM.TEAM_ROLE,
+                    USERS.FIRST_NAME,
+                    USERS.LAST_NAME,
+                    USERS.USERNAME,
+                    USERS.EMAIL,
+                    USERS.PRIVILEGE_LEVEL,
+                    DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.RESERVED), 1).otherwise(0))
+                        .as("blocksReserved"),
+                    DSL.sum(DSL.when(BLOCK.STATUS.eq(BlockStatus.DONE), 1).otherwise(0))
+                        .as("blocksCompleted"));
+    selected.values(
+        1,
+        5,
+        TeamRole.LEADER,
+        "Kimin",
+        "Lee",
+        "kiminUsername",
+        "kimin@example.com",
+        PrivilegeLevel.ADMIN,
+        new BigDecimal(6),
+        new BigDecimal(6));
+    mockDb.addReturn("SELECT", selected);
+
+    jwtData = new JWTData(1, PrivilegeLevel.ADMIN);
+    String allTeamsForExport = processor.getAllTeamsForExport(jwtData);
+
+    // USER_TEAM
+    assertEquals(true, allTeamsForExport.contains("1"));
+    assertEquals(true, allTeamsForExport.contains("5"));
+    assertEquals(true, allTeamsForExport.contains("LEADER"));
+    assertEquals(true, allTeamsForExport.contains("Kimin"));
+    assertEquals(true, allTeamsForExport.contains("Lee"));
+    assertEquals(true, allTeamsForExport.contains("kiminUsername"));
+    assertEquals(true, allTeamsForExport.contains("kimin@example.com"));
+    assertEquals(true, allTeamsForExport.contains("ADMIN"));
+    assertEquals(true, allTeamsForExport.contains("6"));
+    assertEquals(true, allTeamsForExport.contains("6"));
+
+    // TEAM
+    assertEquals(true, allTeamsForExport.contains("teamKimin"));
+    assertEquals(true, allTeamsForExport.contains("bioTeam"));
+    assertEquals(true, allTeamsForExport.contains("2"));
+  }
+
+  // AdminOnlyRouteException
+  @Test
+  public void testGetAllTeamsForExport2() {
+    jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
+    try {
+      processor.getAllTeamsForExport(jwtData);
+      fail();
+    } catch (AdminOnlyRouteException e) {
+      success();
     }
   }
 }
