@@ -45,5 +45,5 @@ deploy:
   on:
     repo: Code-4-Community/speak-for-the-trees-backend
     branch: master
-  cleanup: false
+  skip_cleanup: true
 
