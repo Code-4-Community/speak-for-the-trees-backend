@@ -46,7 +46,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.RESERVED, jwtData.getUserId());
 
     List<String> successfulBlockIds =
-        brs.getOrDefault(BlockStatus.OPEN, db.newResult(BLOCK)).map(BlockRecord::getId);
+        brs.getOrDefault(BlockStatus.OPEN, db.newResult(BLOCK)).map(BlockRecord::getFid);
     mapRequester.updateStreets(successfulBlockIds, BlockStatus.RESERVED);
 
     return new BlockResponse(successfulBlockIds, failures);
@@ -65,7 +65,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.DONE, jwtData.getUserId());
 
     List<String> successfulBlockIds =
-        eligibleBlocks.stream().map(BlockRecord::getId).collect(Collectors.toList());
+        eligibleBlocks.stream().map(BlockRecord::getFid).collect(Collectors.toList());
     mapRequester.updateStreets(successfulBlockIds, BlockStatus.DONE);
 
     return new BlockResponse(successfulBlockIds, failures);
@@ -84,7 +84,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.OPEN, jwtData.getUserId());
 
     List<String> successfulBlockIds =
-        eligibleBlocks.stream().map(BlockRecord::getId).collect(Collectors.toList());
+        eligibleBlocks.stream().map(BlockRecord::getFid).collect(Collectors.toList());
     mapRequester.updateStreets(successfulBlockIds, BlockStatus.OPEN);
 
     return new BlockResponse(successfulBlockIds, failures);
@@ -103,7 +103,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.OPEN, jwtData.getUserId());
 
     List<String> successfulBlockIds =
-        eligibleBlocks.stream().map(BlockRecord::getId).collect(Collectors.toList());
+        eligibleBlocks.stream().map(BlockRecord::getFid).collect(Collectors.toList());
     mapRequester.updateStreets(successfulBlockIds, BlockStatus.OPEN);
 
     return new BlockResponse(successfulBlockIds, failures);
@@ -149,7 +149,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
       throw new AdminOnlyRouteException();
     }
 
-    List<String> blockIds = db.selectFrom(BLOCK).fetch(BLOCK.ID);
+    List<String> blockIds = db.selectFrom(BLOCK).fetch(BLOCK.FID);
     for (int i = 0; i < blockIds.size(); i += 3000) {
       List<String> sublist = blockIds.subList(i, Math.min(blockIds.size(), i + 3000));
       mapRequester.updateStreets(sublist, BlockStatus.OPEN);
