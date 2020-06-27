@@ -1,19 +1,28 @@
 package com.codeforcommunity.dataaccess;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.codeforcommunity.JooqMock;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.auth.Passwords;
 import com.codeforcommunity.enums.PrivilegeLevel;
+import com.codeforcommunity.enums.VerificationKeyType;
+
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
+import com.codeforcommunity.exceptions.InvalidSecretKeyException;
+import com.codeforcommunity.exceptions.UsedSecretKeyException;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
-import java.util.ArrayList;
+import com.codeforcommunity.exceptions.ExpiredSecretKeyException;
 import org.jooq.generated.Tables;
 import org.jooq.generated.tables.records.UsersRecord;
+import org.jooq.generated.tables.records.VerificationKeysRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.sql.Timestamp;
 
 // Contains tests for AuthDatabaseOperations.java
 public class AuthDatabaseOperationsTest {
@@ -33,8 +42,7 @@ public class AuthDatabaseOperationsTest {
     String myEmail = "kimin@example.com";
 
     // no users in DB
-    myJooqMock.addReturn("SELECT", new ArrayList<UsersRecord>());
-
+    myJooqMock.addEmptyReturn("SELECT");
     try {
       myAuthDatabaseOperations.getUserJWTData(myEmail);
       fail();
@@ -156,5 +164,91 @@ public class AuthDatabaseOperationsTest {
     assertEquals("conner@example.com", returned.getEmail());
     assertEquals("connerusername", returned.getUsername());
     assertEquals(2, myJooqMock.timesCalled("SELECT"));
+  }
+
+  @Test
+  public void testValidateSecretKey1() {
+    String secretKey = "";
+    VerificationKeyType type = VerificationKeyType.VERIFY_EMAIL;
+
+    VerificationKeysRecord myVerKeys = myJooqMock.getContext().newRecord(Tables.VERIFICATION_KEYS);
+    myVerKeys.setId("id");
+    Timestamp timestamp = Timestamp.valueOf("2020-05-30 02:00:55.939");
+    myVerKeys.setCreated(timestamp);
+    myVerKeys.setType(type);
+    myVerKeys.setUsed(false);
+    myVerKeys.setUserId(1);
+    myJooqMock.addReturn("SELECT", myVerKeys);
+
+    UsersRecord myUser = myJooqMock.getContext().newRecord(Tables.USERS);
+    myUser.setUsername("kiminusername");
+    myUser.setEmail("kimin@example.com");
+    myUser.setPassHash(Passwords.createHash("pwpw"));
+    myUser.setEmailVerified(true);
+    myUser.setFirstName("Kimin");
+    myUser.setLastName("Lee");
+    myUser.setId(1);
+    myUser.setPrivilegeLevel(PrivilegeLevel.STANDARD);
+    myJooqMock.addReturn("SELECT", myUser);
+
+    UsersRecord returned = myAuthDatabaseOperations.validateSecretKey(secretKey, type);
+    assertEquals(3, myJooqMock.timesCalled("SELECT"));
+  }
+
+  // InvalidSecretKeyException
+  @Test
+  public void testValidateSecretKey2() {
+    String secretKey = "";
+    VerificationKeyType type = VerificationKeyType.VERIFY_EMAIL;
+
+    try {
+      myAuthDatabaseOperations.validateSecretKey(secretKey, type);
+      fail();
+    } catch (InvalidSecretKeyException e) {
+      assertEquals(type, e.getType());
+    }
+  }
+
+  // UsedSecretKeyException
+  @Test
+  public void testValidateSecretKey3() {
+    String secretKey = "";
+    VerificationKeyType type = VerificationKeyType.VERIFY_EMAIL;
+
+    VerificationKeysRecord myVerKeys = myJooqMock.getContext().newRecord(Tables.VERIFICATION_KEYS);
+    myVerKeys.setId("id");
+    Timestamp timestamp = Timestamp.valueOf("2020-05-30 02:00:55.939");
+    myVerKeys.setCreated(timestamp);
+    myVerKeys.setType(type);
+    myVerKeys.setUsed(true);
+    myVerKeys.setUserId(1);
+
+    try {
+      myAuthDatabaseOperations.validateSecretKey(secretKey, type);
+      fail();
+    } catch (UsedSecretKeyException e) {
+      assertEquals(type, e.getType());
+    }
+  }
+
+  // ExpiredSecretKeyException
+  @Test
+  public void testValidateSecretKey4() {
+    String secretKey = "";
+    VerificationKeyType type = VerificationKeyType.VERIFY_EMAIL;
+
+    VerificationKeysRecord myVerKeys = myJooqMock.getContext().newRecord(Tables.VERIFICATION_KEYS);
+    myVerKeys.setId("id");
+    Timestamp timestamp = Timestamp.valueOf("2023-05-30 02:00:55.939");
+    myVerKeys.setCreated(timestamp);
+    myVerKeys.setType(type);
+    myVerKeys.setUsed(true);
+    myVerKeys.setUserId(1);
+    try {
+      myAuthDatabaseOperations.validateSecretKey(secretKey, type);
+      fail();
+    } catch (ExpiredSecretKeyException e) {
+      assertEquals(type, e.getType());
+    }
   }
 }

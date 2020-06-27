@@ -1,28 +1,54 @@
 package com.codeforcommunity.processor;
 
 import static io.vertx.ext.web.client.predicate.ResponsePredicateResult.success;
-import static org.jooq.generated.Tables.*;
 import static org.jooq.generated.Tables.USERS;
+import static org.jooq.generated.tables.Block.BLOCK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.mock;
+
 
 import com.codeforcommunity.JooqMock;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.auth.Passwords;
-import com.codeforcommunity.dto.team.*;
+import com.codeforcommunity.dto.team.CreateTeamRequest;
+import com.codeforcommunity.dto.team.GetAllTeamsResponse;
+import com.codeforcommunity.dto.team.InviteMembersRequest;
+import com.codeforcommunity.dto.team.TeamInvitationRequest;
+import com.codeforcommunity.dto.team.TeamResponse;
+import com.codeforcommunity.dto.team.GetUserTeamsResponse;
+import com.codeforcommunity.dto.team.TransferOwnershipRequest;
+import com.codeforcommunity.dto.team.TeamApplicant;
+
 import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.enums.TeamRole;
-import com.codeforcommunity.exceptions.*;
+
+import com.codeforcommunity.exceptions.NoSuchTeamException;
+import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
+import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
+import com.codeforcommunity.exceptions.UserNotOnTeamException;
+import com.codeforcommunity.exceptions.UserDoesNotExistException;
+import com.codeforcommunity.exceptions.NoSuchTeamRequestException;
+import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
+import com.codeforcommunity.exceptions.ExistingTeamRequestException;
+import com.codeforcommunity.exceptions.AdminOnlyRouteException;
+
 import com.codeforcommunity.requester.Emailer;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.util.*;
-import org.jooq.*;
-import org.jooq.exception.*;
+import java.util.Arrays;
+import java.util.List;
+
+import org.jooq.Record;
+import org.jooq.Record2;
+import org.jooq.Record4;
+import org.jooq.Record5;
+import org.jooq.Record10;
 import org.jooq.generated.Tables;
 import org.jooq.generated.tables.pojos.Team;
 import org.jooq.generated.tables.pojos.Users;
@@ -132,45 +158,25 @@ public class TeamsProcessorImplTest {
 
     // Inviter information
     List<Users> capturedUsers = usersArgs.getAllValues();
-    assertEquals("Kimin", capturedUsers.get(0).getFirstName());
-    assertEquals("Lee", capturedUsers.get(0).getLastName());
-    assertEquals("kimin@example.com", capturedUsers.get(0).getEmail());
-    assertEquals("kiminusername", capturedUsers.get(0).getUsername());
-    assertEquals(1, capturedUsers.get(0).getId());
-    assertEquals(PrivilegeLevel.STANDARD, capturedUsers.get(0).getPrivilegeLevel());
-    assertEquals(true, capturedUsers.get(0).getEmailVerified());
-    assertEquals("Kimin", capturedUsers.get(1).getFirstName());
-    assertEquals("Lee", capturedUsers.get(1).getLastName());
-    assertEquals("kimin@example.com", capturedUsers.get(1).getEmail());
-    assertEquals("kiminusername", capturedUsers.get(1).getUsername());
-    assertEquals(1, capturedUsers.get(1).getId());
-    assertEquals(PrivilegeLevel.STANDARD, capturedUsers.get(1).getPrivilegeLevel());
-    assertEquals(true, capturedUsers.get(1).getEmailVerified());
-    assertEquals("Kimin", capturedUsers.get(2).getFirstName());
-    assertEquals("Lee", capturedUsers.get(2).getLastName());
-    assertEquals("kimin@example.com", capturedUsers.get(2).getEmail());
-    assertEquals("kiminusername", capturedUsers.get(2).getUsername());
-    assertEquals(1, capturedUsers.get(2).getId());
-    assertEquals(PrivilegeLevel.STANDARD, capturedUsers.get(2).getPrivilegeLevel());
-    assertEquals(true, capturedUsers.get(2).getEmailVerified());
+    for (int i = 0; i < 3; ++i) {
+      assertEquals("Kimin", capturedUsers.get(i).getFirstName());
+      assertEquals("Lee", capturedUsers.get(i).getLastName());
+      assertEquals("kimin@example.com", capturedUsers.get(i).getEmail());
+      assertEquals("kiminusername", capturedUsers.get(i).getUsername());
+      assertEquals(1, capturedUsers.get(i).getId());
+      assertEquals(PrivilegeLevel.STANDARD, capturedUsers.get(i).getPrivilegeLevel());
+      assertEquals(true, capturedUsers.get(i).getEmailVerified());
+    }
 
     // Information on the TeamRecord
     List<Team> capturedTeam = teamArgs.getAllValues();
-    assertEquals("teamName", capturedTeam.get(0).getName());
-    assertEquals("teamBio", capturedTeam.get(0).getBio());
-    assertEquals(2, capturedTeam.get(0).getGoal());
-    assertEquals(3, capturedTeam.get(0).getId());
-    assertEquals("2020-05-30 02:00:55.939", capturedTeam.get(0).getGoalCompletionDate().toString());
-    assertEquals("teamName", capturedTeam.get(1).getName());
-    assertEquals("teamBio", capturedTeam.get(1).getBio());
-    assertEquals(2, capturedTeam.get(1).getGoal());
-    assertEquals(3, capturedTeam.get(1).getId());
-    assertEquals("2020-05-30 02:00:55.939", capturedTeam.get(1).getGoalCompletionDate().toString());
-    assertEquals("teamName", capturedTeam.get(2).getName());
-    assertEquals("teamBio", capturedTeam.get(2).getBio());
-    assertEquals(2, capturedTeam.get(2).getGoal());
-    assertEquals(3, capturedTeam.get(2).getId());
-    assertEquals("2020-05-30 02:00:55.939", capturedTeam.get(2).getGoalCompletionDate().toString());
+    for (int i = 0; i < 3; ++i) {
+      assertEquals("teamName", capturedTeam.get(i).getName());
+      assertEquals("teamBio", capturedTeam.get(i).getBio());
+      assertEquals(2, capturedTeam.get(i).getGoal());
+      assertEquals(3, capturedTeam.get(i).getId());
+      assertEquals("2020-05-30 02:00:55.939", capturedTeam.get(i).getGoalCompletionDate().toString());
+    }
   }
 
   // successfully leaves team
@@ -872,23 +878,23 @@ public class TeamsProcessorImplTest {
     team1();
 
     Record10<
-            Integer,
-            Integer,
-            TeamRole,
-            String,
-            String,
-            String,
-            String,
-            PrivilegeLevel,
-            BigDecimal,
-            BigDecimal>
+                Integer,
+                Integer,
+                TeamRole,
+                String,
+                String,
+                String,
+                String,
+                PrivilegeLevel,
+                BigDecimal,
+                BigDecimal>
         selected =
             mockDb
                 .getContext()
                 .newRecord(
                     Tables.USERS.ID,
                     Tables.USER_TEAM.TEAM_ID,
-                    USER_TEAM.TEAM_ROLE,
+                    Tables.USER_TEAM.TEAM_ROLE,
                     USERS.FIRST_NAME,
                     USERS.LAST_NAME,
                     USERS.USERNAME,
