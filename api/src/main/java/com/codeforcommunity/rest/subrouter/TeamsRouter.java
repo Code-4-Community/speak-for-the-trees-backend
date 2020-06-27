@@ -5,6 +5,7 @@ import static com.codeforcommunity.rest.ApiRouter.end;
 import com.codeforcommunity.api.ITeamsProcessor;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.team.CreateTeamRequest;
+import com.codeforcommunity.dto.team.GetAllTeamsAdminResponse;
 import com.codeforcommunity.dto.team.GetAllTeamsResponse;
 import com.codeforcommunity.dto.team.GetUserTeamsResponse;
 import com.codeforcommunity.dto.team.InviteMembersRequest;
@@ -45,6 +46,7 @@ public class TeamsRouter implements IRouter {
     registerKick(router);
     registerInvite(router);
     registerGetAllTeams(router);
+    registerGetAllTeamsAdmin(router);
     registerGetSingleTeam(router);
     registerTransferOwnership(router);
 
@@ -59,6 +61,11 @@ public class TeamsRouter implements IRouter {
   private void registerGetAllTeams(Router router) {
     Route getAllTeamsRoute = router.get("/");
     getAllTeamsRoute.handler(this::handleGetAllTeams);
+  }
+
+  private void registerGetAllTeamsAdmin(Router router) {
+    Route route = router.get("/admin");
+    route.handler(this::handleGetAllTeamsAdmin);
   }
 
   private void registerGetSingleTeam(Router router) {
@@ -130,6 +137,12 @@ public class TeamsRouter implements IRouter {
   private void handleGetAllTeams(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
     GetAllTeamsResponse response = processor.getAllTeams(userData);
+    end(ctx.response(), 200, JsonObject.mapFrom(response).toString());
+  }
+
+  private void handleGetAllTeamsAdmin(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+    GetAllTeamsAdminResponse response = processor.getAllTeamsAdmin(userData);
     end(ctx.response(), 200, JsonObject.mapFrom(response).toString());
   }
 

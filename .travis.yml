@@ -31,7 +31,7 @@ before_deploy:
   - cp map.properties input.properties
   - awk -F"=" -v updatedVal="=$MAP_FEATURE_LAYER_URL" '/feature_layer_route=/{$2=updatedVal}1' input.properties > map.properties
   - cd /home/travis/build/Code-4-Community/speak-for-the-trees-backend/
-  - mvn clean spotless:check install
+  - mvn clean install
   - zip build.zip Dockerfile service/target/service-1.0-SNAPSHOT-jar-with-dependencies.jar
 deploy:
   provider: elasticbeanstalk
@@ -45,5 +45,5 @@ deploy:
   on:
     repo: Code-4-Community/speak-for-the-trees-backend
     branch: master
-  cleanup: false
+  skip_cleanup: true
 

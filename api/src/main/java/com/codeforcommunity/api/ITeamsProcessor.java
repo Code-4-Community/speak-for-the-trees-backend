@@ -2,6 +2,7 @@ package com.codeforcommunity.api;
 
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.team.CreateTeamRequest;
+import com.codeforcommunity.dto.team.GetAllTeamsAdminResponse;
 import com.codeforcommunity.dto.team.GetAllTeamsResponse;
 import com.codeforcommunity.dto.team.GetUserTeamsResponse;
 import com.codeforcommunity.dto.team.InviteMembersRequest;
@@ -31,6 +32,8 @@ public interface ITeamsProcessor {
   void inviteToTeam(JWTData userData, InviteMembersRequest inviteMembersRequest);
 
   GetAllTeamsResponse getAllTeams(JWTData userData);
+
+  GetAllTeamsAdminResponse getAllTeamsAdmin(JWTData userData);
 
   TeamResponse getSingleTeam(JWTData userData, int teamId);
 

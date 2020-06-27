@@ -4,20 +4,20 @@ import java.sql.Timestamp;
 
 public class AssignedBlock {
 
-  private String fid;
+  private String id;
   private String username;
   private Timestamp dateUpdated;
 
   public AssignedBlock() {}
 
-  public AssignedBlock(String fid, String username, Timestamp dateUpdated) {
-    this.fid = fid;
+  public AssignedBlock(String id, String username, Timestamp dateUpdated) {
+    this.id = id;
     this.username = username;
     this.dateUpdated = dateUpdated;
   }
 
-  public String getFid() {
-    return fid;
+  public String getId() {
+    return id;
   }
 
   public String getUsername() {

@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 public class BlockExport {
-  private String fid;
+  private String id;
   private String status;
   private Timestamp updatedTimestamp;
   private String firstName;
@@ -16,7 +16,7 @@ public class BlockExport {
 
   /** Constructor for Block & User query. User Team names must be set separately. */
   public BlockExport(
-      String fid,
+      String id,
       String status,
       Timestamp updatedTimestamp,
       String firstName,
@@ -24,7 +24,7 @@ public class BlockExport {
       String email,
       String username,
       int userId) {
-    this.fid = fid;
+    this.id = id;
     this.status = status;
     this.updatedTimestamp = updatedTimestamp;
     this.firstName = firstName != null ? firstName : "";
@@ -35,8 +35,8 @@ public class BlockExport {
     this.teamNames = "";
   }
 
-  public String getFid() {
-    return fid;
+  public String getId() {
+    return id;
   }
 
   public String getStatus() {
@@ -77,7 +77,7 @@ public class BlockExport {
   }
 
   public static String getHeaderCSV() {
-    return "Block Fid,"
+    return "Block Id,"
         + "Block Status,"
         + "Last Updated,"
         + "First Name,"
@@ -89,7 +89,7 @@ public class BlockExport {
   }
 
   public String getRowCSV() {
-    return this.fid
+    return this.id
         + ","
         + this.status
         + ","

@@ -54,7 +54,7 @@ Must be called by an admin or the person that completed the block.
 }
 ```
 
-The block id will correspond to the fid of a block stored in the ArcGIS map.
+The block id will correspond to the id of a block stored in the ArcGIS map.
 
 ### Responses
 Partial successes are possible.
@@ -62,7 +62,7 @@ Partial successes are possible.
 Reasons a block may fail:
 - The block was not in the state that it should've been
 - The user is not allowed to modify that block's state
-- The fid doesn't match any block
+- The id doesn't match any block
 
 ##### `200 OK`
 ```json
@@ -212,6 +212,31 @@ Gets a list of teams, names, member count.
       "id": INT,
       "name": STRING,
       "memberCount": INT
+    },
+    ...
+  ],
+  "rowCount": INT
+}
+```
+
+## `GET /teams/admin`
+
+Gets a list of teams with their goal data.
+
+### Responses
+
+##### `200 OK`
+
+```json
+{
+  "teams": [
+    {
+      "id": INT,
+      "name": STRING,
+      "goalCompletionDate": TIMESTAMP,
+      "blocksCompleted": INT,
+      "blocksReserved": INT,
+      "goal": INT
     },
     ...
   ],
