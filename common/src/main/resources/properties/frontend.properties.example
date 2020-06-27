@@ -1,2 +1,3 @@
 base_url=https://sftt.c4cneu.com
+password_reset_route=/forgot-password-reset/%s/
 team_page_route=/teams/%d/
