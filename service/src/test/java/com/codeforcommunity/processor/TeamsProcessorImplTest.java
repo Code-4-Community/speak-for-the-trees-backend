@@ -7,48 +7,43 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.mock;
-
 
 import com.codeforcommunity.JooqMock;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.auth.Passwords;
 import com.codeforcommunity.dto.team.CreateTeamRequest;
 import com.codeforcommunity.dto.team.GetAllTeamsResponse;
+import com.codeforcommunity.dto.team.GetUserTeamsResponse;
 import com.codeforcommunity.dto.team.InviteMembersRequest;
+import com.codeforcommunity.dto.team.TeamApplicant;
 import com.codeforcommunity.dto.team.TeamInvitationRequest;
 import com.codeforcommunity.dto.team.TeamResponse;
-import com.codeforcommunity.dto.team.GetUserTeamsResponse;
 import com.codeforcommunity.dto.team.TransferOwnershipRequest;
-import com.codeforcommunity.dto.team.TeamApplicant;
-
 import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.enums.TeamRole;
-
+import com.codeforcommunity.exceptions.AdminOnlyRouteException;
+import com.codeforcommunity.exceptions.ExistingTeamRequestException;
 import com.codeforcommunity.exceptions.NoSuchTeamException;
+import com.codeforcommunity.exceptions.NoSuchTeamRequestException;
 import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
 import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
-import com.codeforcommunity.exceptions.UserNotOnTeamException;
-import com.codeforcommunity.exceptions.UserDoesNotExistException;
-import com.codeforcommunity.exceptions.NoSuchTeamRequestException;
 import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
-import com.codeforcommunity.exceptions.ExistingTeamRequestException;
-import com.codeforcommunity.exceptions.AdminOnlyRouteException;
-
+import com.codeforcommunity.exceptions.UserDoesNotExistException;
+import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import com.codeforcommunity.requester.Emailer;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
-
 import org.jooq.Record;
+import org.jooq.Record10;
 import org.jooq.Record2;
 import org.jooq.Record4;
 import org.jooq.Record5;
-import org.jooq.Record10;
 import org.jooq.generated.Tables;
 import org.jooq.generated.tables.pojos.Team;
 import org.jooq.generated.tables.pojos.Users;
@@ -175,7 +170,8 @@ public class TeamsProcessorImplTest {
       assertEquals("teamBio", capturedTeam.get(i).getBio());
       assertEquals(2, capturedTeam.get(i).getGoal());
       assertEquals(3, capturedTeam.get(i).getId());
-      assertEquals("2020-05-30 02:00:55.939", capturedTeam.get(i).getGoalCompletionDate().toString());
+      assertEquals(
+          "2020-05-30 02:00:55.939", capturedTeam.get(i).getGoalCompletionDate().toString());
     }
   }
 
@@ -878,16 +874,16 @@ public class TeamsProcessorImplTest {
     team1();
 
     Record10<
-                Integer,
-                Integer,
-                TeamRole,
-                String,
-                String,
-                String,
-                String,
-                PrivilegeLevel,
-                BigDecimal,
-                BigDecimal>
+            Integer,
+            Integer,
+            TeamRole,
+            String,
+            String,
+            String,
+            String,
+            PrivilegeLevel,
+            BigDecimal,
+            BigDecimal>
         selected =
             mockDb
                 .getContext()
