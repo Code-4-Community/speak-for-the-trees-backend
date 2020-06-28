@@ -16,6 +16,7 @@ import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.exceptions.AdminOnlyRouteException;
 import com.codeforcommunity.requester.MapRequester;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -164,6 +165,8 @@ public class BlocksProcessorImpl implements IBlockProcessor {
                 BLOCK.ID,
                 BLOCK.STATUS,
                 BLOCK.UPDATED_TIMESTAMP,
+                BLOCK.LAST_RESERVED,
+                BLOCK.LAST_COMPLETED,
                 USERS.FIRST_NAME,
                 USERS.LAST_NAME,
                 USERS.EMAIL,
@@ -252,9 +255,11 @@ public class BlocksProcessorImpl implements IBlockProcessor {
               break;
             case RESERVED:
               setToId = userId;
+              br.setLastReserved(new Timestamp(System.currentTimeMillis()));
               break;
             case DONE:
               setToId = br.getAssignedTo();
+              br.setLastCompleted(new Timestamp(System.currentTimeMillis()));
               break;
             default:
               throw new UnsupportedOperationException("BlockStatus " + newStatus + " is unhandled");

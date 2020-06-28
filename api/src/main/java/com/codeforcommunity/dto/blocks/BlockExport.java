@@ -7,6 +7,8 @@ public class BlockExport {
   private String id;
   private String status;
   private Timestamp updatedTimestamp;
+  private Timestamp lastReserved;
+  private Timestamp lastCompleted;
   private String firstName;
   private String lastName;
   private String email;
@@ -19,6 +21,8 @@ public class BlockExport {
       String id,
       String status,
       Timestamp updatedTimestamp,
+      Timestamp lastReserved,
+      Timestamp lastCompleted,
       String firstName,
       String lastName,
       String email,
@@ -27,6 +31,8 @@ public class BlockExport {
     this.id = id;
     this.status = status;
     this.updatedTimestamp = updatedTimestamp;
+    this.lastReserved = lastReserved;
+    this.lastCompleted = lastCompleted;
     this.firstName = firstName != null ? firstName : "";
     this.lastName = lastName != null ? lastName : "";
     this.email = email != null ? email : "";
@@ -45,6 +51,14 @@ public class BlockExport {
 
   public Timestamp getUpdatedTimestamp() {
     return updatedTimestamp;
+  }
+
+  public Timestamp getLastReserved() {
+    return lastReserved;
+  }
+
+  public Timestamp getLastCompleted() {
+    return lastCompleted;
   }
 
   public String getFirstName() {
@@ -80,6 +94,8 @@ public class BlockExport {
     return "Block Id,"
         + "Block Status,"
         + "Last Updated,"
+        + "Last Reserved,"
+        + "Last Completed,"
         + "First Name,"
         + "Last Name,"
         + "Email,"
@@ -95,6 +111,10 @@ public class BlockExport {
         + ","
         + this.updatedTimestamp.toString()
         + ","
+        + toStringOrEmpty(this.lastReserved)
+        + ","
+        + toStringOrEmpty(this.lastCompleted)
+        + ","
         + this.firstName
         + ","
         + this.lastName
@@ -108,5 +128,12 @@ public class BlockExport {
         + "\""
         + this.teamNames
         + "\"\n";
+  }
+
+  private String toStringOrEmpty(Object o) {
+    if (o == null) {
+      return "";
+    }
+    return o.toString();
   }
 }
