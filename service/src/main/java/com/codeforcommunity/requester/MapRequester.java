@@ -45,7 +45,7 @@ public class MapRequester {
    * @param updateTo The block status all blocks should be updated to.
    */
   public void updateStreets(List<String> streetIds, BlockStatus updateTo) {
-//    updateLayers(streetIds, updateTo, this.tokenFuture);
+    updateLayers(streetIds, updateTo, this.tokenFuture);
   }
 
   /** Make a request to update the ArcGIS feature layer */
