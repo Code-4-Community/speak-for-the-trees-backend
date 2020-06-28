@@ -79,8 +79,9 @@ public class ServiceMain {
     MapRequester mapRequester = new MapRequester(vertx);
     Emailer emailer = new Emailer();
 
-    IAuthProcessor authProcessor = new AuthProcessorImpl(this.db, jwtCreator);
-    IProtectedUserProcessor protectedUserProcessor = new ProtectedUserProcessorImpl(this.db);
+    IAuthProcessor authProcessor = new AuthProcessorImpl(this.db, emailer, jwtCreator);
+    IProtectedUserProcessor protectedUserProcessor =
+        new ProtectedUserProcessorImpl(this.db, emailer);
     IBlockProcessor blockProcessor = new BlocksProcessorImpl(this.db, mapRequester);
     IBlockInfoProcessor blockInfoProcessor = new BlockInfoProcessorImpl(this.db);
     ITeamsProcessor teamsProcessor = new TeamsProcessorImpl(this.db, emailer);
