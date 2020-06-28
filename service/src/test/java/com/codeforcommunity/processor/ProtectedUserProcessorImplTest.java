@@ -20,11 +20,11 @@ import org.jooq.generated.tables.records.UsersRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class ProtectedUserProcessorImplTest {
+class ProtectedUserProcessorImplTest {
   // the JooqMock to use for testing
-  JooqMock mockDb;
+  private JooqMock mockDb;
   // the ProcessorImpl to use for testing
-  ProtectedUserProcessorImpl processor;
+  private ProtectedUserProcessorImpl processor;
 
   /** Method to setup mockDb and processor. */
   @BeforeEach
@@ -35,7 +35,7 @@ public class ProtectedUserProcessorImplTest {
 
   // successfully deletes user when user is a member
   @Test
-  public void testDeleteUser1() {
+  void testDeleteUser1() {
     UserTeamRecord myUserTeam = mockDb.getContext().newRecord(Tables.USER_TEAM);
     myUserTeam.setUserId(1);
     myUserTeam.setTeamId(5);
@@ -60,7 +60,7 @@ public class ProtectedUserProcessorImplTest {
 
   // successfully deletes user when user is a leader
   @Test
-  public void testDeleteUser2() {
+  void testDeleteUser2() {
     UserTeamRecord myUserTeam = mockDb.getContext().newRecord(Tables.USER_TEAM);
     myUserTeam.setUserId(1);
     myUserTeam.setTeamId(5);
@@ -82,22 +82,18 @@ public class ProtectedUserProcessorImplTest {
 
     this.processor.deleteUser(jwtData);
     assertEquals(1, mockDb.timesCalled("SELECT"));
-    assertEquals(4, mockDb.timesCalled("DELETE"));
     // user_id
     assertEquals(1, mockDb.getSqlBindings().get("DELETE").get(0)[0]);
     // user_id from user_team
     assertEquals(5, mockDb.getSqlBindings().get("DELETE").get(1)[0]);
-    // user_id from users
-    assertEquals(1, mockDb.getSqlBindings().get("DELETE").get(2)[0]);
-    // team_id from team
-    assertEquals(5, mockDb.getSqlBindings().get("DELETE").get(3)[0]);
+
     // user_id from user_team
     assertEquals(1, mockDb.getSqlBindings().get("SELECT").get(0)[0]);
   }
 
   // attempts to delete user when there are no users
   @Test
-  public void testDeleteUser3() {
+  void testDeleteUser3() {
     UsersRecord myUser = mockDb.getContext().newRecord(Tables.USERS);
     myUser.setUsername("kiminusername");
     myUser.setEmail("kimin@example.com");
@@ -115,7 +111,7 @@ public class ProtectedUserProcessorImplTest {
 
   // UserDoesNotExistException because user does not exist
   @Test
-  public void testChangePassword1() {
+  void testChangePassword1() {
     mockDb.addEmptyReturn("SELECT");
     JWTData jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
 
@@ -132,7 +128,7 @@ public class ProtectedUserProcessorImplTest {
 
   // WrongPasswordException because user inputted wrong current password
   @Test
-  public void testChangePassword2() {
+  void testChangePassword2() {
     String myPw = "password";
     String wrongPw = "wrongPassword";
 
@@ -158,7 +154,7 @@ public class ProtectedUserProcessorImplTest {
 
   // successfully changes password
   @Test
-  public void testChangePassword3() {
+  void testChangePassword3() {
     String myPw = "password";
     String newPw = "newPassword";
 

@@ -55,14 +55,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-public class TeamsProcessorImplTest {
+class TeamsProcessorImplTest {
   // the JooqMock to use for testing
-  JooqMock mockDb;
+  private JooqMock mockDb;
   // the ProcessorImpl to use for testing
-  TeamsProcessorImpl processor;
+  private TeamsProcessorImpl processor;
 
-  JWTData jwtData;
-  Emailer emailer;
+  private JWTData jwtData;
+  private Emailer emailer;
 
   /** Method to setup mockDb and processor. */
   @BeforeEach
@@ -100,7 +100,7 @@ public class TeamsProcessorImplTest {
 
   // successfully create a team
   @Test
-  public void testCreateTeam1() {
+  void testCreateTeam1() {
     createUser();
     team1();
     mockDb.addEmptyReturn("INSERT");
@@ -177,7 +177,7 @@ public class TeamsProcessorImplTest {
 
   // successfully leaves team
   @Test
-  public void testLeaveTeam1() {
+  void testLeaveTeam1() {
     createUser();
     processor.leaveTeam(jwtData, 5);
     assertEquals(1, mockDb.timesCalled("SELECT"));
@@ -185,7 +185,7 @@ public class TeamsProcessorImplTest {
 
   // UserNotOnTeamException for user not being in the team
   @Test
-  public void testLeaveTeam2() {
+  void testLeaveTeam2() {
     jwtData = new JWTData(2, PrivilegeLevel.STANDARD);
     try {
       processor.leaveTeam(jwtData, 5);
@@ -198,7 +198,7 @@ public class TeamsProcessorImplTest {
 
   // TeamLeaderExcludedRouteException for the user being the team leader
   @Test
-  public void testLeaveTeam3() {
+  void testLeaveTeam3() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.LEADER);
     userTeamRecord.setTeamId(5);
@@ -217,7 +217,7 @@ public class TeamsProcessorImplTest {
 
   // successfully disbands team
   @Test
-  public void testDisbandTeam1() {
+  void testDisbandTeam1() {
     TeamRecord myTeam = mockDb.getContext().newRecord(Tables.TEAM);
     myTeam.setId(5);
     myTeam.setName("teamKimin");
@@ -243,7 +243,7 @@ public class TeamsProcessorImplTest {
 
   // TeamLeaderOnlyRouteException for user not being a leader
   @Test
-  public void testDisbandTeam2() {
+  void testDisbandTeam2() {
     TeamRecord myTeam = mockDb.getContext().newRecord(Tables.TEAM);
     myTeam.setId(5);
     myTeam.setName("teamKimin");
@@ -264,7 +264,7 @@ public class TeamsProcessorImplTest {
   }
 
   @Test
-  public void testKickFromTeam1() {
+  void testKickFromTeam1() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.LEADER);
     userTeamRecord.setTeamId(5);
@@ -279,7 +279,7 @@ public class TeamsProcessorImplTest {
 
   // TeamLeaderOnlyRouteException
   @Test
-  public void testKickFromTeam2() {
+  void testKickFromTeam2() {
     team1();
     jwtData = new JWTData(2, PrivilegeLevel.STANDARD);
 
@@ -305,7 +305,7 @@ public class TeamsProcessorImplTest {
   }
 
   @Test
-  public void testInviteToTeam1() {
+  void testInviteToTeam1() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.LEADER);
     userTeamRecord.setTeamId(5);
@@ -325,7 +325,7 @@ public class TeamsProcessorImplTest {
 
   // TeamLeaderOnlyRouteException since user is not team leader
   @Test
-  public void testInviteToTeam2() {
+  void testInviteToTeam2() {
     team1();
     List<String> emailList = Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com");
     InviteMembersRequest imr = new InviteMembersRequest(emailList, 5);
@@ -341,7 +341,7 @@ public class TeamsProcessorImplTest {
 
   // TeamLeaderOnlyRouteException since team doesn't exist
   @Test
-  public void testInviteToTeam3() {
+  void testInviteToTeam3() {
     List<String> emailList = Arrays.asList("ex1@example.com", "ex2@example.com", "ex3@example.com");
     InviteMembersRequest imr = new InviteMembersRequest(emailList, 5);
     jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
@@ -356,7 +356,7 @@ public class TeamsProcessorImplTest {
 
   // Returns 1 team
   @Test
-  public void testGetAllTeams1() {
+  void testGetAllTeams1() {
     Record4<Integer, String, Integer, TeamRole> myTeam =
         mockDb
             .getContext()
@@ -382,7 +382,7 @@ public class TeamsProcessorImplTest {
 
   // Returns 3 teams
   @Test
-  public void testGetAllTeams2() {
+  void testGetAllTeams2() {
     Record4<Integer, String, Integer, TeamRole> myTeam =
         mockDb
             .getContext()
@@ -442,7 +442,7 @@ public class TeamsProcessorImplTest {
 
   // successfully return a single team
   @Test
-  public void testGetSingleTeam1() {
+  void testGetSingleTeam1() {
     TeamRecord myTeam = mockDb.getContext().newRecord(Tables.TEAM);
     myTeam.setId(5);
     myTeam.setName("teamKimin");
@@ -487,7 +487,7 @@ public class TeamsProcessorImplTest {
 
   // NoSuchTeamException
   @Test
-  public void testGetSingleTeam2() {
+  void testGetSingleTeam2() {
     jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
     try {
       processor.getSingleTeam(jwtData, 3);
@@ -498,7 +498,7 @@ public class TeamsProcessorImplTest {
   }
 
   @Test
-  public void testGetUserTeams1() {
+  void testGetUserTeams1() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.LEADER);
     userTeamRecord.setTeamId(5);
@@ -551,7 +551,7 @@ public class TeamsProcessorImplTest {
   }
 
   @Test
-  public void testTransferOwnership1() {
+  void testTransferOwnership1() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.LEADER);
     userTeamRecord.setTeamId(5);
@@ -574,7 +574,7 @@ public class TeamsProcessorImplTest {
 
   // TeamLeaderOnlyRouteException where currentLeaderTeam == null
   @Test
-  public void testTransferOwnership2() {
+  void testTransferOwnership2() {
     createUser();
     team1();
     TransferOwnershipRequest tor = new TransferOwnershipRequest(5, 1);
@@ -590,7 +590,7 @@ public class TeamsProcessorImplTest {
 
   // TeamLeaderOnlyRouteException where currentLeaderTeam.getTeamRole() != TeamRole.LEADER
   @Test
-  public void testTransferOwnership3() {
+  void testTransferOwnership3() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.MEMBER);
     userTeamRecord.setTeamId(5);
@@ -612,7 +612,7 @@ public class TeamsProcessorImplTest {
 
   // UserDoesNotExistException
   @Test
-  public void testTransferOwnership4() {
+  void testTransferOwnership4() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.LEADER);
     userTeamRecord.setTeamId(5);
@@ -636,7 +636,7 @@ public class TeamsProcessorImplTest {
 
   // UserNotOnTeamException
   @Test
-  public void testTransferOwnership5() {
+  void testTransferOwnership5() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.LEADER);
     userTeamRecord.setTeamId(9);
@@ -659,7 +659,7 @@ public class TeamsProcessorImplTest {
   }
 
   @Test
-  public void testApproveTeamRequest1() {
+  void testApproveTeamRequest1() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.PENDING);
     userTeamRecord.setTeamId(5);
@@ -675,7 +675,7 @@ public class TeamsProcessorImplTest {
 
   // TeamLeaderOnlyRouteException
   @Test
-  public void testApproveTeamRequest2() {
+  void testApproveTeamRequest2() {
     jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
     try {
       processor.approveTeamRequest(jwtData, 9, 2);
@@ -687,7 +687,7 @@ public class TeamsProcessorImplTest {
 
   // NoSuchTeamRequestException
   @Test
-  public void testApproveTeamRequest3() {
+  void testApproveTeamRequest3() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.LEADER);
     userTeamRecord.setTeamId(5);
@@ -705,7 +705,7 @@ public class TeamsProcessorImplTest {
 
   // UserAlreadyOnTeamException
   @Test
-  public void testApproveTeamRequest4() {
+  void testApproveTeamRequest4() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.LEADER);
     userTeamRecord.setTeamId(5);
@@ -721,7 +721,7 @@ public class TeamsProcessorImplTest {
   }
 
   @Test
-  public void testRejectTeamRequest1() {
+  void testRejectTeamRequest1() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.PENDING);
     userTeamRecord.setTeamId(5);
@@ -739,7 +739,7 @@ public class TeamsProcessorImplTest {
 
   // TeamLeaderOnlyRouteException
   @Test
-  public void testRejectTeamRequest2() {
+  void testRejectTeamRequest2() {
     jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
     try {
       processor.rejectTeamRequest(jwtData, 9, 2);
@@ -751,7 +751,7 @@ public class TeamsProcessorImplTest {
 
   // NoSuchTeamRequestException
   @Test
-  public void testRejectTeamRequest3() {
+  void testRejectTeamRequest3() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.LEADER);
     userTeamRecord.setTeamId(5);
@@ -769,7 +769,7 @@ public class TeamsProcessorImplTest {
 
   // UserAlreadyOnTeamException
   @Test
-  public void testRejectTeamRequest4() {
+  void testRejectTeamRequest4() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.LEADER);
     userTeamRecord.setTeamId(5);
@@ -785,7 +785,7 @@ public class TeamsProcessorImplTest {
   }
 
   @Test
-  public void testApplyForTeam1() {
+  void testApplyForTeam1() {
     team1();
     mockDb.addEmptyReturn("SELECT");
     mockDb.addEmptyReturn("INSERT");
@@ -799,7 +799,7 @@ public class TeamsProcessorImplTest {
 
   // NoSuchTeamException
   @Test
-  public void testApplyForTeam2() {
+  void testApplyForTeam2() {
     jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
     try {
       processor.applyForTeam(jwtData, 3);
@@ -811,7 +811,7 @@ public class TeamsProcessorImplTest {
 
   // UserAlreadyOnTeamException
   @Test
-  public void testApplyForTeam3() {
+  void testApplyForTeam3() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.LEADER);
     userTeamRecord.setTeamId(5);
@@ -828,7 +828,7 @@ public class TeamsProcessorImplTest {
 
   // ExistingTeamRequestException
   @Test
-  public void testApplyForTeam4() {
+  void testApplyForTeam4() {
     UserTeamRecord userTeamRecord = mockDb.getContext().newRecord(Tables.USER_TEAM);
     userTeamRecord.setTeamRole(TeamRole.PENDING);
     userTeamRecord.setTeamId(5);
@@ -844,7 +844,7 @@ public class TeamsProcessorImplTest {
   }
 
   @Test
-  public void testGetTeamApplicants1() {
+  void testGetTeamApplicants1() {
     Record2<Integer, String> myTeam =
         mockDb.getContext().newRecord(Tables.USER_TEAM.USER_ID, Tables.USERS.USERNAME);
     myTeam.values(1, "kiminUsername");
@@ -858,7 +858,7 @@ public class TeamsProcessorImplTest {
 
   // TeamLeaderOnlyRouteException
   @Test
-  public void testGetTeamApplicants2() {
+  void testGetTeamApplicants2() {
     jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
 
     try {
@@ -870,7 +870,7 @@ public class TeamsProcessorImplTest {
   }
 
   @Test
-  public void testGetAllTeamsForExport1() {
+  void testGetAllTeamsForExport1() {
     team1();
 
     Record10<
@@ -936,7 +936,7 @@ public class TeamsProcessorImplTest {
 
   // AdminOnlyRouteException
   @Test
-  public void testGetAllTeamsForExport2() {
+  void testGetAllTeamsForExport2() {
     jwtData = new JWTData(1, PrivilegeLevel.STANDARD);
     try {
       processor.getAllTeamsForExport(jwtData);

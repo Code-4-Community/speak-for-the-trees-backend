@@ -24,20 +24,20 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 // Contains tests for AuthDatabaseOperations.java
-public class AuthDatabaseOperationsTest {
-  JooqMock myJooqMock;
-  AuthDatabaseOperations myAuthDatabaseOperations;
+class AuthDatabaseOperationsTest {
+  private JooqMock myJooqMock;
+  private AuthDatabaseOperations myAuthDatabaseOperations;
 
   // set up all the mocks
   @BeforeEach
-  public void setup() {
+  void setup() {
     this.myJooqMock = new JooqMock();
     this.myAuthDatabaseOperations = new AuthDatabaseOperations(myJooqMock.getContext());
   }
 
   // proper exception is thrown when user doesn't exist in DB
   @Test
-  public void testGetUserJWTData1() {
+  void testGetUserJWTData1() {
     String myEmail = "kimin@example.com";
 
     // no users in DB
@@ -52,7 +52,7 @@ public class AuthDatabaseOperationsTest {
 
   // works as expected when user does indeed exist
   @Test
-  public void testGetUserJWTData2() {
+  void testGetUserJWTData2() {
     String myEmail = "kimin@example.com";
 
     // one user in DB
@@ -71,7 +71,7 @@ public class AuthDatabaseOperationsTest {
 
   // returns false for incorrect login
   @Test
-  public void testIsValidLogin1() {
+  void testIsValidLogin1() {
     String myEmail = "kimin@example.com";
 
     // one user in DB
@@ -88,7 +88,7 @@ public class AuthDatabaseOperationsTest {
 
   // returns true for correct login
   @Test
-  public void testIsValidLogin2() {
+  void testIsValidLogin2() {
     String myEmail = "kimin@example.com";
 
     // one user in DB
@@ -105,7 +105,7 @@ public class AuthDatabaseOperationsTest {
 
   // creating a new user fails when the email is already in use
   @Test
-  public void testCreateNewUser1() {
+  void testCreateNewUser1() {
     String myEmail = "kimin@example.com";
 
     // one user in DB
@@ -127,7 +127,7 @@ public class AuthDatabaseOperationsTest {
 
   // creating a new user fails when the username is already in use
   @Test
-  public void testCreateNewUser2() {
+  void testCreateNewUser2() {
     String myEmail = "kimin@example.com";
     String myUsername = "kiminusername";
 
@@ -151,7 +151,7 @@ public class AuthDatabaseOperationsTest {
 
   // creating a new user succeeds when the email and username isn't already in use
   @Test
-  public void testCreateNewUser3() {
+  void testCreateNewUser3() {
     // no users in DB
     myJooqMock.addEmptyReturn("SELECT");
 
@@ -166,7 +166,7 @@ public class AuthDatabaseOperationsTest {
   }
 
   @Test
-  public void testValidateSecretKey1() {
+  void testValidateSecretKey1() {
     String secretKey = "secretKey";
     VerificationKeyType type = VerificationKeyType.VERIFY_EMAIL;
 
@@ -199,7 +199,7 @@ public class AuthDatabaseOperationsTest {
 
   // InvalidSecretKeyException
   @Test
-  public void testValidateSecretKey2() {
+  void testValidateSecretKey2() {
     String secretKey = "secretKey";
     VerificationKeyType type = VerificationKeyType.VERIFY_EMAIL;
 
@@ -213,7 +213,7 @@ public class AuthDatabaseOperationsTest {
 
   // UsedSecretKeyException
   @Test
-  public void testValidateSecretKey3() {
+  void testValidateSecretKey3() {
     String secretKey = "secretKey";
     VerificationKeyType type = VerificationKeyType.VERIFY_EMAIL;
 
@@ -236,7 +236,7 @@ public class AuthDatabaseOperationsTest {
 
   // ExpiredSecretKeyException
   @Test
-  public void testValidateSecretKey4() {
+  void testValidateSecretKey4() {
     String secretKey = "secretKey";
     VerificationKeyType type = VerificationKeyType.VERIFY_EMAIL;
 
@@ -258,7 +258,7 @@ public class AuthDatabaseOperationsTest {
   }
 
   @Test
-  public void testCreateSecretKey1() {
+  void testCreateSecretKey1() {
     VerificationKeyType type = VerificationKeyType.VERIFY_EMAIL;
     VerificationKeysRecord myVerKeys = myJooqMock.getContext().newRecord(Tables.VERIFICATION_KEYS);
     myVerKeys.setId("id");
@@ -274,7 +274,7 @@ public class AuthDatabaseOperationsTest {
   }
 
   @Test
-  public void testAddToBlackList1() {
+  void testAddToBlackList1() {
     String signature = "signature";
 
     Timestamp timestamp = Timestamp.valueOf("2020-05-30 02:00:55.939");
@@ -289,7 +289,7 @@ public class AuthDatabaseOperationsTest {
   }
 
   @Test
-  public void testIsOnBlackList1() {
+  void testIsOnBlackList1() {
     String signature = "signature";
 
     Timestamp timestamp = Timestamp.valueOf("2020-05-30 02:00:55.939");
