@@ -172,7 +172,7 @@ public class AuthDatabaseOperationsTest {
 
     VerificationKeysRecord myVerKeys = myJooqMock.getContext().newRecord(Tables.VERIFICATION_KEYS);
     myVerKeys.setId("id");
-    Timestamp timestamp = Timestamp.valueOf("2020-05-30 02:00:55.939");
+    Timestamp timestamp = Timestamp.valueOf("2026-05-30 02:00:55.939");
     myVerKeys.setCreated(timestamp);
     myVerKeys.setType(type);
     myVerKeys.setUsed(false);
@@ -191,9 +191,10 @@ public class AuthDatabaseOperationsTest {
     myJooqMock.addReturn("SELECT", myUser);
 
     UsersRecord returned = myAuthDatabaseOperations.validateSecretKey(secretKey, type);
-    assertEquals(3, myJooqMock.timesCalled("SELECT"));
+    assertEquals(2, myJooqMock.timesCalled("SELECT"));
     assertEquals("kiminusername", returned.getUsername());
-    assertEquals("secretKey", returned.get(0).toString());
+    // userId
+    assertEquals("1", returned.get(0).toString());
   }
 
   // InvalidSecretKeyException
@@ -223,6 +224,7 @@ public class AuthDatabaseOperationsTest {
     myVerKeys.setType(type);
     myVerKeys.setUsed(true);
     myVerKeys.setUserId(1);
+    myJooqMock.addReturn("SELECT", myVerKeys);
 
     try {
       myAuthDatabaseOperations.validateSecretKey(secretKey, type);
@@ -240,11 +242,13 @@ public class AuthDatabaseOperationsTest {
 
     VerificationKeysRecord myVerKeys = myJooqMock.getContext().newRecord(Tables.VERIFICATION_KEYS);
     myVerKeys.setId("id");
-    Timestamp timestamp = Timestamp.valueOf("2023-05-30 02:00:55.939");
+    Timestamp timestamp = Timestamp.valueOf("2020-05-30 02:00:55.939");
     myVerKeys.setCreated(timestamp);
     myVerKeys.setType(type);
-    myVerKeys.setUsed(true);
+    myVerKeys.setUsed(false);
     myVerKeys.setUserId(1);
+    myJooqMock.addReturn("SELECT", myVerKeys);
+
     try {
       myAuthDatabaseOperations.validateSecretKey(secretKey, type);
       fail();
@@ -274,7 +278,8 @@ public class AuthDatabaseOperationsTest {
     String signature = "signature";
 
     Timestamp timestamp = Timestamp.valueOf("2020-05-30 02:00:55.939");
-    BlacklistedRefreshesRecord myBlacklistedRecord = myJooqMock.getContext().newRecord(Tables.BLACKLISTED_REFRESHES);
+    BlacklistedRefreshesRecord myBlacklistedRecord =
+        myJooqMock.getContext().newRecord(Tables.BLACKLISTED_REFRESHES);
     myBlacklistedRecord.setExpires(timestamp);
     myBlacklistedRecord.setRefreshHash("refreshHash");
     myJooqMock.addReturn("INSERT", myBlacklistedRecord);
@@ -288,12 +293,13 @@ public class AuthDatabaseOperationsTest {
     String signature = "signature";
 
     Timestamp timestamp = Timestamp.valueOf("2020-05-30 02:00:55.939");
-    BlacklistedRefreshesRecord myBlacklistedRecord = myJooqMock.getContext().newRecord(Tables.BLACKLISTED_REFRESHES);
+    BlacklistedRefreshesRecord myBlacklistedRecord =
+        myJooqMock.getContext().newRecord(Tables.BLACKLISTED_REFRESHES);
     myBlacklistedRecord.setExpires(timestamp);
     myBlacklistedRecord.setRefreshHash("refreshHash");
-    myJooqMock.addReturn("INSERT", myBlacklistedRecord);
+    myJooqMock.addReturn("SELECT", myBlacklistedRecord);
 
     myAuthDatabaseOperations.isOnBlackList(signature);
-    assertEquals(1, myJooqMock.timesCalled("INSERT"));
+    assertEquals(1, myJooqMock.timesCalled("SELECT"));
   }
 }
