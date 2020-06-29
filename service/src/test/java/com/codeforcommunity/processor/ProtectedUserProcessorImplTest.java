@@ -3,6 +3,7 @@ package com.codeforcommunity.processor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
 
 import com.codeforcommunity.JooqMock;
 import com.codeforcommunity.auth.JWTData;
@@ -12,6 +13,7 @@ import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.WrongPasswordException;
+import com.codeforcommunity.requester.Emailer;
 import java.sql.Timestamp;
 import org.jooq.generated.Tables;
 import org.jooq.generated.tables.records.TeamRecord;
@@ -26,11 +28,14 @@ class ProtectedUserProcessorImplTest {
   // the ProcessorImpl to use for testing
   private ProtectedUserProcessorImpl processor;
 
+  private Emailer emailer;
+
   /** Method to setup mockDb and processor. */
   @BeforeEach
   void setup() {
     this.mockDb = new JooqMock();
-    this.processor = new ProtectedUserProcessorImpl(mockDb.getContext());
+    emailer = mock(Emailer.class);
+    this.processor = new ProtectedUserProcessorImpl(mockDb.getContext(), emailer);
   }
 
   // successfully deletes user when user is a member
