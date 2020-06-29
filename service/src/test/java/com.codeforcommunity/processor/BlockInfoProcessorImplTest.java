@@ -9,6 +9,7 @@ import com.codeforcommunity.JooqMock;
 import com.codeforcommunity.dto.blockInfo.BlockInfoResponse;
 import com.codeforcommunity.dto.blockInfo.BlockLeaderboardResponse;
 import com.codeforcommunity.enums.BlockStatus;
+import com.codeforcommunity.enums.TeamRole;
 import java.util.Arrays;
 import java.util.List;
 import org.jooq.Field;
@@ -191,7 +192,13 @@ class BlockInfoProcessorImplTest {
     }
 
     // add block assigned_to and block status
-    verificationQuery.append("= " + block + ".\"assigned_to\" and " + block + ".\"status\" = ?)");
+    verificationQuery.append("= " + block + ".\"assigned_to\" and " + block + ".\"status\" = ?");
+
+    if (isTeam) {
+      verificationQuery.append(" and \"user_team\".\"team_role\" in (?, ?)");
+    }
+
+    verificationQuery.append(")");
 
     // if itemId is present, add where clause
     if (itemId != null) {
@@ -238,8 +245,10 @@ class BlockInfoProcessorImplTest {
     String verificationQuery =
         this.buildSubQueryPartsString(TEAM, status, true, false, null).toString();
     assertEquals(verificationQuery, rawResult.getSQL());
-    assertEquals(1, rawResult.getBindValues().size());
+    assertEquals(3, rawResult.getBindValues().size());
     assertEquals(status, rawResult.getBindValues().get(0));
+    assertEquals(TeamRole.LEADER, rawResult.getBindValues().get(1));
+    assertEquals(TeamRole.MEMBER, rawResult.getBindValues().get(2));
   }
 
   // test that buildSubQueryParts returns the correct sql query for TEAM with a provided itemId
@@ -252,9 +261,11 @@ class BlockInfoProcessorImplTest {
     String verificationQuery =
         this.buildSubQueryPartsString(TEAM, status, true, false, itemId).toString();
     assertEquals(verificationQuery, rawResult.getSQL());
-    assertEquals(2, rawResult.getBindValues().size());
+    assertEquals(4, rawResult.getBindValues().size());
     assertEquals(status, rawResult.getBindValues().get(0));
-    assertEquals(itemId, rawResult.getBindValues().get(1));
+    assertEquals(TeamRole.LEADER, rawResult.getBindValues().get(1));
+    assertEquals(TeamRole.MEMBER, rawResult.getBindValues().get(2));
+    assertEquals(itemId, rawResult.getBindValues().get(3));
   }
 
   @ParameterizedTest
@@ -290,9 +301,18 @@ class BlockInfoProcessorImplTest {
     String verificationQuery = buildSubQueryString(table, isTeam, false, null).toString();
 
     assertEquals(verificationQuery, subQuery.getSQL());
-    assertEquals(2, subQuery.getBindValues().size());
     assertEquals(BlockStatus.DONE, subQuery.getBindValues().get(0));
-    assertEquals(BlockStatus.RESERVED, subQuery.getBindValues().get(1));
+    if (isTeam) {
+      assertEquals(6, subQuery.getBindValues().size());
+      assertEquals(TeamRole.LEADER, subQuery.getBindValues().get(1));
+      assertEquals(TeamRole.MEMBER, subQuery.getBindValues().get(2));
+      assertEquals(BlockStatus.RESERVED, subQuery.getBindValues().get(3));
+      assertEquals(TeamRole.LEADER, subQuery.getBindValues().get(4));
+      assertEquals(TeamRole.MEMBER, subQuery.getBindValues().get(5));
+    } else {
+      assertEquals(2, subQuery.getBindValues().size());
+      assertEquals(BlockStatus.RESERVED, subQuery.getBindValues().get(1));
+    }
   }
 
   @ParameterizedTest
@@ -336,9 +356,18 @@ class BlockInfoProcessorImplTest {
     String verificationQuery = buildFullQueryString(table, isTeam, null).toString();
 
     assertEquals(verificationQuery, query.getSQL());
-    assertEquals(2, query.getBindValues().size());
     assertEquals(BlockStatus.DONE, query.getBindValues().get(0));
-    assertEquals(BlockStatus.RESERVED, query.getBindValues().get(1));
+    if (isTeam) {
+      assertEquals(6, query.getBindValues().size());
+      assertEquals(TeamRole.LEADER, query.getBindValues().get(1));
+      assertEquals(TeamRole.MEMBER, query.getBindValues().get(2));
+      assertEquals(BlockStatus.RESERVED, query.getBindValues().get(3));
+      assertEquals(TeamRole.LEADER, query.getBindValues().get(4));
+      assertEquals(TeamRole.MEMBER, query.getBindValues().get(5));
+    } else {
+      assertEquals(2, query.getBindValues().size());
+      assertEquals(BlockStatus.RESERVED, query.getBindValues().get(1));
+    }
   }
 
   // test that buildQuery returns the correct sql query for TEAM and USERS with a given itemId
@@ -352,11 +381,23 @@ class BlockInfoProcessorImplTest {
     String verificationQuery = buildFullQueryString(table, isTeam, itemId).toString();
 
     assertEquals(verificationQuery, query.getSQL());
-    assertEquals(4, query.getBindValues().size());
-    assertEquals(BlockStatus.DONE, query.getBindValues().get(0));
-    assertEquals(itemId, query.getBindValues().get(1));
-    assertEquals(BlockStatus.RESERVED, query.getBindValues().get(2));
-    assertEquals(itemId, query.getBindValues().get(3));
+    if (isTeam) {
+      assertEquals(8, query.getBindValues().size());
+      assertEquals(BlockStatus.DONE, query.getBindValues().get(0));
+      assertEquals(TeamRole.LEADER, query.getBindValues().get(1));
+      assertEquals(TeamRole.MEMBER, query.getBindValues().get(2));
+      assertEquals(5, query.getBindValues().get(3));
+      assertEquals(BlockStatus.RESERVED, query.getBindValues().get(4));
+      assertEquals(TeamRole.LEADER, query.getBindValues().get(5));
+      assertEquals(TeamRole.MEMBER, query.getBindValues().get(6));
+      assertEquals(5, query.getBindValues().get(7));
+    } else {
+      assertEquals(4, query.getBindValues().size());
+      assertEquals(BlockStatus.DONE, query.getBindValues().get(0));
+      assertEquals(itemId, query.getBindValues().get(1));
+      assertEquals(BlockStatus.RESERVED, query.getBindValues().get(2));
+      assertEquals(itemId, query.getBindValues().get(3));
+    }
   }
 
   @ParameterizedTest
