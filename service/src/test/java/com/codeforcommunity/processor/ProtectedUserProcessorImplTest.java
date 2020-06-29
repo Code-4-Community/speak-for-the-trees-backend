@@ -86,7 +86,6 @@ class ProtectedUserProcessorImplTest {
     assertEquals(1, mockDb.getSqlBindings().get("DELETE").get(0)[0]);
     // user_id from user_team
     assertEquals(5, mockDb.getSqlBindings().get("DELETE").get(1)[0]);
-
     // user_id from user_team
     assertEquals(1, mockDb.getSqlBindings().get("SELECT").get(0)[0]);
   }
