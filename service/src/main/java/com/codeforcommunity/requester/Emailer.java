@@ -11,6 +11,8 @@ import org.jooq.generated.tables.pojos.Users;
 
 public class Emailer {
   private final EmailOperations emailOperations;
+  private final String loginUrl;
+  private final String passwordResetTemplate;
   private final String teamPageUrlTemplate;
 
   public Emailer() {
@@ -20,23 +22,74 @@ public class Emailer {
     String sendPassword = emailProperties.getProperty("sendPassword");
     String emailHost = emailProperties.getProperty("emailHost");
     int emailPort = Integer.parseInt(emailProperties.getProperty("emailPort"));
+    boolean shouldSendEmails =
+        Boolean.parseBoolean(emailProperties.getProperty("shouldSendEmails", "false"));
 
     this.emailOperations =
-        new EmailOperations(senderName, sendEmail, sendPassword, emailHost, emailPort);
+        new EmailOperations(
+            shouldSendEmails, senderName, sendEmail, sendPassword, emailHost, emailPort);
 
     Properties frontendProperties = PropertiesLoader.getFrontendProperties();
+    this.loginUrl = frontendProperties.getProperty("base_url");
+    this.passwordResetTemplate =
+        frontendProperties.getProperty("base_url")
+            + frontendProperties.getProperty("password_reset_route");
     this.teamPageUrlTemplate =
         frontendProperties.getProperty("base_url")
             + frontendProperties.getProperty("team_page_route");
   }
 
-  public void sendWelcomeEmail(String sendToEmail, String sendToName, String verificationLink) {
+  public void sendWelcomeEmail(String sendToEmail, String sendToName) {
     String filePath = "/emails/WelcomeEmail.html";
     String subjectLine = "Welcome to Speak For The Trees Boston";
 
     Map<String, String> templateValues = new HashMap<>();
     templateValues.put("name", sendToName);
-    templateValues.put("link", verificationLink);
+    templateValues.put("link", loginUrl);
+    Optional<String> emailBody = emailOperations.getTemplateString(filePath, templateValues);
+
+    emailBody.ifPresent(s -> emailOperations.sendEmail(sendToName, sendToEmail, subjectLine, s));
+  }
+
+  public void sendEmailChangeConfirmationEmail(
+      String sendToEmail, String sendToName, String newEmail) {
+    String filePath = "/emails/EmailChangeConfirmation.html";
+    String subjectLine = "Your Speak For The Trees Email has Changed";
+
+    Map<String, String> templateValues = new HashMap<>();
+    templateValues.put("new_email", newEmail);
+    Optional<String> emailBody = emailOperations.getTemplateString(filePath, templateValues);
+
+    emailBody.ifPresent(s -> emailOperations.sendEmail(sendToName, sendToEmail, subjectLine, s));
+  }
+
+  public void sendPasswordChangeRequestEmail(
+      String sendToEmail, String sendToName, String passwordResetKey) {
+    String filePath = "/emails/PasswordChangeRequest.html";
+    String subjectLine = "Reset your Speak For The Trees Password";
+
+    Map<String, String> templateValues = new HashMap<>();
+    templateValues.put("link", String.format(passwordResetTemplate, passwordResetKey));
+    Optional<String> emailBody = emailOperations.getTemplateString(filePath, templateValues);
+
+    emailBody.ifPresent(s -> emailOperations.sendEmail(sendToName, sendToEmail, subjectLine, s));
+  }
+
+  public void sendPasswordChangeConfirmationEmail(String sendToEmail, String sendToName) {
+    String filePath = "/emails/PasswordChangeConfirmation.html";
+    String subjectLine = "Your Speak For The Trees Password has Changed";
+
+    Map<String, String> templateValues = new HashMap<>();
+    Optional<String> emailBody = emailOperations.getTemplateString(filePath, templateValues);
+
+    emailBody.ifPresent(s -> emailOperations.sendEmail(sendToName, sendToEmail, subjectLine, s));
+  }
+
+  public void sendAccountDeactivatedEmail(String sendToEmail, String sendToName) {
+    String filePath = "/emails/AccountDeactivated.html";
+    String subjectLine = "Your Speak For The Trees Account has been Deleted";
+
+    Map<String, String> templateValues = new HashMap<>();
     Optional<String> emailBody = emailOperations.getTemplateString(filePath, templateValues);
 
     emailBody.ifPresent(s -> emailOperations.sendEmail(sendToName, sendToEmail, subjectLine, s));
@@ -49,8 +102,7 @@ public class Emailer {
         String.format("You've Been Invited to Join %s's Team!", inviter.getFirstName());
 
     Map<String, String> templateValues = new HashMap<>();
-    templateValues.put(
-        "inviter name", String.format("%s %s", inviter.getFirstName(), inviter.getLastName()));
+    templateValues.put("team_name", invitedTeam.getName());
     templateValues.put("link", String.format(this.teamPageUrlTemplate, invitedTeam.getId()));
     Optional<String> emailBody = emailOperations.getTemplateString(filePath, templateValues);
 

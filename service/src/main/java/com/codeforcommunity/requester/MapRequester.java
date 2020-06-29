@@ -50,11 +50,11 @@ public class MapRequester {
 
   /** Make a request to update the ArcGIS feature layer */
   private Future<Void> updateLayers(
-      List<String> streetIds, BlockStatus updateTo, Future<String> tokenFuture) {
+      List<String> streetFids, BlockStatus updateTo, Future<String> tokenFuture) {
     logger.info("Making request to update blocks to " + updateTo.name());
 
     JsonArray updateJson = new JsonArray();
-    streetIds.forEach(
+    streetFids.forEach(
         (id) -> {
           updateJson.add(JsonObject.mapFrom(new MapRequest(id, updateTo)));
         });
@@ -85,11 +85,16 @@ public class MapRequester {
                                       && responseBody.getJsonObject("error").getInteger("code")
                                           == 498) {
                                     // The API token is invalid, reset it and make this call again.
+                                    logger.info(
+                                        "Remaking token request while updating blocks to "
+                                            + updateTo.name());
                                     this.tokenFuture = updateToken();
-                                    updateLayers(streetIds, updateTo, this.tokenFuture)
+                                    updateLayers(streetFids, updateTo, this.tokenFuture)
                                         .onSuccess((V) -> promise.complete())
                                         .onFailure(promise::fail);
                                   } else if (responseBody.containsKey("updateResults")) {
+                                    logger.info(
+                                        "Successfully updated blocks to " + updateTo.name());
                                     // Check successes
                                     promise.complete();
                                   } else {
@@ -143,6 +148,7 @@ public class MapRequester {
                           if (httpResponse.statusCode() == 200) {
                             JsonObject responseBody = httpResponse.bodyAsJsonObject();
                             if (responseBody.containsKey("access_token")) {
+                              logger.info("Received ArcGIS token successfully");
                               promise.complete(responseBody.getString("access_token"));
                             } else {
                               logger.error(
@@ -180,16 +186,16 @@ public class MapRequester {
   }
 
   private class StreetUpdate {
-    private String ID;
+    private String FID;
     private String RESERVED;
 
-    public StreetUpdate(String id, BlockStatus reserved) {
-      this.ID = id;
+    public StreetUpdate(String fid, BlockStatus reserved) {
+      this.FID = fid;
       this.RESERVED = String.valueOf(reserved.getVal());
     }
 
-    public String getID() {
-      return ID;
+    public String getFID() {
+      return FID;
     }
 
     public String getRESERVED() {

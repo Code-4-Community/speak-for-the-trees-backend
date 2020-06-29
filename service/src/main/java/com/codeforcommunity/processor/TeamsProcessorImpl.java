@@ -380,9 +380,9 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
                 tm -> tm.getRole().equals(TeamRole.MEMBER) || tm.getRole().equals(TeamRole.LEADER))
             .collect(Collectors.toList());
     int doneBlocks =
-        teamMembers.stream().map(Individual::getBlocksCompleted).reduce(0, Integer::sum);
+        activeMembers.stream().map(Individual::getBlocksCompleted).reduce(0, Integer::sum);
     int reservedBlocks =
-        teamMembers.stream().map(Individual::getBlocksReserved).reduce(0, Integer::sum);
+        activeMembers.stream().map(Individual::getBlocksReserved).reduce(0, Integer::sum);
     return new TeamResponse(
         teamPojo.getId(),
         teamPojo.getName(),
@@ -441,6 +441,8 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
             .on(USERS.ID.eq(USER_TEAM.USER_ID))
             .leftJoin(BLOCK)
             .on(USERS.ID.eq(BLOCK.ASSIGNED_TO))
+            .where(
+                USER_TEAM.TEAM_ROLE.eq(TeamRole.LEADER).or(USER_TEAM.TEAM_ROLE.eq(TeamRole.MEMBER)))
             .groupBy(
                 USERS.ID,
                 USER_TEAM.TEAM_ID,

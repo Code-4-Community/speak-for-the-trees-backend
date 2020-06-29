@@ -8,6 +8,7 @@ import static org.jooq.generated.Tables.VERIFICATION_KEYS;
 import com.codeforcommunity.api.IProtectedUserProcessor;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.auth.Passwords;
+import com.codeforcommunity.dataaccess.AuthDatabaseOperations;
 import com.codeforcommunity.dto.user.ChangeEmailRequest;
 import com.codeforcommunity.dto.user.ChangePasswordRequest;
 import com.codeforcommunity.dto.user.UserDataResponse;
@@ -15,18 +16,22 @@ import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.WrongPasswordException;
+import com.codeforcommunity.requester.Emailer;
 import java.util.List;
 import java.util.Optional;
 import org.jooq.DSLContext;
+import org.jooq.generated.tables.pojos.Users;
 import org.jooq.generated.tables.records.UserTeamRecord;
 import org.jooq.generated.tables.records.UsersRecord;
 
 public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
 
   private final DSLContext db;
+  private final Emailer emailer;
 
-  public ProtectedUserProcessorImpl(DSLContext db) {
+  public ProtectedUserProcessorImpl(DSLContext db, Emailer emailer) {
     this.db = db;
+    this.emailer = emailer;
   }
 
   @Override
@@ -52,7 +57,11 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
       }
     }
 
-    db.deleteFrom(USERS).where(USERS.ID.eq(userId)).executeAsync();
+    UsersRecord user = db.selectFrom(USERS).where(USERS.ID.eq(userId)).fetchOne();
+    user.delete();
+
+    emailer.sendAccountDeactivatedEmail(
+        user.getEmail(), AuthDatabaseOperations.getFullName(user.into(Users.class)));
   }
 
   @Override
@@ -70,6 +79,9 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
     } else {
       throw new WrongPasswordException();
     }
+
+    emailer.sendPasswordChangeConfirmationEmail(
+        user.getEmail(), AuthDatabaseOperations.getFullName(user.into(Users.class)));
   }
 
   @Override
@@ -91,6 +103,7 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
       throw new UserDoesNotExistException(userData.getUserId());
     }
 
+    String previousEmail = user.getEmail();
     if (Passwords.isExpectedPassword(changeEmailRequest.getPassword(), user.getPassHash())) {
       if (db.fetchExists(USERS, USERS.EMAIL.eq(changeEmailRequest.getNewEmail()))) {
         throw new EmailAlreadyInUseException(changeEmailRequest.getNewEmail());
@@ -100,5 +113,10 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
     } else {
       throw new WrongPasswordException();
     }
+
+    emailer.sendEmailChangeConfirmationEmail(
+        previousEmail,
+        AuthDatabaseOperations.getFullName(user.into(Users.class)),
+        changeEmailRequest.getNewEmail());
   }
 }

@@ -16,17 +16,21 @@ import com.codeforcommunity.enums.VerificationKeyType;
 import com.codeforcommunity.exceptions.AuthException;
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
 import com.codeforcommunity.exceptions.TokenInvalidException;
+import com.codeforcommunity.requester.Emailer;
 import java.util.Optional;
 import org.jooq.DSLContext;
+import org.jooq.generated.tables.pojos.Users;
 import org.jooq.generated.tables.records.UsersRecord;
 
 public class AuthProcessorImpl implements IAuthProcessor {
 
   private final AuthDatabaseOperations authDatabaseOperations;
+  private final Emailer emailer;
   private final JWTCreator jwtCreator;
 
-  public AuthProcessorImpl(DSLContext db, JWTCreator jwtCreator) {
+  public AuthProcessorImpl(DSLContext db, Emailer emailer, JWTCreator jwtCreator) {
     this.authDatabaseOperations = new AuthDatabaseOperations(db);
+    this.emailer = emailer;
     this.jwtCreator = jwtCreator;
   }
 
@@ -46,10 +50,8 @@ public class AuthProcessorImpl implements IAuthProcessor {
             request.getFirstName(),
             request.getLastName());
 
-    String secretKey =
-        authDatabaseOperations.createSecretKey(user.getId(), VerificationKeyType.VERIFY_EMAIL);
-
-    // TODO: Send email
+    emailer.sendWelcomeEmail(
+        request.getEmail(), AuthDatabaseOperations.getFullName(user.into(Users.class)));
 
     return setupSessionResponse(request.getEmail());
   }
@@ -113,7 +115,8 @@ public class AuthProcessorImpl implements IAuthProcessor {
         authDatabaseOperations.createSecretKey(
             userData.getUserId(), VerificationKeyType.FORGOT_PASSWORD);
 
-    // TODO: Send email
+    Users user = authDatabaseOperations.getUserPojo(userData.getUserId());
+    emailer.sendPasswordChangeRequestEmail(email, AuthDatabaseOperations.getFullName(user), token);
   }
 
   /**
@@ -129,6 +132,9 @@ public class AuthProcessorImpl implements IAuthProcessor {
 
     user.setPassHash(Passwords.createHash(request.getNewPassword()));
     user.store();
+
+    emailer.sendPasswordChangeConfirmationEmail(
+        user.getEmail(), AuthDatabaseOperations.getFullName(user.into(Users.class)));
   }
 
   @Override

@@ -65,6 +65,22 @@ public class AuthDatabaseOperations {
   }
 
   /**
+   * Gets the Users pojo associated with the given id if that user exists.
+   *
+   * @throws UserDoesNotExistException if given email does not match a user.
+   */
+  public Users getUserPojo(int id) {
+    Optional<Users> maybeUser =
+        Optional.ofNullable(db.selectFrom(USERS).where(USERS.ID.eq(id)).fetchOneInto(Users.class));
+
+    if (maybeUser.isPresent()) {
+      return maybeUser.get();
+    } else {
+      throw new UserDoesNotExistException(id);
+    }
+  }
+
+  /**
    * Returns true if the given username and password correspond to a user in the USER table and
    * false otherwise.
    */
@@ -153,9 +169,7 @@ public class AuthDatabaseOperations {
   }
 
   /**
-   * TODO: This method should be called as part of sign-up flow
-   *
-   * <p>Given a userId and token, stores the token in the verification_keys table for the user and
+   * Given a userId and token, stores the token in the verification_keys table for the user and
    * invalidates all other keys of this type for this user.
    */
   public String createSecretKey(int userId, VerificationKeyType type) {
@@ -194,5 +208,10 @@ public class AuthDatabaseOperations {
           String.format("Verification type %s not implemented", type.name()));
     }
     return tokenResult.getCreated().after(cutoffDate);
+  }
+
+  /** Given a user pojo, return the user's full name. */
+  public static String getFullName(Users user) {
+    return String.format("%s %s", user.getFirstName(), user.getLastName());
   }
 }

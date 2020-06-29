@@ -19,12 +19,19 @@ import org.simplejavamail.mailer.MailerBuilder;
 public class EmailOperations {
   private static final Logger logger = LogManager.getLogger(EmailOperations.class);
 
+  private final boolean shouldSendEmails;
   private final String senderName;
   private final String sendEmail;
   private final Mailer mailer;
 
   public EmailOperations(
-      String senderName, String sendEmail, String sendPassword, String emailHost, int emailPort) {
+      boolean shouldSendEmails,
+      String senderName,
+      String sendEmail,
+      String sendPassword,
+      String emailHost,
+      int emailPort) {
+    this.shouldSendEmails = shouldSendEmails;
     this.senderName = senderName;
     this.sendEmail = sendEmail;
     this.mailer =
@@ -107,6 +114,10 @@ public class EmailOperations {
    * email.
    */
   public void sendEmail(String sendToName, String sendToEmail, String subject, String emailBody) {
+    if (!shouldSendEmails) {
+      return;
+    }
+
     logger.info("Sending email subject " + subject);
 
     Email email =
