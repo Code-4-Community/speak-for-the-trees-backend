@@ -127,6 +127,7 @@ class ProtectedUserProcessorImplTest {
     } catch (UserDoesNotExistException e) {
       assertEquals(e.getIdentifierMessage(), "id = 1");
     }
+
     assertEquals(1, mockDb.timesCalled("SELECT"));
   }
 
