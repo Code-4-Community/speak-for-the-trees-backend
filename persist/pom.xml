@@ -159,7 +159,7 @@
             <schema>public</schema>
           </schemas>
           <encoding>ISO-8859-1</encoding>
-          <cleanOnValidationError>true</cleanOnValidationError>
+          <cleanDisabled>true</cleanDisabled>
         </configuration>
         <executions>
           <execution>
