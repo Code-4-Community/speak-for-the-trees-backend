@@ -14,6 +14,7 @@ import com.codeforcommunity.dto.blockInfo.BlockLeaderboardResponse;
 import com.codeforcommunity.dto.blockInfo.Individual;
 import com.codeforcommunity.dto.blockInfo.Team;
 import com.codeforcommunity.enums.BlockStatus;
+import com.codeforcommunity.enums.TeamRole;
 import java.util.List;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -69,6 +70,7 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
    * FROM <strong>table</strong>
    * (optional) JOIN user_team ON user_team.team_id = <strong>id</strong>
    * JOIN block ON block.id = <strong>table</strong>.assigned_to AND block.status = <strong>blockStatus</strong>
+   * AND user_team.team_role in (TeamRole.MEMBER, TeamRole.LEADER)
    * (optional) WHERE <strong>id</strong> = <strong>itemId</strong>
    * </pre>
    *
@@ -121,16 +123,15 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
               .join(USER_TEAM)
               .on(USER_TEAM.TEAM_ID.eq(id))
               .join(selectedBlock)
-              .on(
-                  USER_TEAM
-                      .USER_ID
-                      .eq(selectedBlock.ASSIGNED_TO)
-                      .and(selectedBlock.STATUS.eq(blockStatus)));
+              .on(USER_TEAM.USER_ID.eq(selectedBlock.ASSIGNED_TO))
+              .and(selectedBlock.STATUS.eq(blockStatus))
+              .and(USER_TEAM.TEAM_ROLE.in(TeamRole.LEADER, TeamRole.MEMBER));
     } else {
       joinStep =
           joinStep
               .join(selectedBlock)
-              .on(id.eq(selectedBlock.ASSIGNED_TO).and(selectedBlock.STATUS.eq(blockStatus)));
+              .on(id.eq(selectedBlock.ASSIGNED_TO))
+              .and(selectedBlock.STATUS.eq(blockStatus));
     }
 
     // add where step for selecting where the ID = itemId
@@ -152,11 +153,13 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
    *   FROM <strong>table</strong>
    *   (optional) JOIN user_team ON user_team.team_id = <strong>id</strong>
    *   JOIN block ON block.id = <strong>table</strong>.assigned_to AND block.status = 2
+   *   AND user_team.team_role in (TeamRole.MEMBER, TeamRole.LEADER)
    *   (optional) WHERE <strong>id</strong> = <strong>itemId</strong>
    *   UNION
    *   SELECT <strong>id</strong>, <strong>name</strong>, null as completed_raw, id as reserved_raw
    *   FROM <strong>table</strong>
    *   (optional) JOIN user_team ON user_team.team_id = <strong>id</strong>
+   *   AND user_team.team_role in (TeamRole.MEMBER, TeamRole.LEADER)
    *   JOIN block ON block.id = <strong>table</strong>.assigned_to AND block.status = 1
    *   (optional) WHERE <strong>id</strong> = <strong>itemId</strong>
    * </pre>
@@ -253,10 +256,12 @@ public class BlockInfoProcessorImpl implements IBlockInfoProcessor {
    * FROM (SELECT tc.id, tc.name, c.id AS completed_raw, null AS reserved_raw
    * FROM team tc
    * JOIN block c ON uc.id = c.assigned_to AND c.status = 2
+   * AND user_team.team_role in (TeamRole.MEMBER, TeamRole.LEADER)
    * UNION
    * SELECT tr.id, tr.name, null AS completed_raw, r.id AS reserved_raw
    * FROM users tr
    * JOIN block r ON tr.id = r.assigned_to AND r.status = 1) s
+   * AND user_team.team_role in (TeamRole.MEMBER, TeamRole.LEADER)
    * GROUP BY id, name
    * ORDER BY completed DESC, reserved DESC
    * LIMIT 10;
