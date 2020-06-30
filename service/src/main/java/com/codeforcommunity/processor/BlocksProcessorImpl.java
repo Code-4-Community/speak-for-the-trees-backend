@@ -134,7 +134,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
   private GetAssignedBlocksResponse getAssignedBlocksWithStatus(BlockStatus status) {
     return new GetAssignedBlocksResponse(
-        db.select(BLOCK.ID, USERS.USERNAME, BLOCK.UPDATED_TIMESTAMP)
+        db.select(BLOCK.ID, USERS.USERNAME, BLOCK.UPDATED_TIMESTAMP.as("dateUpdated"))
             .from(BLOCK)
             .innerJoin(USERS)
             .on(BLOCK.ASSIGNED_TO.eq(USERS.ID))
