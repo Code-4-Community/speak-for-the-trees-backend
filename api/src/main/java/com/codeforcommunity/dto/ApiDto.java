@@ -1,4 +1,4 @@
-package com.codeforcommunity.api;
+package com.codeforcommunity.dto;
 
 import com.codeforcommunity.exceptions.HandledException;
 import com.codeforcommunity.exceptions.MalformedParameterException;
