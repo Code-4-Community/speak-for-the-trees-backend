@@ -5,6 +5,7 @@ import static com.codeforcommunity.rest.ApiRouter.end;
 import com.codeforcommunity.api.IBlockProcessor;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blocks.BlockResponse;
+import com.codeforcommunity.dto.blocks.BlocksSeedingRequest;
 import com.codeforcommunity.dto.blocks.GetAssignedBlocksResponse;
 import com.codeforcommunity.dto.blocks.StandardBlockRequest;
 import com.codeforcommunity.rest.IRouter;
@@ -35,6 +36,7 @@ public class BlocksRouter implements IRouter {
     registerReset(router);
     registerGetReserved(router);
     registerResetAllBlocks(router);
+    registerSeedBlockCompletions(router);
     registerGetReservedAdmin(router);
     registerGetDoneAdmin(router);
     registerGetBlocksCSV(router);
@@ -80,6 +82,11 @@ public class BlocksRouter implements IRouter {
   private void registerResetAllBlocks(Router router) {
     Route resetAllRoute = router.post("/reset/hard");
     resetAllRoute.handler(this::handleResetAll);
+  }
+
+  private void registerSeedBlockCompletions(Router router) {
+    Route resetAllRoute = router.post("/seed");
+    resetAllRoute.handler(this::handleSeedBlockCompletions);
   }
 
   private void registerGetBlocksCSV(Router router) {
@@ -156,6 +163,16 @@ public class BlocksRouter implements IRouter {
     JWTData userData = ctx.get("jwt_data");
 
     processor.resetAllBlocks(userData);
+
+    end(ctx.response(), 200);
+  }
+
+  private void handleSeedBlockCompletions(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+    BlocksSeedingRequest request = RestFunctions.getJsonBodyAsClass(ctx, BlocksSeedingRequest.class);
+
+
+    processor.seedBlockCompletions(userData, request.getBlocks());
 
     end(ctx.response(), 200);
   }
