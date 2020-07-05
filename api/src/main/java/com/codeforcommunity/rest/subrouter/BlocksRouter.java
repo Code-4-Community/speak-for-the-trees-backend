@@ -169,8 +169,8 @@ public class BlocksRouter implements IRouter {
 
   private void handleSeedBlockCompletions(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
-    BlocksSeedingRequest request = RestFunctions.getJsonBodyAsClass(ctx, BlocksSeedingRequest.class);
-
+    BlocksSeedingRequest request =
+        RestFunctions.getJsonBodyAsClass(ctx, BlocksSeedingRequest.class);
 
     processor.seedBlockCompletions(userData, request.getBlocks());
 

@@ -164,16 +164,18 @@ public class BlocksProcessorImpl implements IBlockProcessor {
       throw new AdminOnlyRouteException();
     }
 
-    blockSeedingInfos.forEach((bsi) -> {
-      db.update(BLOCK)
-          .set(BLOCK.STATUS, BlockStatus.DONE)
-          .set(BLOCK.LAST_COMPLETED, bsi.getDateCompleted())
-          .setNull(BLOCK.ASSIGNED_TO)
-          .where(BLOCK.ID.eq(bsi.getId()))
-          .execute();
-    });
+    blockSeedingInfos.forEach(
+        (bsi) -> {
+          db.update(BLOCK)
+              .set(BLOCK.STATUS, BlockStatus.DONE)
+              .set(BLOCK.LAST_COMPLETED, bsi.getDateCompleted())
+              .setNull(BLOCK.ASSIGNED_TO)
+              .where(BLOCK.ID.eq(bsi.getId()))
+              .execute();
+        });
 
-    List<String> blockIds = blockSeedingInfos.stream().map(BlockSeedingInfo::getId).collect(Collectors.toList());
+    List<String> blockIds =
+        blockSeedingInfos.stream().map(BlockSeedingInfo::getId).collect(Collectors.toList());
     List<String> blockFids = db.selectFrom(BLOCK).where(BLOCK.ID.in(blockIds)).fetch(BLOCK.FID);
     for (int i = 0; i < blockFids.size(); i += 3000) {
       List<String> sublist = blockFids.subList(i, Math.min(blockFids.size(), i + 3000));

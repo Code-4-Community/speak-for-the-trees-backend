@@ -3,7 +3,6 @@ package com.codeforcommunity.dto.blocks;
 import com.codeforcommunity.dto.ApiDto;
 import com.codeforcommunity.exceptions.HandledException;
 import com.fasterxml.jackson.annotation.JsonFormat;
-
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +10,8 @@ import java.util.List;
 public class BlockSeedingInfo extends ApiDto {
 
   private String id;
-  @JsonFormat(pattern="MM/dd/yyyy")
+
+  @JsonFormat(pattern = "MM/dd/yyyy")
   private Timestamp dateCompleted;
 
   public BlockSeedingInfo(String id, Timestamp dateCompleted) {
