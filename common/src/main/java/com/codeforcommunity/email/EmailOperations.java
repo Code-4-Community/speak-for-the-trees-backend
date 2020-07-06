@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
@@ -54,18 +56,23 @@ public class EmailOperations {
    */
   public Optional<String> getTemplateString(
       String templateFilePath, Map<String, String> tagValues) {
-    FileReader fr;
+    InputStream templateFile;
     try {
-      File templateFile = new File(EmailOperations.class.getResource(templateFilePath).getFile());
-      fr = new FileReader(templateFile);
-    } catch (FileNotFoundException | NullPointerException e) {
+      templateFile = EmailOperations.class.getResourceAsStream(templateFilePath);
+    } catch (NullPointerException e) {
       logger
           .atError()
           .withThrowable(e)
-          .log("Could not find the specified email template file at" + templateFilePath);
+          .log("Could not find the specified email template file at " + templateFilePath);
       return Optional.empty();
     }
 
+    if (templateFile == null) {
+      logger.error("Could not find the specified email template file at " + templateFilePath);
+      return Optional.empty();
+    }
+
+    InputStreamReader fr = new InputStreamReader(templateFile);
     boolean readingTag = false;
     StringBuilder output = new StringBuilder();
     StringBuilder tag = new StringBuilder();
