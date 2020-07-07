@@ -10,6 +10,7 @@ import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.blocks.AssignedBlock;
 import com.codeforcommunity.dto.blocks.BlockExport;
 import com.codeforcommunity.dto.blocks.BlockResponse;
+import com.codeforcommunity.dto.blocks.BlockSeedingInfo;
 import com.codeforcommunity.dto.blocks.GetAssignedBlocksResponse;
 import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.PrivilegeLevel;
@@ -136,7 +137,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     return new GetAssignedBlocksResponse(
         db.select(BLOCK.ID, USERS.USERNAME, BLOCK.UPDATED_TIMESTAMP.as("dateUpdated"))
             .from(BLOCK)
-            .innerJoin(USERS)
+            .leftJoin(USERS)
             .on(BLOCK.ASSIGNED_TO.eq(USERS.ID))
             .where(BLOCK.STATUS.equal(status))
             .orderBy(BLOCK.UPDATED_TIMESTAMP.desc())
@@ -149,12 +150,37 @@ public class BlocksProcessorImpl implements IBlockProcessor {
       throw new AdminOnlyRouteException();
     }
 
-    List<String> blockIds = db.selectFrom(BLOCK).fetch(BLOCK.FID);
-    for (int i = 0; i < blockIds.size(); i += 3000) {
-      List<String> sublist = blockIds.subList(i, Math.min(blockIds.size(), i + 3000));
+    List<String> blockFids = db.selectFrom(BLOCK).fetch(BLOCK.FID);
+    for (int i = 0; i < blockFids.size(); i += 3000) {
+      List<String> sublist = blockFids.subList(i, Math.min(blockFids.size(), i + 3000));
       mapRequester.updateStreets(sublist, BlockStatus.OPEN);
     }
     db.update(BLOCK).set(BLOCK.STATUS, BlockStatus.OPEN).execute();
+  }
+
+  @Override
+  public void seedBlockCompletions(JWTData jwtData, List<BlockSeedingInfo> blockSeedingInfos) {
+    if (jwtData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
+      throw new AdminOnlyRouteException();
+    }
+
+    blockSeedingInfos.forEach(
+        (bsi) -> {
+          db.update(BLOCK)
+              .set(BLOCK.STATUS, BlockStatus.DONE)
+              .set(BLOCK.LAST_COMPLETED, bsi.getDateCompleted())
+              .setNull(BLOCK.ASSIGNED_TO)
+              .where(BLOCK.ID.eq(bsi.getId()))
+              .execute();
+        });
+
+    List<String> blockIds =
+        blockSeedingInfos.stream().map(BlockSeedingInfo::getId).collect(Collectors.toList());
+    List<String> blockFids = db.selectFrom(BLOCK).where(BLOCK.ID.in(blockIds)).fetch(BLOCK.FID);
+    for (int i = 0; i < blockFids.size(); i += 3000) {
+      List<String> sublist = blockFids.subList(i, Math.min(blockFids.size(), i + 3000));
+      mapRequester.updateStreets(sublist, BlockStatus.DONE);
+    }
   }
 
   @Override
