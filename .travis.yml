@@ -21,15 +21,18 @@ before_install:
 install: mvn spotless:check install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 before_deploy:
   - cd common/src/main/resources/properties/
-  - cp db.properties input.properties
+  - cp db.properties.example input.properties
   - awk -F" = " -v updatedVal="= $DB_USERNAME" '/database.username =/{$2=updatedVal}1' input.properties > user.properties
   - awk -F" = " -v updatedVal="= $DB_PASSWORD" '/database.password =/{$2=updatedVal}1' user.properties > pass.properties
   - awk -F" = " -v updatedVal="= $DB_DOMAIN" '/database.url =/{$2=updatedVal}1' pass.properties > db.properties
-  - rm user.properties
-  - rm pass.properties
-  - rm input.properties
-  - cp map.properties input.properties
+  - rm user.properties pass.properties input.properties
+  - cp map.properties.example input.properties
   - awk -F"=" -v updatedVal="=$MAP_FEATURE_LAYER_URL" '/feature_layer_route=/{$2=updatedVal}1' input.properties > map.properties
+  - rm input.properties
+  - cp emailer.properties.example input.properties
+  - awk -F" = " -v updatedVal="= $GMAIL_APP_PASSWORD" '/sendPassword =/{$2=updatedVal}1' input.properties > on.properties
+  - awk -F" = " -v updatedVal="= true" '/shouldSendEmails =/{$2=updatedVal}1' on.properties > emailer.properties
+  - rm input.properties on.properties
   - cd /home/travis/build/Code-4-Community/speak-for-the-trees-backend/
   - mvn clean install
   - zip build.zip Dockerfile service/target/service-1.0-SNAPSHOT-jar-with-dependencies.jar
