@@ -33,11 +33,15 @@ public class ChangeUsernameRequest extends ApiDto {
 
   @Override
   public List<String> validateFields(String fieldPrefix) {
-    String fieldName = fieldPrefix + "change_username_request.";
+    String fieldName = fieldPrefix + "change username request";
     List<String> fields = new ArrayList<>();
 
+    if (isEmpty(newUsername)) {
+      fields.add(fieldName + " username");
+    }
+
     if (password == null) {
-      fields.add(fieldName + "password");
+      fields.add(fieldName + " password");
     }
     return fields;
   }
