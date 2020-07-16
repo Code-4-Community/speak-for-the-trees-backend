@@ -11,10 +11,12 @@ import com.codeforcommunity.auth.Passwords;
 import com.codeforcommunity.dataaccess.AuthDatabaseOperations;
 import com.codeforcommunity.dto.user.ChangeEmailRequest;
 import com.codeforcommunity.dto.user.ChangePasswordRequest;
+import com.codeforcommunity.dto.user.ChangeUsernameRequest;
 import com.codeforcommunity.dto.user.UserDataResponse;
 import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
+import com.codeforcommunity.exceptions.UsernameAlreadyInUseException;
 import com.codeforcommunity.exceptions.WrongPasswordException;
 import com.codeforcommunity.requester.Emailer;
 import java.util.List;
@@ -118,5 +120,24 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
         previousEmail,
         AuthDatabaseOperations.getFullName(user.into(Users.class)),
         changeEmailRequest.getNewEmail());
+  }
+
+  @Override
+  public void changeUsername(JWTData userData, ChangeUsernameRequest changeUsernameRequest) {
+    UsersRecord user = db.selectFrom(USERS).where(USERS.ID.eq(userData.getUserId())).fetchOne();
+    if (user == null) {
+      throw new UserDoesNotExistException(userData.getUserId());
+    }
+
+    if (Passwords.isExpectedPassword(changeUsernameRequest.getPassword(), user.getPassHash())) {
+      if (db.fetchExists(USERS, USERS.USERNAME.eq(changeUsernameRequest.getNewUsername()))) {
+        throw new UsernameAlreadyInUseException(changeUsernameRequest.getNewUsername());
+      }
+
+      user.setUsername(changeUsernameRequest.getNewUsername());
+      user.store();
+    } else {
+      throw new WrongPasswordException();
+    }
   }
 }

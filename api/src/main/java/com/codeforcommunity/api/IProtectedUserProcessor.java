@@ -3,6 +3,7 @@ package com.codeforcommunity.api;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.user.ChangeEmailRequest;
 import com.codeforcommunity.dto.user.ChangePasswordRequest;
+import com.codeforcommunity.dto.user.ChangeUsernameRequest;
 import com.codeforcommunity.dto.user.UserDataResponse;
 
 public interface IProtectedUserProcessor {
@@ -21,4 +22,7 @@ public interface IProtectedUserProcessor {
 
   /** Change the user's email to the provided one */
   void changeEmail(JWTData userData, ChangeEmailRequest changeEmailRequest);
+
+  /** Change the user's username to the provided one */
+  void changeUsername(JWTData userData, ChangeUsernameRequest changeUsernameRequest);
 }
