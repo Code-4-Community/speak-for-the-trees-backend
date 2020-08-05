@@ -27,9 +27,9 @@ before_deploy:
   - awk -F" = " -v updatedVal="= $DB_DOMAIN" '/database.url =/{$2=updatedVal}1' pass.properties > db.properties
   - rm user.properties pass.properties input.properties
   - cp map.properties.example input.properties
-  - awk -F"=" -v updatedVal="=$MAP_FEATURE_LAYER_SLSSS_URL" '/feature_layer_route=/{$2=updatedVal}1' input.properties > map_url.properties
-  - awk -F"=" -v updatedVal="=$MAP_CLIENT_ID" '/client_id=/{$2=updatedVal}1' map_url.properties > map_id.properties
-  - awk -F"=" -v updatedVal="=$MAP_CLIENT_SECRET" '/client_secret=/{$2=updatedVal}1' map_id.properties > map.properties
+  - awk -F"=" -v updatedVal="= $MAP_FEATURE_LAYER_SLSSS_URL" '/feature_layer_route =/{$2=updatedVal}1' input.properties > map_url.properties
+  - awk -F"=" -v updatedVal="= $MAP_CLIENT_ID" '/client_id =/{$2=updatedVal}1' map_url.properties > map_id.properties
+  - awk -F"=" -v updatedVal="= $MAP_CLIENT_SECRET" '/client_secret =/{$2=updatedVal}1' map_id.properties > map.properties
   - rm input.properties map_url.properties map_id.properties
   - cp emailer.properties.example input.properties
   - awk -F" = " -v updatedVal="= $GMAIL_APP_PASSWORD" '/sendPassword =/{$2=updatedVal}1' input.properties > on.properties
