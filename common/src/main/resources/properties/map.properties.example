@@ -1,4 +1,4 @@
 token_route = https://www.arcgis.com/sharing/rest/oauth2/token
-feature_layer_route = https://services7.arcgis.com/iIw2JoTaLFMnHLgW/ArcGIS/rest/services/sftt_development_layer/FeatureServer/0
+feature_layer_route = https://services7.arcgis.com/iIw2JoTaLFMnHLgW/ArcGIS/rest/services/sftt_development_layer/FeatureServer/0/applyEdits
 client_id = placeholder_id
 client_secret = placeholder_secret
