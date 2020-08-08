@@ -159,6 +159,23 @@ public class BlocksProcessorImpl implements IBlockProcessor {
   }
 
   @Override
+  public void setMapToDatabase(JWTData jwtData) {
+    if (jwtData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
+      throw new AdminOnlyRouteException();
+    }
+
+    Map<BlockStatus, List<String>> blockStatuses =
+        db.selectFrom(BLOCK).fetchGroups(BLOCK.STATUS, BLOCK.FID);
+    for (BlockStatus status : blockStatuses.keySet()) {
+      List<String> fids = blockStatuses.get(status);
+      for (int i = 0; i < fids.size(); i += 3000) {
+        List<String> sublist = fids.subList(i, Math.min(fids.size(), i + 3000));
+        mapRequester.updateStreets(sublist, status);
+      }
+    }
+  }
+
+  @Override
   public void seedBlockCompletions(JWTData jwtData, List<BlockSeedingInfo> blockSeedingInfos) {
     if (jwtData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
       throw new AdminOnlyRouteException();

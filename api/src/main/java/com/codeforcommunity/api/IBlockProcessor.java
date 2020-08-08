@@ -23,6 +23,8 @@ public interface IBlockProcessor {
 
   void resetAllBlocks(JWTData jwtData);
 
+  void setMapToDatabase(JWTData jwtData);
+
   void seedBlockCompletions(JWTData jwtData, List<BlockSeedingInfo> blockSeedingInfos);
 
   String getBlockExportCSV(JWTData jwtData);

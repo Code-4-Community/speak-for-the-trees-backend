@@ -36,6 +36,7 @@ public class BlocksRouter implements IRouter {
     registerReset(router);
     registerGetReserved(router);
     registerResetAllBlocks(router);
+    registerSetMapToFeatureLayer(router);
     registerSeedBlockCompletions(router);
     registerGetReservedAdmin(router);
     registerGetDoneAdmin(router);
@@ -82,6 +83,11 @@ public class BlocksRouter implements IRouter {
   private void registerResetAllBlocks(Router router) {
     Route resetAllRoute = router.post("/reset/hard");
     resetAllRoute.handler(this::handleResetAll);
+  }
+
+  private void registerSetMapToFeatureLayer(Router router) {
+    Route resetAllRoute = router.post("/reset/map");
+    resetAllRoute.handler(this::handleMapToFeatureLayer);
   }
 
   private void registerSeedBlockCompletions(Router router) {
@@ -163,6 +169,14 @@ public class BlocksRouter implements IRouter {
     JWTData userData = ctx.get("jwt_data");
 
     processor.resetAllBlocks(userData);
+
+    end(ctx.response(), 200);
+  }
+
+  private void handleMapToFeatureLayer(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+
+    processor.setMapToDatabase(userData);
 
     end(ctx.response(), 200);
   }
