@@ -58,8 +58,6 @@ public class MapRequester {
       List<String> blockIds, BlockStatus updateTo, Future<String> tokenFuture) {
     logger.info("Making request to update blocks to " + updateTo.name());
 
-    String BLOCK_ID_QUERY_LIST = "ID IN (" + String.join(",", blockIds) + ")";
-
     Future<JsonArray> getBlockFIDsFuture =
         tokenFuture.compose(
             tokenString -> {
@@ -67,7 +65,7 @@ public class MapRequester {
                   MultiMap.caseInsensitiveMultiMap()
                       .add("f", "json")
                       .add("token", tokenString)
-                      .add("where", BLOCK_ID_QUERY_LIST)
+                      .add("where", "ID IN (" + String.join(",", blockIds) + ")")
                       .add("outFields", "FID");
 
               return Future.future(
@@ -99,6 +97,7 @@ public class MapRequester {
                                   }
                                 }
                               } else {
+                                // TODO: Logging/testing
                                 promise.fail("Error fetching Block FIDs");
                               }
                             }));
