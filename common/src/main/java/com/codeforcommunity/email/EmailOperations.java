@@ -1,12 +1,11 @@
 package com.codeforcommunity.email;
 
+import com.codeforcommunity.logger.SLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.Optional;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.simplejavamail.MailException;
 import org.simplejavamail.api.email.Email;
 import org.simplejavamail.api.mailer.AsyncResponse;
@@ -16,7 +15,7 @@ import org.simplejavamail.email.EmailBuilder;
 import org.simplejavamail.mailer.MailerBuilder;
 
 public class EmailOperations {
-  private static final Logger logger = LogManager.getLogger(EmailOperations.class);
+  private final SLogger logger = new SLogger(EmailOperations.class);
 
   private final boolean shouldSendEmails;
   private final String senderName;
@@ -57,15 +56,15 @@ public class EmailOperations {
     try {
       templateFile = EmailOperations.class.getResourceAsStream(templateFilePath);
     } catch (NullPointerException e) {
-      logger
-          .atError()
-          .withThrowable(e)
-          .log("Could not find the specified email template file at " + templateFilePath);
+      logger.error(
+          String.format("Could not find the specified email template at `%s`", templateFilePath),
+          e);
       return Optional.empty();
     }
 
     if (templateFile == null) {
-      logger.error("Could not find the specified email template file at " + templateFilePath);
+      logger.error(
+          String.format("Could not find the specified email template at `%s`", templateFilePath));
       return Optional.empty();
     }
 
@@ -103,10 +102,9 @@ public class EmailOperations {
         }
       }
     } catch (IOException e) {
-      logger
-          .atError()
-          .withThrowable(e)
-          .log("Threw IO exception while reading template file at " + templateFilePath);
+      logger.error(
+          String.format("IOException thrown while reading template file at `%s`", templateFilePath),
+          e);
       return Optional.empty();
     }
 
@@ -122,7 +120,7 @@ public class EmailOperations {
       return;
     }
 
-    logger.info("Sending email subject " + subject);
+    logger.info(String.format("Sending email with subject `%s`", subject));
 
     Email email =
         EmailBuilder.startingBlank()
@@ -134,22 +132,28 @@ public class EmailOperations {
 
     try {
       AsyncResponse mailResponse = mailer.sendMail(email, true);
+
+      if (mailResponse == null) {
+        logger.error("No mail response returned after trying to send email with subject `%s`");
+        return;
+      }
+
       mailResponse.onException(
           (e) -> {
-            logger
-                .atError()
-                .withThrowable(e)
-                .log("Threw exception while sending email subject " + subject);
+            logger.error(
+                String.format("Exception thrown while sending email with subject `%s`", subject),
+                e);
           });
+
       mailResponse.onSuccess(
           () -> {
-            logger.info("Successfully sent email subject " + subject);
+            logger.info(String.format("Successfully sent email subject `%s`", subject));
           });
+
     } catch (MailException e) {
-      logger
-          .atError()
-          .withThrowable(e)
-          .log("Threw exception while sending email subject" + subject);
+      logger.error(
+          String.format("`MailException` thrown while sending email with subject `%s`", subject),
+          e);
     }
   }
 }

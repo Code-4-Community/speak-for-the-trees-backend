@@ -1,6 +1,7 @@
 package com.codeforcommunity.requester;
 
 import com.codeforcommunity.enums.BlockStatus;
+import com.codeforcommunity.logger.SLogger;
 import com.codeforcommunity.propertiesLoader.PropertiesLoader;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
@@ -12,11 +13,9 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import java.util.List;
 import java.util.Properties;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class MapRequester {
-  private final Logger logger = LogManager.getLogger(MapRequester.class);
+  private final SLogger logger = new SLogger(MapRequester.class);
   private final WebClient client;
   private Future<String> tokenFuture;
 
@@ -105,14 +104,12 @@ public class MapRequester {
                                   }
                                 } else {
                                   logger.error(
-                                      "Update street response request responded with non-200 status code: "
-                                          + httpResponse.statusCode());
+                                      String.format(
+                                          "Update street response request responded with non-200 status code [%d]: %s",
+                                          httpResponse.statusCode(), httpResponse.bodyAsString()));
                                 }
                               } else {
-                                logger
-                                    .atError()
-                                    .withThrowable(ar.cause())
-                                    .log("Error sending update street request", ar.cause());
+                                logger.error("Error sending update street request", ar.cause());
                                 promise.fail(ar.cause());
                               }
                             });
@@ -157,14 +154,12 @@ public class MapRequester {
                             }
                           } else {
                             logger.error(
-                                "ArcGIS token request responded with non-200 status code: "
-                                    + httpResponse.statusCode());
+                                String.format(
+                                    "ArcGIS token request responded with non-200 status code [%d]: %s",
+                                    httpResponse.statusCode(), httpResponse.bodyAsString()));
                           }
                         } else {
-                          logger
-                              .atError()
-                              .withThrowable(ar.cause())
-                              .log("Error sending ArcGIS token request");
+                          logger.error("Error sending ArcGIS token request", ar.cause());
                           promise.fail(ar.cause());
                         }
                       });

@@ -53,4 +53,8 @@ public class PropertiesLoader {
   public static Properties getMapProperties() {
     return getProperties("map.properties");
   }
+
+  public static Properties getSlackProperties() {
+    return getProperties("slack.properties");
+  }
 }
