@@ -11,7 +11,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,61 +52,68 @@ public class MapRequester {
     updateLayers(blockIds, updateTo, this.tokenFuture);
   }
 
+  private Future<JsonArray> getBlockFidsFuture(List<String> blockIds, BlockStatus updateTo) {
+    return this.tokenFuture.compose(
+        tokenString -> {
+          MultiMap formData =
+              MultiMap.caseInsensitiveMultiMap()
+                  .add("f", "json")
+                  .add("token", tokenString)
+                  .add("where", "ID IN (" + String.join(",", blockIds) + ")")
+                  .add("outFields", "FID");
+
+          return Future.future(
+              promise -> {
+                client
+                    .postAbs(featureLayerQueryRoute)
+                    .putHeader("content-type", "multipart/form-data")
+                    .sendForm(
+                        formData,
+                        (asyncResult -> {
+                          if (asyncResult.succeeded()) {
+                            HttpResponse<Buffer> httpResponse = asyncResult.result();
+
+                            if (httpResponse.statusCode() == 200) {
+                              JsonObject responseBody = httpResponse.bodyAsJsonObject();
+                              if (responseBody.containsKey("features")) {
+                                JsonArray features = responseBody.getJsonArray("features");
+                                JsonArray updateJson = new JsonArray();
+                                for (int i = 0; i < updateJson.size(); i++) {
+                                  JsonObject feature = features.getJsonObject(i);
+                                  JsonObject attribute = feature.getJsonObject("attributes");
+                                  String FID = attribute.getString("FID");
+                                  updateJson.add(JsonObject.mapFrom(new MapRequest(FID, updateTo)));
+                                }
+                                promise.complete(updateJson);
+                              } else {
+                                promise.fail("Error fetching Block FIDs");
+                                logger.error(
+                                    "Failed to find features in ArcGIS Response: " + responseBody);
+                              }
+                            } else {
+                              promise.fail("Error fetching Block FIDs");
+                              logger.error(
+                                  "ArcGIS API returned a non-200 status code: "
+                                      + httpResponse.toString());
+                            }
+                          } else {
+                            promise.fail("Error fetching Block FIDs");
+                            logger.error(
+                                "Async Request to ArcGIS failed: " + asyncResult.toString());
+                          }
+                        }));
+              });
+        });
+  }
+
   /** Make a request to update the ArcGIS feature layer */
   private Future<Void> updateLayers(
       List<String> blockIds, BlockStatus updateTo, Future<String> tokenFuture) {
     logger.info("Making request to update blocks to " + updateTo.name());
-
-    Future<JsonArray> getBlockFIDsFuture =
-        tokenFuture.compose(
-            tokenString -> {
-              MultiMap formData =
-                  MultiMap.caseInsensitiveMultiMap()
-                      .add("f", "json")
-                      .add("token", tokenString)
-                      .add("where", "ID IN (" + String.join(",", blockIds) + ")")
-                      .add("outFields", "FID");
-
-              return Future.future(
-                  promise -> {
-                    client
-                        .postAbs(featureLayerQueryRoute)
-                        .putHeader("content-type", "multipart/form-data")
-                        .sendForm(
-                            formData,
-                            (asyncResult -> {
-                              if (asyncResult.succeeded()) {
-                                HttpResponse<Buffer> httpResponse = asyncResult.result();
-
-                                if (httpResponse.statusCode() == 200) {
-                                  JsonObject responseBody = httpResponse.bodyAsJsonObject();
-                                  if (responseBody.containsKey("features")) {
-                                    List<Map> features =
-                                        responseBody.getJsonArray("features").getList();
-                                    JsonArray updateJson = new JsonArray();
-                                    features.forEach(
-                                        feature -> {
-                                          Map attributes = (Map) feature.get("attributes");
-                                          String FID = attributes.get("FID").toString();
-                                          updateJson.add(
-                                              JsonObject.mapFrom(new MapRequest(FID, updateTo)));
-                                        });
-                                    promise.complete(updateJson);
-                                    return;
-                                  }
-                                }
-                              } else {
-                                // TODO: Logging/testing
-                                promise.fail("Error fetching Block FIDs");
-                              }
-                            }));
-                  });
-            });
-
-    Future<Void> updateMapFuture =
-        tokenFuture.compose(
-            tokenString ->
-                getBlockFIDsFuture.compose(
+    return tokenFuture.compose(
+        tokenString ->
+            this.getBlockFidsFuture(blockIds, updateTo)
+                .compose(
                     updateJson -> {
                       MultiMap formData =
                           MultiMap.caseInsensitiveMultiMap()
@@ -170,8 +176,6 @@ public class MapRequester {
                                     });
                           });
                     }));
-
-    return updateMapFuture;
   }
 
   /**
