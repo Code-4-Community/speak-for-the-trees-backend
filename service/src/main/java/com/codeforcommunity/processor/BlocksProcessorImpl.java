@@ -150,14 +150,14 @@ public class BlocksProcessorImpl implements IBlockProcessor {
    */
   @Override
   public void resetAllBlocks(JWTData jwtData) {
-    throw new AdminOnlyRouteException();
+    //    throw new AdminOnlyRouteException();
 
-    //    List<String> blockIds = db.selectFrom(BLOCK).fetch(BLOCK.ID);
-    //    for (int i = 0; i < blockIds.size(); i += 3000) {
-    //      List<String> sublist = blockIds.subList(i, Math.min(blockIds.size(), i + 3000));
-    //      mapRequester.updateBlocks(sublist, BlockStatus.OPEN);
-    //    }
-    //    db.update(BLOCK).set(BLOCK.STATUS, BlockStatus.OPEN).execute();
+    List<String> blockIds = db.selectFrom(BLOCK).fetch(BLOCK.ID);
+    for (int i = 0; i < blockIds.size(); i += 3000) {
+      List<String> sublist = blockIds.subList(i, Math.min(blockIds.size(), i + 3000));
+      mapRequester.updateBlocks(sublist, BlockStatus.OPEN);
+    }
+    db.update(BLOCK).set(BLOCK.STATUS, BlockStatus.OPEN).execute();
   }
 
   @Override

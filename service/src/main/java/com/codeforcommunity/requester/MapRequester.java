@@ -78,11 +78,12 @@ public class MapRequester {
                               if (responseBody.containsKey("features")) {
                                 JsonArray features = responseBody.getJsonArray("features");
                                 JsonArray updateJson = new JsonArray();
-                                for (int i = 0; i < updateJson.size(); i++) {
+                                for (int i = 0; i < features.size(); i++) {
                                   JsonObject feature = features.getJsonObject(i);
                                   JsonObject attribute = feature.getJsonObject("attributes");
-                                  String FID = attribute.getString("FID");
-                                  updateJson.add(JsonObject.mapFrom(new MapRequest(FID, updateTo)));
+                                  Integer FID = attribute.getInteger("FID");
+                                  updateJson.add(
+                                      JsonObject.mapFrom(new MapRequest(FID.toString(), updateTo)));
                                 }
                                 promise.complete(updateJson);
                               } else {
