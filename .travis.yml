@@ -35,6 +35,10 @@ before_deploy:
   - awk -F" = " -v updatedVal="= $GMAIL_APP_PASSWORD" '/sendPassword =/{$2=updatedVal}1' input.properties > on.properties
   - awk -F" = " -v updatedVal="= true" '/shouldSendEmails =/{$2=updatedVal}1' on.properties > emailer.properties
   - rm input.properties on.properties
+  - cp slack.properties.example input.properties
+  - awk -F" = " -v updatedVal="= $SLACK_WEBHOOK_URL" '/slack_webhook_url =/{$2=updatedVal}1' input.properties > on.properties
+  - awk -F" = " -v updatedVal="= true" '/enabled =/{$2=updatedVal}1' on.properties > slack.properties
+  - rm input.properties on.properties
   - cd /home/travis/build/Code-4-Community/speak-for-the-trees-backend/
   - mvn clean install
   - zip build.zip Dockerfile service/target/service-1.0-SNAPSHOT-jar-with-dependencies.jar
