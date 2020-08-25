@@ -26,7 +26,6 @@ import org.jooq.impl.DSL;
 public class ServiceMain {
   private DSLContext db;
   private final Properties dbProperties = PropertiesLoader.getDbProperties();
-  private final String productName = "SFTT";
 
   public static void main(String[] args) {
     try {
@@ -76,6 +75,8 @@ public class ServiceMain {
         new JWTHandler(PropertiesLoader.getJwtProperties().getProperty("secret_key"));
     JWTAuthorizer jwtAuthorizer = new JWTAuthorizer(jwtHandler);
     JWTCreator jwtCreator = new JWTCreator(jwtHandler);
+
+    String productName = "SFTT";
 
     Vertx vertx = Vertx.vertx();
     SLogger.initializeLogger(vertx, productName);
