@@ -26,6 +26,7 @@ import org.jooq.impl.DSL;
 public class ServiceMain {
   private DSLContext db;
   private final Properties dbProperties = PropertiesLoader.getDbProperties();
+  private final String productName = "SFTT";
 
   public static void main(String[] args) {
     try {
@@ -77,7 +78,7 @@ public class ServiceMain {
     JWTCreator jwtCreator = new JWTCreator(jwtHandler);
 
     Vertx vertx = Vertx.vertx();
-    SLogger.initializeLogger(vertx, "SFTT");
+    SLogger.initializeLogger(vertx, productName);
     MapRequester mapRequester = new MapRequester(vertx);
     Emailer emailer = new Emailer();
 
