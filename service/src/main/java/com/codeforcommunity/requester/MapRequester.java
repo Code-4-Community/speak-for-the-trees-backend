@@ -75,7 +75,19 @@ public class MapRequester {
 
                             if (httpResponse.statusCode() == 200) {
                               JsonObject responseBody = httpResponse.bodyAsJsonObject();
-                              if (responseBody.containsKey("features")) {
+                              if (responseBody.containsKey("error")
+                                  && responseBody.getJsonObject("error").getInteger("code")
+                                      == 498) {
+                                // The API token is invalid, reset it and make this call
+                                // again.
+                                logger.info(
+                                    "Remaking token request while updating blocks to "
+                                        + updateTo.name());
+                                this.tokenFuture = updateToken();
+                                updateLayers(blockIds, updateTo, this.tokenFuture)
+                                    .onSuccess((V) -> promise.complete())
+                                    .onFailure(promise::fail);
+                              } else if (responseBody.containsKey("features")) {
                                 JsonArray features = responseBody.getJsonArray("features");
                                 JsonArray updateJson = new JsonArray();
                                 for (int i = 0; i < features.size(); i++) {
@@ -152,8 +164,9 @@ public class MapRequester {
                                           } else if (responseBody.containsKey("updateResults")) {
                                             // TODO: NOTE - THIS DOES NOT GUARANTEE A SUCCESS CASE
                                             logger.info(
-                                                "Successfully updated blocks to "
-                                                    + updateTo.name());
+                                                "ArcGIS returned updated results to status: "
+                                                    + updateTo.name()
+                                                    + ". This does not guarantee a successful update.");
                                             // Check successes
                                             promise.complete();
                                           } else {
