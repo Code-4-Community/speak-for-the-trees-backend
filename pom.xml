@@ -51,6 +51,16 @@
             <mainClass>com.codeforcommunity.ServiceMain</mainClass>
           </configuration>
         </plugin>
+
+        <!-- Used for Coveralls code coverage reporting https://github.com/trautonen/coveralls-maven-plugin -->
+        <plugin>
+          <groupId>org.eluder.coveralls</groupId>
+          <artifactId>coveralls-maven-plugin</artifactId>
+          <version>4.3.0</version>
+          <configuration>
+            <repoToken>NkER2Z6UArofF4hFJULGmeAueGC5xGDdv</repoToken>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
