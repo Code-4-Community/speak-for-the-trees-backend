@@ -59,7 +59,11 @@ public class MapRequester {
               MultiMap.caseInsensitiveMultiMap()
                   .add("f", "json")
                   .add("token", tokenString)
-                  .add("where", "ID IN (" + String.join(",", blockIds) + ")")
+                  .add(
+                      "where",
+                      "ID IN ("
+                          + (blockIds.size() > 1 ? String.join(",", blockIds) : blockIds.get(0))
+                          + ")")
                   .add("outFields", "FID");
 
           return Future.future(
@@ -166,7 +170,8 @@ public class MapRequester {
                                             logger.info(
                                                 "ArcGIS returned updated results to status: "
                                                     + updateTo.name()
-                                                    + ". This does not guarantee a successful update.");
+                                                    + ". This does not guarantee a successful update. Response: "
+                                                    + responseBody.toString());
                                             // Check successes
                                             promise.complete();
                                           } else {
