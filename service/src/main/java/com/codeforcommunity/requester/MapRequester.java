@@ -101,12 +101,13 @@ public class MapRequester {
                                 }
                                 promise.complete(updateJson);
                               } else {
-                                promise.fail("Error fetching Block FIDs");
+                                promise.fail(
+                                    "Error fetching Block FIDs: " + responseBody.toString());
                                 logger.error(
                                     "Failed to find features in ArcGIS Response: " + responseBody);
                               }
                             } else {
-                              promise.fail("Error fetching Block FIDs");
+                              promise.fail("Error fetching Block FIDs: " + httpResponse.toString());
                               logger.error(
                                   "ArcGIS API returned a non-200 status code: "
                                       + httpResponse.toString());
@@ -177,17 +178,17 @@ public class MapRequester {
                                             logger.error(
                                                 "Update street request responded with unrecognized response body: "
                                                     + responseBody);
+                                            promise.fail(responseBody.encode());
                                           }
                                         } else {
                                           logger.error(
                                               "Update street response request responded with non-200 status code: "
                                                   + httpResponse.statusCode());
+                                          promise.fail(httpResponse.bodyAsString());
                                         }
                                       } else {
-                                        logger
-                                            .atError()
-                                            .withThrowable(ar.cause())
-                                            .log("Error sending update street request", ar.cause());
+                                        logger.error(
+                                            "Error sending update street request", ar.cause());
                                         promise.fail(ar.cause());
                                       }
                                     });
