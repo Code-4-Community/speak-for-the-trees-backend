@@ -18,9 +18,12 @@ import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import com.codeforcommunity.exceptions.UsernameAlreadyInUseException;
+import com.codeforcommunity.logger.SLogger;
 import io.vertx.ext.web.RoutingContext;
 
 public class FailureHandler {
+
+  private final SLogger logger = new SLogger(FailureHandler.class);
 
   public void handleFailure(RoutingContext ctx) {
     Throwable throwable = ctx.failure();
@@ -169,6 +172,7 @@ public class FailureHandler {
   /** A general handler for all exceptions not explicitly handled above. */
   private void handleUncaughtError(RoutingContext ctx, Throwable throwable) {
     String message = String.format("Internal server error caused by: %s", throwable.getMessage());
+    logger.error("Encountered uncaught error", throwable);
     end(ctx, message, 500);
   }
 

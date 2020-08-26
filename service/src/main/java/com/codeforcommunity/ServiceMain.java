@@ -8,6 +8,7 @@ import com.codeforcommunity.api.ITeamsProcessor;
 import com.codeforcommunity.auth.JWTAuthorizer;
 import com.codeforcommunity.auth.JWTCreator;
 import com.codeforcommunity.auth.JWTHandler;
+import com.codeforcommunity.logger.SLogger;
 import com.codeforcommunity.processor.AuthProcessorImpl;
 import com.codeforcommunity.processor.BlockInfoProcessorImpl;
 import com.codeforcommunity.processor.BlocksProcessorImpl;
@@ -75,9 +76,15 @@ public class ServiceMain {
     JWTAuthorizer jwtAuthorizer = new JWTAuthorizer(jwtHandler);
     JWTCreator jwtCreator = new JWTCreator(jwtHandler);
 
+    String productName = "SFTT";
+
     Vertx vertx = Vertx.vertx();
+    SLogger.initializeLogger(vertx, productName);
     MapRequester mapRequester = new MapRequester(vertx);
     Emailer emailer = new Emailer();
+
+    // Log uncaught exceptions to Slack
+    vertx.exceptionHandler(SLogger::logApplicationError);
 
     IAuthProcessor authProcessor = new AuthProcessorImpl(this.db, emailer, jwtCreator);
     IProtectedUserProcessor protectedUserProcessor =
