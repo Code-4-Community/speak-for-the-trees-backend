@@ -29,6 +29,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
   private DSLContext db;
   private MapRequester mapRequester;
+  private final int UPDATE_BATCH_SIZE = 1000;
 
   public BlocksProcessorImpl(DSLContext db, MapRequester mapRequester) {
     this.db = db;
@@ -47,8 +48,8 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.RESERVED, jwtData.getUserId());
 
     List<String> successfulBlockIds =
-        brs.getOrDefault(BlockStatus.OPEN, db.newResult(BLOCK)).map(BlockRecord::getFid);
-    mapRequester.updateStreets(successfulBlockIds, BlockStatus.RESERVED);
+        brs.getOrDefault(BlockStatus.OPEN, db.newResult(BLOCK)).map(BlockRecord::getId);
+    mapRequester.updateBlocks(successfulBlockIds, BlockStatus.RESERVED);
 
     return new BlockResponse(successfulBlockIds, failures);
   }
@@ -66,8 +67,8 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.DONE, jwtData.getUserId());
 
     List<String> successfulBlockIds =
-        eligibleBlocks.stream().map(BlockRecord::getFid).collect(Collectors.toList());
-    mapRequester.updateStreets(successfulBlockIds, BlockStatus.DONE);
+        eligibleBlocks.stream().map(BlockRecord::getId).collect(Collectors.toList());
+    mapRequester.updateBlocks(successfulBlockIds, BlockStatus.DONE);
 
     return new BlockResponse(successfulBlockIds, failures);
   }
@@ -85,8 +86,8 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.OPEN, jwtData.getUserId());
 
     List<String> successfulBlockIds =
-        eligibleBlocks.stream().map(BlockRecord::getFid).collect(Collectors.toList());
-    mapRequester.updateStreets(successfulBlockIds, BlockStatus.OPEN);
+        eligibleBlocks.stream().map(BlockRecord::getId).collect(Collectors.toList());
+    mapRequester.updateBlocks(successfulBlockIds, BlockStatus.OPEN);
 
     return new BlockResponse(successfulBlockIds, failures);
   }
@@ -104,8 +105,8 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     updateDatabaseBlocks(eligibleBlocks, BlockStatus.OPEN, jwtData.getUserId());
 
     List<String> successfulBlockIds =
-        eligibleBlocks.stream().map(BlockRecord::getFid).collect(Collectors.toList());
-    mapRequester.updateStreets(successfulBlockIds, BlockStatus.OPEN);
+        eligibleBlocks.stream().map(BlockRecord::getId).collect(Collectors.toList());
+    mapRequester.updateBlocks(successfulBlockIds, BlockStatus.OPEN);
 
     return new BlockResponse(successfulBlockIds, failures);
   }
@@ -144,18 +145,21 @@ public class BlocksProcessorImpl implements IBlockProcessor {
             .fetchInto(AssignedBlock.class));
   }
 
+  /*
+   * Never use this in production. Uncomment and use locally, if needed. Don't commit the uncommented code.
+   * TODO: Create superuser privilege level for system management.
+   */
   @Override
   public void resetAllBlocks(JWTData jwtData) {
-    if (jwtData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
-      throw new AdminOnlyRouteException();
-    }
+    throw new AdminOnlyRouteException();
 
-    List<String> blockFids = db.selectFrom(BLOCK).fetch(BLOCK.FID);
-    for (int i = 0; i < blockFids.size(); i += 3000) {
-      List<String> sublist = blockFids.subList(i, Math.min(blockFids.size(), i + 3000));
-      mapRequester.updateStreets(sublist, BlockStatus.OPEN);
-    }
-    db.update(BLOCK).set(BLOCK.STATUS, BlockStatus.OPEN).execute();
+    //    List<String> blockIds = db.selectFrom(BLOCK).fetch(BLOCK.ID);
+    //    for (int i = 0; i < blockIds.size(); i += this.UPDATE_BATCH_SIZE) {
+    //      List<String> sublist = blockIds.subList(i, Math.min(blockIds.size(), i +
+    // this.UPDATE_BATCH_SIZE));
+    //      mapRequester.updateBlocks(sublist, BlockStatus.OPEN);
+    //    }
+    //    db.update(BLOCK).set(BLOCK.STATUS, BlockStatus.OPEN).execute();
   }
 
   @Override
@@ -165,12 +169,13 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     }
 
     Map<BlockStatus, List<String>> blockStatuses =
-        db.selectFrom(BLOCK).fetchGroups(BLOCK.STATUS, BLOCK.FID);
+        db.selectFrom(BLOCK).fetchGroups(BLOCK.STATUS, BLOCK.ID);
     for (BlockStatus status : blockStatuses.keySet()) {
-      List<String> fids = blockStatuses.get(status);
-      for (int i = 0; i < fids.size(); i += 3000) {
-        List<String> sublist = fids.subList(i, Math.min(fids.size(), i + 3000));
-        mapRequester.updateStreets(sublist, status);
+      List<String> blockIds = blockStatuses.get(status);
+      for (int i = 0; i < blockIds.size(); i += this.UPDATE_BATCH_SIZE) {
+        List<String> sublist =
+            blockIds.subList(i, Math.min(blockIds.size(), i + this.UPDATE_BATCH_SIZE));
+        mapRequester.updateBlocks(sublist, status);
       }
     }
   }
@@ -193,10 +198,11 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
     List<String> blockIds =
         blockSeedingInfos.stream().map(BlockSeedingInfo::getId).collect(Collectors.toList());
-    List<String> blockFids = db.selectFrom(BLOCK).where(BLOCK.ID.in(blockIds)).fetch(BLOCK.FID);
-    for (int i = 0; i < blockFids.size(); i += 3000) {
-      List<String> sublist = blockFids.subList(i, Math.min(blockFids.size(), i + 3000));
-      mapRequester.updateStreets(sublist, BlockStatus.DONE);
+    // TODO: Make this a reusable function
+    for (int i = 0; i < blockIds.size(); i += this.UPDATE_BATCH_SIZE) {
+      List<String> sublist =
+          blockIds.subList(i, Math.min(blockIds.size(), i + this.UPDATE_BATCH_SIZE));
+      mapRequester.updateBlocks(sublist, BlockStatus.DONE);
     }
   }
 

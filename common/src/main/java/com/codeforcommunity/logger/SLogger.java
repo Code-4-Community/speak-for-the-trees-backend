@@ -50,6 +50,16 @@ public class SLogger {
    * @param msg the error message to log.
    */
   public void info(String msg) {
+    this.info(msg, false);
+  }
+
+  /**
+   * Log the given info-level message to the standard logger. The given message and exception must
+   * be non-null.
+   *
+   * @param msg the error message to log.
+   */
+  public void info(String msg, boolean slackEnabled) {
     if (msg == null) {
       String errorMsg = "Given `null` message to log";
       log4jLogger.error(errorMsg);
@@ -58,6 +68,10 @@ public class SLogger {
     }
 
     this.classLogger.info(msg);
+
+    if (slackEnabled) {
+      sendSlack(msg);
+    }
   }
 
   /**
