@@ -29,6 +29,7 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
   private DSLContext db;
   private MapRequester mapRequester;
+  private final int UPDATE_BATCH_SIZE = 1000;
 
   public BlocksProcessorImpl(DSLContext db, MapRequester mapRequester) {
     this.db = db;
@@ -153,8 +154,9 @@ public class BlocksProcessorImpl implements IBlockProcessor {
     throw new AdminOnlyRouteException();
 
     //    List<String> blockIds = db.selectFrom(BLOCK).fetch(BLOCK.ID);
-    //    for (int i = 0; i < blockIds.size(); i += 3000) {
-    //      List<String> sublist = blockIds.subList(i, Math.min(blockIds.size(), i + 3000));
+    //    for (int i = 0; i < blockIds.size(); i += this.UPDATE_BATCH_SIZE) {
+    //      List<String> sublist = blockIds.subList(i, Math.min(blockIds.size(), i +
+    // this.UPDATE_BATCH_SIZE));
     //      mapRequester.updateBlocks(sublist, BlockStatus.OPEN);
     //    }
     //    db.update(BLOCK).set(BLOCK.STATUS, BlockStatus.OPEN).execute();
@@ -170,8 +172,9 @@ public class BlocksProcessorImpl implements IBlockProcessor {
         db.selectFrom(BLOCK).fetchGroups(BLOCK.STATUS, BLOCK.ID);
     for (BlockStatus status : blockStatuses.keySet()) {
       List<String> blockIds = blockStatuses.get(status);
-      for (int i = 0; i < blockIds.size(); i += 3000) {
-        List<String> sublist = blockIds.subList(i, Math.min(blockIds.size(), i + 3000));
+      for (int i = 0; i < blockIds.size(); i += this.UPDATE_BATCH_SIZE) {
+        List<String> sublist =
+            blockIds.subList(i, Math.min(blockIds.size(), i + this.UPDATE_BATCH_SIZE));
         mapRequester.updateBlocks(sublist, status);
       }
     }
@@ -195,8 +198,10 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
     List<String> blockIds =
         blockSeedingInfos.stream().map(BlockSeedingInfo::getId).collect(Collectors.toList());
-    for (int i = 0; i < blockIds.size(); i += 3000) {
-      List<String> sublist = blockIds.subList(i, Math.min(blockIds.size(), i + 3000));
+    // TODO: Make this a reusable function
+    for (int i = 0; i < blockIds.size(); i += this.UPDATE_BATCH_SIZE) {
+      List<String> sublist =
+          blockIds.subList(i, Math.min(blockIds.size(), i + this.UPDATE_BATCH_SIZE));
       mapRequester.updateBlocks(sublist, BlockStatus.DONE);
     }
   }

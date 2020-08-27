@@ -207,42 +207,39 @@ public class MapRequester {
             .add("client_secret", clientSecret)
             .add("grant_type", "client_credentials");
 
-    Future<String> newTokenFuture =
-        Future.future(
-            promise -> {
-              client
-                  .postAbs(tokenRoute)
-                  .putHeader("content-type", "multipart/form-data")
-                  .sendForm(
-                      formData,
-                      ar -> {
-                        if (ar.succeeded()) {
-                          HttpResponse<Buffer> httpResponse = ar.result();
+    return Future.future(
+        promise -> {
+          client
+              .postAbs(tokenRoute)
+              .putHeader("content-type", "multipart/form-data")
+              .sendForm(
+                  formData,
+                  ar -> {
+                    if (ar.succeeded()) {
+                      HttpResponse<Buffer> httpResponse = ar.result();
 
-                          if (httpResponse.statusCode() == 200) {
-                            JsonObject responseBody = httpResponse.bodyAsJsonObject();
-                            if (responseBody.containsKey("access_token")) {
-                              logger.info("Received ArcGIS token successfully");
-                              promise.complete(responseBody.getString("access_token"));
-                            } else {
-                              logger.error(
-                                  "ArcGIS token request responded with unrecognized response body: "
-                                      + responseBody);
-                            }
-                          } else {
-                            logger.error(
-                                String.format(
-                                    "ArcGIS token request responded with non-200 status code [%d]: %s",
-                                    httpResponse.statusCode(), httpResponse.bodyAsString()));
-                          }
+                      if (httpResponse.statusCode() == 200) {
+                        JsonObject responseBody = httpResponse.bodyAsJsonObject();
+                        if (responseBody.containsKey("access_token")) {
+                          logger.info("Received ArcGIS token successfully", true);
+                          promise.complete(responseBody.getString("access_token"));
                         } else {
-                          logger.error("Error sending ArcGIS token request", ar.cause());
-                          promise.fail(ar.cause());
+                          logger.error(
+                              "ArcGIS token request responded with unrecognized response body: "
+                                  + responseBody);
                         }
-                      });
-            });
-
-    return newTokenFuture;
+                      } else {
+                        logger.error(
+                            String.format(
+                                "ArcGIS token request responded with non-200 status code [%d]: %s",
+                                httpResponse.statusCode(), httpResponse.bodyAsString()));
+                      }
+                    } else {
+                      logger.error("Error sending ArcGIS token request", ar.cause());
+                      promise.fail(ar.cause());
+                    }
+                  });
+        });
   }
 
   private class MapRequest {
