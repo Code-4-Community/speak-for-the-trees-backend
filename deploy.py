@@ -13,9 +13,10 @@ ENV_VALUES = {
         "database.password": "DB_PASSWORD",
     },
 
-    "stripe.properties.example": {
-        "stripe_api_secret_key": "STRIPE_API_SECRET",
-        "stripe_webhook_signing_secret": "STRIPE_WEBHOOK_SECRET",
+    "map.properties.example": {
+        "feature_layer_route": "MAP_FEATURE_LAYER_SLSSS_URL",
+        "client_id": "MAP_CLIENT_ID",
+        "client_secret": "MAP_CLIENT_SECRET",
     },
 
     "emailer.properties.example": {
@@ -31,7 +32,6 @@ ENV_VALUES = {
         "slack_webhook_url": "SLACK_WEBHOOK_URL",
         "enabled": "SLACK_ENABLED",
     },
-
 }
 
 # Whether or not to log errors to Slack
