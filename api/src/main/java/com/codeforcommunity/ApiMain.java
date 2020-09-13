@@ -2,6 +2,7 @@ package com.codeforcommunity;
 
 import static com.codeforcommunity.rest.ApiRouter.end;
 
+import com.codeforcommunity.logger.SLogger;
 import com.codeforcommunity.rest.ApiRouter;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
@@ -13,6 +14,7 @@ import io.vertx.ext.web.handler.CorsHandler;
 
 /** The main point for the API. */
 public class ApiMain {
+  private final SLogger logger = new SLogger(ApiMain.class);
   private final ApiRouter apiRouter;
 
   public ApiMain(ApiRouter apiRouter) {
@@ -47,6 +49,7 @@ public class ApiMain {
 
     router.mountSubRouter("/api/v1", apiRouter.initializeRouter(vertx));
 
+    logger.info("Starting server on port 8081", true);
     server.requestHandler(router).listen(8081);
   }
 
