@@ -44,8 +44,8 @@ public class SLogger {
   }
 
   /**
-   * Log the given info-level message to the standard logger. The given message must non-null.
-   * This message is not sent to the Slack channel.
+   * Log the given info-level message to the standard logger. The given message must non-null. This
+   * message is not sent to the Slack channel.
    *
    * @param msg the error message to log.
    */
