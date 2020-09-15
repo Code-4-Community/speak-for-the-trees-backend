@@ -44,8 +44,8 @@ public class SLogger {
   }
 
   /**
-   * Log the given info-level message to the standard logger. The given message and exception must
-   * be non-null.
+   * Log the given info-level message to the standard logger. The given message must non-null. This
+   * message is not sent to the Slack channel.
    *
    * @param msg the error message to log.
    */
@@ -54,23 +54,23 @@ public class SLogger {
   }
 
   /**
-   * Log the given info-level message to the standard logger. The given message and exception must
-   * be non-null.
+   * Log the given info-level message to the standard logger. The given message must non-null.
    *
    * @param msg the error message to log.
+   * @param sendSlack whether or not to log this particular message to slack.
    */
-  public void info(String msg, boolean slackEnabled) {
+  public void info(String msg, boolean sendSlack) {
     if (msg == null) {
       String errorMsg = "Given `null` message to log";
       log4jLogger.error(errorMsg);
-      sendSlack(errorMsg);
+      sendSlack(errorMsg, false);
       return;
     }
 
     this.classLogger.info(msg);
 
-    if (slackEnabled) {
-      sendSlack(msg);
+    if (sendSlack) {
+      sendSlack(msg, false);
     }
   }
 
@@ -84,12 +84,12 @@ public class SLogger {
     if (msg == null) {
       String errorMsg = "Given `null` message to log";
       log4jLogger.error(errorMsg);
-      sendSlack(errorMsg);
+      sendSlack(errorMsg, true);
       return;
     }
 
     this.classLogger.error(msg);
-    sendSlack(msg);
+    sendSlack(msg, true);
   }
 
   /**
@@ -104,7 +104,7 @@ public class SLogger {
     if (msg == null || e == null) {
       String errorMsg = String.format("Given `null` message or exception to log: %s, %s", msg, e);
       log4jLogger.error(errorMsg);
-      sendSlack(errorMsg);
+      sendSlack(errorMsg, true);
       return;
     }
 
@@ -117,7 +117,7 @@ public class SLogger {
 
     String fullMsg = String.format("%s\n\n ```%s```", msg, strStackTrace);
 
-    sendSlack(fullMsg);
+    sendSlack(fullMsg, true);
   }
 
   /**
@@ -158,14 +158,15 @@ public class SLogger {
    * message.
    *
    * @param message the message to send.
+   * @param atChannel whether or not to `@channel`.
    */
-  private void sendSlack(String message) {
+  private void sendSlack(String message, boolean atChannel) {
     if (!slackEnabled || webhookUrl == null || webClient == null) {
       log4jLogger.info(String.format("Not sending given message to Slack: '%s'", message));
       return;
     }
 
-    String fullMessage = this.getFullMessageForSlack(message);
+    String fullMessage = this.getFullMessageForSlack(message, atChannel);
     SlackRequest request = new SlackRequest(fullMessage);
     JsonObject jsonBody = JsonObject.mapFrom(request);
 
@@ -180,13 +181,19 @@ public class SLogger {
    * the class/line number that called the log message
    *
    * @param message the message to add the prefix and suffix to.
+   * @param atChannel whether or not to include `@channel`.
    * @return the full message.
    */
-  private String getFullMessageForSlack(String message) {
+  private String getFullMessageForSlack(String message, boolean atChannel) {
     StringBuilder builder = new StringBuilder();
+
+    if (atChannel) {
+      builder.append("<!channel> ");
+    }
+
     builder.append(
-        String.format(
-            "<!channel> `[%s]` `[%s]` %s", productName, this.classLogger.getName(), message));
+        String.format("`[%s]` `[%s]` %s", productName, this.classLogger.getName(), message));
+
     StackTraceElement[] stackTrace = new Throwable().getStackTrace();
     if (stackTrace.length > 3) {
       builder.append(String.format("\n\n_%s_", stackTrace[3].toString()));

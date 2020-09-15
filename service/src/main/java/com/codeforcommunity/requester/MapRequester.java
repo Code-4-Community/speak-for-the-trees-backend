@@ -221,7 +221,7 @@ public class MapRequester {
                       if (httpResponse.statusCode() == 200) {
                         JsonObject responseBody = httpResponse.bodyAsJsonObject();
                         if (responseBody.containsKey("access_token")) {
-                          logger.info("Received ArcGIS token successfully", true);
+                          logger.info("Received ArcGIS token successfully");
                           promise.complete(responseBody.getString("access_token"));
                         } else {
                           logger.error(
