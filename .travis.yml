@@ -27,7 +27,7 @@ install:
 # It then builds a JAR which we zip with our Dockerfile and Elastic Beanstalk Config
 before_deploy:
   - python3 ./deploy.py
-  - cd /home/travis/build/Code-4-Community/lucys-love-bus-backend/
+  - cd /home/travis/build/Code-4-Community/speak-for-the-trees-backend/
   - mvn clean spotless:check install
   - zip build.zip Dockerfile service/target/service-1.0-SNAPSHOT-jar-with-dependencies.jar
 
