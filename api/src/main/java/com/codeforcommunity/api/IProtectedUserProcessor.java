@@ -4,8 +4,8 @@ import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.user.ChangeEmailRequest;
 import com.codeforcommunity.dto.user.ChangePasswordRequest;
 import com.codeforcommunity.dto.user.ChangeUsernameRequest;
-import com.codeforcommunity.dto.user.UserDataResponse;
 import com.codeforcommunity.dto.user.MakeUserAdminRequest;
+import com.codeforcommunity.dto.user.UserDataResponse;
 
 public interface IProtectedUserProcessor {
 

@@ -14,8 +14,8 @@ import com.codeforcommunity.exceptions.TeamLeaderExcludedRouteException;
 import com.codeforcommunity.exceptions.TeamLeaderOnlyRouteException;
 import com.codeforcommunity.exceptions.TokenInvalidException;
 import com.codeforcommunity.exceptions.UsedSecretKeyException;
-import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
 import com.codeforcommunity.exceptions.UserAlreadyAdminException;
+import com.codeforcommunity.exceptions.UserAlreadyOnTeamException;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import com.codeforcommunity.exceptions.UsernameAlreadyInUseException;
@@ -160,10 +160,7 @@ public class FailureHandler {
   }
 
   public void handleUserAlreadyAdmin(RoutingContext ctx, UserAlreadyAdminException e) {
-    String message =
-            String.format(
-                    "User <%d> is already an admin",
-                    e.getUserId());
+    String message = String.format("User <%d> is already an admin", e.getUserId());
     end(ctx, message, 400);
   }
 

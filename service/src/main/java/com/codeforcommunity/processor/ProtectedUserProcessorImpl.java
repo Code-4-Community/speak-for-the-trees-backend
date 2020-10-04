@@ -12,16 +12,16 @@ import com.codeforcommunity.dataaccess.AuthDatabaseOperations;
 import com.codeforcommunity.dto.user.ChangeEmailRequest;
 import com.codeforcommunity.dto.user.ChangePasswordRequest;
 import com.codeforcommunity.dto.user.ChangeUsernameRequest;
-import com.codeforcommunity.dto.user.UserDataResponse;
 import com.codeforcommunity.dto.user.MakeUserAdminRequest;
+import com.codeforcommunity.dto.user.UserDataResponse;
 import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.enums.TeamRole;
+import com.codeforcommunity.exceptions.AdminOnlyRouteException;
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
+import com.codeforcommunity.exceptions.UserAlreadyAdminException;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.UsernameAlreadyInUseException;
 import com.codeforcommunity.exceptions.WrongPasswordException;
-import com.codeforcommunity.exceptions.UserAlreadyAdminException;
-import com.codeforcommunity.exceptions.AdminOnlyRouteException;
 import com.codeforcommunity.requester.Emailer;
 import java.util.List;
 import java.util.Optional;
@@ -154,7 +154,9 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
     UsersRecord user = db.selectFrom(USERS).where(USERS.ID.eq(userData.getUserId())).fetchOne();
 
     if (Passwords.isExpectedPassword(makeUserAdminRequest.getPassword(), user.getPassHash())) {
-      UsersRecord newAdminUser = db.selectFrom(USERS).where(USERS.EMAIL.eq(makeUserAdminRequest.getNewAdminEmail()))
+      UsersRecord newAdminUser =
+          db.selectFrom(USERS)
+              .where(USERS.EMAIL.eq(makeUserAdminRequest.getNewAdminEmail()))
               .fetchOne();
       if (newAdminUser == null) {
         throw new UserDoesNotExistException(makeUserAdminRequest.getNewAdminEmail());
@@ -168,6 +170,5 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
     } else {
       throw new WrongPasswordException();
     }
-
   }
 }

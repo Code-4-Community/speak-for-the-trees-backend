@@ -118,7 +118,7 @@ public class ProtectedUserRouter implements IRouter {
   private void handleMakeUserAdmin(RoutingContext ctx) {
     JWTData userData = ctx.get("jwt_data");
     MakeUserAdminRequest makeUserAdminRequest =
-            RestFunctions.getJsonBodyAsClass(ctx, MakeUserAdminRequest.class);
+        RestFunctions.getJsonBodyAsClass(ctx, MakeUserAdminRequest.class);
 
     processor.makeUserAdmin(userData, makeUserAdminRequest);
 
