@@ -34,11 +34,11 @@ public class MakeUserAdminRequest extends ApiDto {
 
   @Override
   public List<String> validateFields(String fieldPrefix) throws HandledException {
-    String fieldName = fieldPrefix + "change_email_request.";
+    String fieldName = fieldPrefix + "make user admin request.";
     List<String> fields = new ArrayList<>();
 
     if (emailInvalid(newAdminEmail)) {
-      fields.add(fieldName + "email");
+      fields.add(fieldName + "newAdminEmail");
     }
     if (password == null) {
       fields.add(fieldName + "password");
