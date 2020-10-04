@@ -7,6 +7,7 @@ import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.dto.user.ChangeEmailRequest;
 import com.codeforcommunity.dto.user.ChangePasswordRequest;
 import com.codeforcommunity.dto.user.ChangeUsernameRequest;
+import com.codeforcommunity.dto.user.MakeUserAdminRequest;
 import com.codeforcommunity.dto.user.UserDataResponse;
 import com.codeforcommunity.rest.IRouter;
 import com.codeforcommunity.rest.RestFunctions;
@@ -33,6 +34,7 @@ public class ProtectedUserRouter implements IRouter {
     registerGetUserData(router);
     registerChangeEmail(router);
     registerChangeUsername(router);
+    registerMakeUserAdmin(router);
 
     return router;
   }
@@ -60,6 +62,11 @@ public class ProtectedUserRouter implements IRouter {
   private void registerChangeUsername(Router router) {
     Route changeUsernameRoute = router.post("/change_username");
     changeUsernameRoute.handler(this::handleChangeUsernameRoute);
+  }
+
+  private void registerMakeUserAdmin(Router router) {
+    Route makeUserAdminRoute = router.post("/make_admin");
+    makeUserAdminRoute.handler(this::handleMakeUserAdmin);
   }
 
   private void handleDeleteUserRoute(RoutingContext ctx) {
@@ -104,6 +111,16 @@ public class ProtectedUserRouter implements IRouter {
         RestFunctions.getJsonBodyAsClass(ctx, ChangeUsernameRequest.class);
 
     processor.changeUsername(userData, changeUsernameRequest);
+
+    end(ctx.response(), 200);
+  }
+
+  private void handleMakeUserAdmin(RoutingContext ctx) {
+    JWTData userData = ctx.get("jwt_data");
+    MakeUserAdminRequest makeUserAdminRequest =
+            RestFunctions.getJsonBodyAsClass(ctx, MakeUserAdminRequest.class);
+
+    processor.makeUserAdmin(userData, makeUserAdminRequest);
 
     end(ctx.response(), 200);
   }

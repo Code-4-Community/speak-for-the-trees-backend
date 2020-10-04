@@ -9,15 +9,10 @@ import com.codeforcommunity.api.IProtectedUserProcessor;
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.auth.Passwords;
 import com.codeforcommunity.dataaccess.AuthDatabaseOperations;
-import com.codeforcommunity.dto.user.ChangeEmailRequest;
-import com.codeforcommunity.dto.user.ChangePasswordRequest;
-import com.codeforcommunity.dto.user.ChangeUsernameRequest;
-import com.codeforcommunity.dto.user.UserDataResponse;
+import com.codeforcommunity.dto.user.*;
+import com.codeforcommunity.enums.PrivilegeLevel;
 import com.codeforcommunity.enums.TeamRole;
-import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
-import com.codeforcommunity.exceptions.UserDoesNotExistException;
-import com.codeforcommunity.exceptions.UsernameAlreadyInUseException;
-import com.codeforcommunity.exceptions.WrongPasswordException;
+import com.codeforcommunity.exceptions.*;
 import com.codeforcommunity.requester.Emailer;
 import java.util.List;
 import java.util.Optional;
@@ -139,5 +134,31 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
     } else {
       throw new WrongPasswordException();
     }
+  }
+
+  @Override
+  public void makeUserAdmin(JWTData userData, MakeUserAdminRequest makeUserAdminRequest) {
+    if (userData.getPrivilegeLevel() != PrivilegeLevel.ADMIN) {
+      throw new AdminOnlyRouteException();
+    }
+
+    UsersRecord user = db.selectFrom(USERS).where(USERS.ID.eq(userData.getUserId())).fetchOne();
+
+    if (Passwords.isExpectedPassword(makeUserAdminRequest.getPassword(), user.getPassHash())) {
+      UsersRecord newAdminUser = db.selectFrom(USERS).where(USERS.EMAIL.eq(makeUserAdminRequest.getNewAdminEmail()))
+              .fetchOne();
+      if (newAdminUser == null) {
+        throw new UserDoesNotExistException(makeUserAdminRequest.getNewAdminEmail());
+      }
+      if (newAdminUser.getPrivilegeLevel().equals(PrivilegeLevel.ADMIN)) {
+        throw new UserAlreadyAdminException(newAdminUser.getId());
+      }
+
+      newAdminUser.setPrivilegeLevel(PrivilegeLevel.ADMIN);
+      newAdminUser.store();
+    } else {
+      throw new WrongPasswordException();
+    }
+
   }
 }

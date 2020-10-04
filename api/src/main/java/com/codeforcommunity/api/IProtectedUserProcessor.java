@@ -5,6 +5,7 @@ import com.codeforcommunity.dto.user.ChangeEmailRequest;
 import com.codeforcommunity.dto.user.ChangePasswordRequest;
 import com.codeforcommunity.dto.user.ChangeUsernameRequest;
 import com.codeforcommunity.dto.user.UserDataResponse;
+import com.codeforcommunity.dto.user.MakeUserAdminRequest;
 
 public interface IProtectedUserProcessor {
 
@@ -25,4 +26,7 @@ public interface IProtectedUserProcessor {
 
   /** Change the user's username to the provided one */
   void changeUsername(JWTData userData, ChangeUsernameRequest changeUsernameRequest);
+
+  /** Makes the user with the email in the given request an admin */
+  void makeUserAdmin(JWTData userData, MakeUserAdminRequest makeUserAdminRequest);
 }
