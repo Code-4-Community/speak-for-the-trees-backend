@@ -19,6 +19,8 @@ import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.UsernameAlreadyInUseException;
 import com.codeforcommunity.exceptions.WrongPasswordException;
 import com.codeforcommunity.requester.Emailer;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.jooq.DSLContext;
@@ -52,7 +54,11 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
           db.deleteFrom(USER_TEAM)
               .where(USER_TEAM.TEAM_ID.eq(userTeamRecord.getTeamId()))
               .executeAsync();
-          db.deleteFrom(TEAM).where(TEAM.ID.eq(userTeamRecord.getTeamId())).executeAsync();
+          db.update(TEAM)
+              .set(TEAM.DELETED, true)
+              .set(TEAM.DELETED_TIMESTAMP, Timestamp.from(Instant.now()))
+              .where(TEAM.ID.eq(userTeamRecord.getTeamId()))
+              .executeAsync();
         } else {
           db.executeDelete(userTeamRecord, USER_TEAM.USER_ID.eq(userId));
         }
@@ -60,7 +66,9 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
     }
 
     UsersRecord user = db.selectFrom(USERS).where(USERS.ID.eq(userId)).fetchOne();
-    user.delete();
+    user.setDeleted(true);
+    user.setDeletedTimestamp(Timestamp.from(Instant.now()));
+    user.store();
 
     emailer.sendAccountDeactivatedEmail(
         user.getEmail(), AuthDatabaseOperations.getFullName(user.into(Users.class)));

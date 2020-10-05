@@ -35,6 +35,7 @@ import com.codeforcommunity.exceptions.UserNotOnTeamException;
 import com.codeforcommunity.requester.Emailer;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -256,7 +257,11 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
     db.deleteFrom(USER_TEAM).where(USER_TEAM.TEAM_ID.eq(teamId)).execute();
 
-    db.deleteFrom(TEAM).where(TEAM.ID.eq(teamId)).execute();
+    db.update(TEAM)
+        .set(TEAM.DELETED, true)
+        .set(TEAM.DELETED_TIMESTAMP, Timestamp.from(Instant.now()))
+        .where(TEAM.ID.eq(teamId))
+        .execute();
   }
 
   @Override
