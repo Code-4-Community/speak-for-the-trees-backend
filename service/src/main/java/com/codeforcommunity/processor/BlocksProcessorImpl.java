@@ -1,8 +1,6 @@
 package com.codeforcommunity.processor;
 
-import static org.jooq.generated.Tables.BLOCK;
-import static org.jooq.generated.Tables.USERS;
-import static org.jooq.generated.Tables.USER_TEAM;
+import static org.jooq.generated.Tables.*;
 import static org.jooq.generated.tables.Team.TEAM;
 
 import com.codeforcommunity.api.IBlockProcessor;
@@ -23,6 +21,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.jooq.DSLContext;
 import org.jooq.Result;
+import org.jooq.generated.tables.records.AuditRecord;
 import org.jooq.generated.tables.records.BlockRecord;
 
 public class BlocksProcessorImpl implements IBlockProcessor {
@@ -188,12 +187,26 @@ public class BlocksProcessorImpl implements IBlockProcessor {
 
     blockSeedingInfos.forEach(
         (bsi) -> {
+          String original = db.selectFrom(BLOCK)
+                  .where(BLOCK.ID.eq(bsi.getId()))
+                  .fetchOne().toString();
+
+          AuditRecord audit = db.newRecord(AUDIT);
+          audit.setTableName("block");
+          audit.setTransactionType("update");
+          audit.setOldValue(original);
+
           db.update(BLOCK)
               .set(BLOCK.STATUS, BlockStatus.DONE)
               .set(BLOCK.LAST_COMPLETED, bsi.getDateCompleted())
               .setNull(BLOCK.ASSIGNED_TO)
               .where(BLOCK.ID.eq(bsi.getId()))
               .execute();
+
+          audit.setResult(original);
+          audit.setUserId(jwtData.getUserId());
+          audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
+          audit.insert();
         });
 
     List<String> blockIds =
@@ -296,6 +309,11 @@ public class BlocksProcessorImpl implements IBlockProcessor {
       List<BlockRecord> eligibleBlocks, BlockStatus newStatus, int userId) {
     eligibleBlocks.forEach(
         br -> {
+          AuditRecord audit = db.newRecord(AUDIT);
+          audit.setTableName("block");
+          audit.setTransactionType("update");
+          audit.setOldValue(br.toString());
+
           Integer setToId;
           switch (newStatus) {
             case OPEN:
@@ -317,6 +335,11 @@ public class BlocksProcessorImpl implements IBlockProcessor {
           br.setStatus(newStatus);
           br.setUpdatedTimestamp(new Timestamp(System.currentTimeMillis()));
           br.store();
+
+          audit.setResult(br.toString());
+          audit.setUserId(userId);
+          audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
+          audit.insert();
         });
   }
 
