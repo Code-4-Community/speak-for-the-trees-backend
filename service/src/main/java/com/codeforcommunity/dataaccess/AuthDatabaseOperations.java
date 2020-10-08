@@ -22,7 +22,6 @@ import org.jooq.DSLContext;
 import org.jooq.generated.Tables;
 import org.jooq.generated.tables.pojos.Users;
 import org.jooq.generated.tables.records.AuditRecord;
-import org.jooq.generated.tables.records.BlacklistedRefreshesRecord;
 import org.jooq.generated.tables.records.UsersRecord;
 import org.jooq.generated.tables.records.VerificationKeysRecord;
 
@@ -146,7 +145,6 @@ public class AuthDatabaseOperations {
     audit.setUserId(-1);
     audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
     audit.insert();
-
   }
 
   /** Given a JWT signature return true if it is stored in the BLACKLISTED_REFRESHES table. */
@@ -202,7 +200,8 @@ public class AuthDatabaseOperations {
    * invalidates all other keys of this type for this user.
    */
   public String createSecretKey(int userId, VerificationKeyType type) {
-    String original = db.selectFrom(VERIFICATION_KEYS)
+    String original =
+        db.selectFrom(VERIFICATION_KEYS)
             .where(VERIFICATION_KEYS.USER_ID.eq(userId))
             .and(VERIFICATION_KEYS.TYPE.eq(type))
             .fetchOne()
@@ -215,10 +214,10 @@ public class AuthDatabaseOperations {
 
     // Maybe add a different column besides used?
     db.update(VERIFICATION_KEYS)
-            .set(VERIFICATION_KEYS.USED, true)
-            .where(VERIFICATION_KEYS.USER_ID.eq(userId))
-            .and(VERIFICATION_KEYS.TYPE.eq(type))
-            .execute();
+        .set(VERIFICATION_KEYS.USED, true)
+        .where(VERIFICATION_KEYS.USER_ID.eq(userId))
+        .and(VERIFICATION_KEYS.TYPE.eq(type))
+        .execute();
 
     audit.setResult(original);
     audit.setUserId(userId);
