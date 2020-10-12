@@ -1187,8 +1187,8 @@
 						"header": [
 							{
 								"key": "X-Access-Token",
-								"value": "{{accessToken}}",
-								"type": "text"
+								"type": "text",
+								"value": "{{accessToken}}"
 							}
 						],
 						"url": {
@@ -1205,7 +1205,8 @@
 								"teams",
 								"user_teams"
 							]
-						}
+						},
+						"description": "can send as any user"
 					},
 					"response": []
 				},
@@ -1248,7 +1249,8 @@
 								"teams",
 								""
 							]
-						}
+						},
+						"description": "can send as any user"
 					},
 					"response": []
 				},
@@ -1291,7 +1293,8 @@
 								"teams",
 								"admin"
 							]
-						}
+						},
+						"description": "can send as admin"
 					},
 					"response": []
 				},
@@ -1340,7 +1343,8 @@
 									"value": "1"
 								}
 							]
-						}
+						},
+						"description": "can send as any user"
 					},
 					"response": []
 				},
@@ -1371,7 +1375,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\" : \"test team\",\n    \"bio\" : \"a test team\",\n    \"goal\" : 5,\n    \"goalCompletionDate\" : 1759276800000,\n    \"invites\" : [\n        {\n            \"name\" : \"John\",\n            \"email\" : \"email@email.com\"\n        }\n    ]\n}",
+							"raw": "{\n    \"name\" : \"test team\",\n    \"bio\" : \"a test team\",\n    \"goal\" : 5,\n    \"goalCompletionDate\" : 1759276800000,\n    \"invites\" : [\n        {\n            \"name\" : \"John\",\n            \"email\" : \"test.email@email.com\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1392,7 +1396,8 @@
 								"teams",
 								""
 							]
-						}
+						},
+						"description": "can send as any user\n\nfor basic test purposes, send as admin.email@email.com"
 					},
 					"response": []
 				},
@@ -1442,7 +1447,8 @@
 									"value": "1"
 								}
 							]
-						}
+						},
+						"description": "can send as any user not already in the team\n\nfor basic test purposes, send as test.email@email.com"
 					},
 					"response": []
 				},
@@ -1492,7 +1498,8 @@
 									"value": "1"
 								}
 							]
-						}
+						},
+						"description": "can send as team leader"
 					},
 					"response": []
 				},
@@ -1549,7 +1556,8 @@
 									"description": "user id of applicant"
 								}
 							]
-						}
+						},
+						"description": "can send as team leader"
 					},
 					"response": []
 				},
@@ -1606,7 +1614,8 @@
 									"value": "2"
 								}
 							]
-						}
+						},
+						"description": "can send as team leader"
 					},
 					"response": []
 				},
@@ -1656,7 +1665,8 @@
 									"value": "1"
 								}
 							]
-						}
+						},
+						"description": "can send as any team member, if team leader then transfer team ownership first"
 					},
 					"response": []
 				},
@@ -1706,7 +1716,8 @@
 									"value": "1"
 								}
 							]
-						}
+						},
+						"description": "can send as team leader"
 					},
 					"response": []
 				},
@@ -1763,7 +1774,8 @@
 									"description": "id of team member"
 								}
 							]
-						}
+						},
+						"description": "can send as team leader"
 					},
 					"response": []
 				},
@@ -1822,7 +1834,8 @@
 									"value": "1"
 								}
 							]
-						}
+						},
+						"description": "can send as team leader"
 					},
 					"response": []
 				},
@@ -1881,7 +1894,8 @@
 									"value": "1"
 								}
 							]
-						}
+						},
+						"description": "can send as team leader"
 					},
 					"response": []
 				}
@@ -1952,17 +1966,17 @@
 	],
 	"variable": [
 		{
-			"id": "9bc2a73b-b758-413f-8a9c-27ef659a300a",
+			"id": "030c582e-77a5-4e05-9677-384eeb47f3f7",
 			"key": "accessToken",
 			"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwcml2aWxlZ2VMZXZlbCI6MiwiaXNzIjoiYzRjIiwiZXhwIjoxNTg5MDA1MDA1LCJ1c2VySWQiOjJ9.TuPIzdEJj6APbkwpIu-TxqdJlDFbVI1LUzx6PHgD2II"
 		},
 		{
-			"id": "d3f0a359-d569-42c7-8dd7-3d9671b9cbe6",
+			"id": "5c4e556d-63aa-4c8a-885f-241238d18eb0",
 			"key": "refreshToken",
 			"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwcml2aWxlZ2VMZXZlbCI6MiwiaXNzIjoiYzRjIiwiZXhwIjoxNTg5NjA4MDA1LCJ1c2VySWQiOjJ9.UG81DEsGHXuBDVXNGkLhC45H4sMsQoNwC6aIivERKoo"
 		},
 		{
-			"id": "7d0c0319-d774-4d6f-abd2-62b7452d9f38",
+			"id": "95516cdf-25bb-4308-b047-ebf6117b2ca5",
 			"key": "freshAccessToken",
 			"value": ""
 		}
