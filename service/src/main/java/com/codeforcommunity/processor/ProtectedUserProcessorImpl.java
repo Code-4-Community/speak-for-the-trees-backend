@@ -78,7 +78,7 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
   public void changePassword(JWTData userData, ChangePasswordRequest changePasswordRequest) {
     UsersRecord user = db.selectFrom(USERS).where(USERS.ID.eq(userData.getUserId())).fetchOne();
 
-    if (user == null) {
+    if (user == null || user.getDeleted()) {
       throw new UserDoesNotExistException(userData.getUserId());
     }
 
@@ -98,7 +98,7 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
   public UserDataResponse getUserData(JWTData userData) {
     UsersRecord user = db.selectFrom(USERS).where(USERS.ID.eq(userData.getUserId())).fetchOne();
 
-    if (user == null) {
+    if (user == null || user.getDeleted()) {
       throw new UserDoesNotExistException(userData.getUserId());
     }
 
@@ -109,7 +109,7 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
   @Override
   public void changeEmail(JWTData userData, ChangeEmailRequest changeEmailRequest) {
     UsersRecord user = db.selectFrom(USERS).where(USERS.ID.eq(userData.getUserId())).fetchOne();
-    if (user == null) {
+    if (user == null || user.getDeleted()) {
       throw new UserDoesNotExistException(userData.getUserId());
     }
 
@@ -133,7 +133,7 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
   @Override
   public void changeUsername(JWTData userData, ChangeUsernameRequest changeUsernameRequest) {
     UsersRecord user = db.selectFrom(USERS).where(USERS.ID.eq(userData.getUserId())).fetchOne();
-    if (user == null) {
+    if (user == null || user.getDeleted()) {
       throw new UserDoesNotExistException(userData.getUserId());
     }
 

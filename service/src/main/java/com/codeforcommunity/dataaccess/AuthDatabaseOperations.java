@@ -53,7 +53,9 @@ public class AuthDatabaseOperations {
   public JWTData getUserJWTData(String email) {
     Optional<Users> maybeUser =
         Optional.ofNullable(
-            db.selectFrom(USERS).where(USERS.EMAIL.eq(email)).fetchOneInto(Users.class));
+            db.selectFrom(USERS)
+                .where(USERS.EMAIL.eq(email), USERS.DELETED.isFalse())
+                .fetchOneInto(Users.class));
 
     if (maybeUser.isPresent()) {
       Users user = maybeUser.get();
@@ -71,7 +73,10 @@ public class AuthDatabaseOperations {
    */
   public Users getUserPojo(int id) {
     Optional<Users> maybeUser =
-        Optional.ofNullable(db.selectFrom(USERS).where(USERS.ID.eq(id)).fetchOneInto(Users.class));
+        Optional.ofNullable(
+            db.selectFrom(USERS)
+                .where(USERS.ID.eq(id), USERS.DELETED.isFalse())
+                .fetchOneInto(Users.class));
 
     if (maybeUser.isPresent()) {
       return maybeUser.get();
@@ -87,7 +92,9 @@ public class AuthDatabaseOperations {
   public boolean isValidLogin(String email, String pass) {
     Optional<Users> maybeUser =
         Optional.ofNullable(
-            db.selectFrom(USERS).where(USERS.EMAIL.eq(email)).fetchOneInto(Users.class));
+            db.selectFrom(USERS)
+                .where(USERS.EMAIL.eq(email), USERS.DELETED.isFalse())
+                .fetchOneInto(Users.class));
 
     return maybeUser
         .filter(user -> Passwords.isExpectedPassword(pass, user.getPassHash()))
@@ -103,11 +110,14 @@ public class AuthDatabaseOperations {
    */
   public UsersRecord createNewUser(
       String username, String email, String password, String firstName, String lastName) {
-    boolean emailUsed = db.fetchExists(db.selectFrom(USERS).where(USERS.EMAIL.eq(email)));
+    boolean emailUsed =
+        db.fetchExists(db.selectFrom(USERS).where(USERS.EMAIL.eq(email), USERS.DELETED.isFalse()));
     if (emailUsed) {
       throw new EmailAlreadyInUseException(email);
     }
-    boolean usernameUsed = db.fetchExists(db.selectFrom(USERS).where(USERS.USERNAME.eq(username)));
+    boolean usernameUsed =
+        db.fetchExists(
+            db.selectFrom(USERS).where(USERS.USERNAME.eq(username), USERS.DELETED.isFalse()));
     if (usernameUsed) {
       throw new UsernameAlreadyInUseException(username);
     }
