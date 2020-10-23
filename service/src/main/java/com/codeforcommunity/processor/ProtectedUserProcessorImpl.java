@@ -1,5 +1,6 @@
 package com.codeforcommunity.processor;
 
+import static org.jooq.generated.Tables.DELETED_USERS;
 import static org.jooq.generated.Tables.TEAM;
 import static org.jooq.generated.Tables.USERS;
 import static org.jooq.generated.Tables.USER_TEAM;
@@ -60,6 +61,8 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
     }
 
     UsersRecord user = db.selectFrom(USERS).where(USERS.ID.eq(userId)).fetchOne();
+
+    db.insertInto(DELETED_USERS).set(user.intoMap()).execute();
     user.delete();
 
     emailer.sendAccountDeactivatedEmail(
