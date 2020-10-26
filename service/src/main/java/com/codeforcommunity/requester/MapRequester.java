@@ -15,6 +15,7 @@ import org.jooq.tools.json.JSONParser;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
 
@@ -248,10 +249,10 @@ public class MapRequester {
 
   public Object getPrivateStreets() {
     try {
-      return new JSONParser().parse(new FileReader("private_streets_light.geojson"));
+      return new JSONParser().parse(new FileReader("service/src/main/resources/private_streets_light.geojson"));
     }
     catch(Exception e) {
-      System.out.println("GeoJSON file was not found.");
+      logger.error("There was an error loading GeoJSON data", e);
       return new Object();
     }
   }
