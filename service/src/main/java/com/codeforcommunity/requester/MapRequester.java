@@ -11,11 +11,10 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
-import org.jooq.tools.json.JSONParser;
-
 import java.io.FileReader;
 import java.util.List;
 import java.util.Properties;
+import org.jooq.tools.json.JSONParser;
 
 public class MapRequester {
   private final SLogger logger = new SLogger(MapRequester.class);
@@ -247,9 +246,9 @@ public class MapRequester {
 
   public Object getPrivateStreets() {
     try {
-      return new JSONParser().parse(new FileReader("service/src/main/resources/private_streets_light.geojson"));
-    }
-    catch(Exception e) {
+      return new JSONParser()
+          .parse(new FileReader("service/src/main/resources/private_streets_light.geojson"));
+    } catch (Exception e) {
       logger.error("There was an error loading GeoJSON data", e);
       return new Object();
     }
