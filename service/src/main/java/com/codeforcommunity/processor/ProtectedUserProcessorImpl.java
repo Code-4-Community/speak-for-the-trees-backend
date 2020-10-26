@@ -1,5 +1,7 @@
 package com.codeforcommunity.processor;
 
+import static org.jooq.generated.Tables.DELETED_TEAM;
+import static org.jooq.generated.Tables.DELETED_USERS;
 import static org.jooq.generated.Tables.TEAM;
 import static org.jooq.generated.Tables.USERS;
 import static org.jooq.generated.Tables.USER_TEAM;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import org.jooq.DSLContext;
 import org.jooq.generated.tables.pojos.Users;
+import org.jooq.generated.tables.records.TeamRecord;
 import org.jooq.generated.tables.records.UserTeamRecord;
 import org.jooq.generated.tables.records.UsersRecord;
 
@@ -52,7 +55,10 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
           db.deleteFrom(USER_TEAM)
               .where(USER_TEAM.TEAM_ID.eq(userTeamRecord.getTeamId()))
               .executeAsync();
-          db.deleteFrom(TEAM).where(TEAM.ID.eq(userTeamRecord.getTeamId())).executeAsync();
+          TeamRecord team =
+              db.selectFrom(TEAM).where(TEAM.ID.eq(userTeamRecord.getTeamId())).fetchOne();
+          db.insertInto(DELETED_TEAM).set(team.intoMap());
+          team.delete();
         } else {
           db.executeDelete(userTeamRecord, USER_TEAM.USER_ID.eq(userId));
         }
@@ -60,6 +66,8 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
     }
 
     UsersRecord user = db.selectFrom(USERS).where(USERS.ID.eq(userId)).fetchOne();
+
+    db.insertInto(DELETED_USERS).set(user.intoMap()).execute();
     user.delete();
 
     emailer.sendAccountDeactivatedEmail(
