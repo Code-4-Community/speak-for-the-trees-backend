@@ -11,6 +11,10 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
+import org.jooq.tools.json.JSONParser;
+
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.List;
 import java.util.Properties;
 
@@ -240,6 +244,16 @@ public class MapRequester {
                     }
                   });
         });
+  }
+
+  public Object getPrivateStreets() {
+    try {
+      return new JSONParser().parse(new FileReader("private_streets_light.geojson"));
+    }
+    catch(Exception e) {
+      System.out.println("GeoJSON file was not found.");
+      return new Object();
+    }
   }
 
   private class MapRequest {
