@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS neighborhood (
+    id INT PRIMARY KEY,
+    Name VARCHAR(36) NOT NULL,
+    SqMiles DOUBLE PRECISION,
+    Latitude DOUBLE PRECISION,
+    Longiude DOUBLE PRECISION
+);
+
+
+
+
