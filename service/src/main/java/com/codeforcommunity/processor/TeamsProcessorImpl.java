@@ -1,6 +1,7 @@
 package com.codeforcommunity.processor;
 
 import static org.jooq.generated.Tables.BLOCK;
+import static org.jooq.generated.Tables.DELETED_TEAM;
 import static org.jooq.generated.Tables.TEAM;
 import static org.jooq.generated.Tables.USERS;
 import static org.jooq.generated.Tables.USER_TEAM;
@@ -256,7 +257,10 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
     db.deleteFrom(USER_TEAM).where(USER_TEAM.TEAM_ID.eq(teamId)).execute();
 
-    db.deleteFrom(TEAM).where(TEAM.ID.eq(teamId)).execute();
+    TeamRecord team = db.selectFrom(TEAM).where(TEAM.ID.eq(teamId)).fetchOne();
+    db.insertInto(DELETED_TEAM).set(team.intoMap()).execute();
+
+    team.delete();
   }
 
   @Override
