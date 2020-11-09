@@ -1,12 +1,12 @@
 CREATE TABLE IF NOT EXISTS neighborhood (
     id INT PRIMARY KEY,
-    Name VARCHAR(36) NOT NULL,
-    SqMiles DOUBLE PRECISION,
-    Latitude DOUBLE PRECISION,
-    Longiude DOUBLE PRECISION
+    name VARCHAR(36) NOT NULL,
+    sqmiles DOUBLE PRECISION,
+    latitude DOUBLE PRECISION,
+    longiude DOUBLE PRECISION
 );
 
-INSERT INTO neighborhood (id, name, sqmiles, latitude, longitude) VALUES
+INSERT INTO neighborhood (id, name, sqmiles, latitude, longiude) VALUES
 ('15', 'Roslindale', 2.51, -71.12827828722504, 42.28470319282366),
 ('11', 'Jamaica Plain', 3.94, -71.11242799667276, 42.304327151088174),
 ('13', 'Mission Hill', 0.55, -71.10348132852958, 42.330568644386105),
