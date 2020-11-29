@@ -1,5 +1,10 @@
 ALTER TABLE block
-    ADD COLUMN neighborhoodId int references neighborhood (id);
+    ADD COLUMN neighborhoodId INT;
+
+ALTER TABLE block
+    ADD CONSTRAINT fk_neighborhood
+    FOREIGN KEY (neighborhoodid)
+    REFERENCES neighborhood(id);
 
 INSERT INTO block (id, neighborhoodid)
 VALUES ('1714', 29),
