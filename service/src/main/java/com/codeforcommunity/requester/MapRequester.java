@@ -1,6 +1,7 @@
 package com.codeforcommunity.requester;
 
 import com.codeforcommunity.enums.BlockStatus;
+import com.codeforcommunity.exceptions.FailedFileLoadException;
 import com.codeforcommunity.logger.SLogger;
 import com.codeforcommunity.propertiesLoader.PropertiesLoader;
 import io.vertx.core.Future;
@@ -11,10 +12,13 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
 
 public class MapRequester {
+
   private final SLogger logger = new SLogger(MapRequester.class);
   private final WebClient client;
   private Future<String> tokenFuture;
@@ -49,6 +53,24 @@ public class MapRequester {
    */
   public void updateBlocks(List<String> blockIds, BlockStatus updateTo) {
     updateLayers(blockIds, updateTo, this.tokenFuture);
+  }
+
+  /**
+   * Creates a JSONObject based off the private streets geoJSON file.
+   *
+   * @return the private street JSONObject
+   */
+  public JsonObject getPrivateStreets() {
+    try {
+      String privateStreetJson =
+          new String(
+              Files.readAllBytes(
+                  Paths.get("service/src/main/resources/private_streets_light.geojson")));
+      return new JsonObject(privateStreetJson);
+    } catch (Exception e) {
+      logger.error("There was an error loading private street GeoJSON data", e);
+      throw new FailedFileLoadException("service/src/main/resources/private_streets_light.geojson");
+    }
   }
 
   private Future<JsonArray> getBlockFidsFuture(List<String> blockIds, BlockStatus updateTo) {
@@ -243,6 +265,7 @@ public class MapRequester {
   }
 
   private class MapRequest {
+
     private StreetUpdate attributes;
 
     public MapRequest(String fid, BlockStatus reserved) {
@@ -256,6 +279,7 @@ public class MapRequester {
 
   /** DTO for ArcGIS API. Important note: needs to be FID for JSON serialization */
   private class StreetUpdate {
+
     private String FID;
     private String RESERVED;
 
