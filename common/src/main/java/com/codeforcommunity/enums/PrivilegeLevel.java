@@ -1,7 +1,6 @@
 package com.codeforcommunity.enums;
 
 public enum PrivilegeLevel {
-  NONE(-1),
   STANDARD(0),
   ADMIN(1),
   SUPER_ADMIN(2);
