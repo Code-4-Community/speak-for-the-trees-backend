@@ -12,11 +12,16 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import java.io.FileReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
+
 import org.jooq.tools.json.JSONParser;
 
 public class MapRequester {
+
   private final SLogger logger = new SLogger(MapRequester.class);
   private final WebClient client;
   private Future<String> tokenFuture;
@@ -53,6 +58,17 @@ public class MapRequester {
     updateLayers(blockIds, updateTo, this.tokenFuture);
   }
 
+  public JsonObject getPrivateStreets() {
+    try{
+      String privateStreetJson = new String(Files.readAllBytes(Paths.get("service/src/main/resources/private_streets_light.geojson")));
+      return new JsonObject(privateStreetJson);
+    }
+    catch (Exception e) {
+      logger.error("There was an error loading private street GeoJSON data", e);
+      return new JsonObject();
+    }
+  }
+
   private Future<JsonArray> getBlockFidsFuture(List<String> blockIds, BlockStatus updateTo) {
     return this.tokenFuture.compose(
         tokenString -> {
@@ -81,7 +97,7 @@ public class MapRequester {
                               JsonObject responseBody = httpResponse.bodyAsJsonObject();
                               if (responseBody.containsKey("error")
                                   && responseBody.getJsonObject("error").getInteger("code")
-                                      == 498) {
+                                  == 498) {
                                 // The API token is invalid, reset it and make this call
                                 // again.
                                 logger.info(
@@ -124,7 +140,9 @@ public class MapRequester {
         });
   }
 
-  /** Make a request to update the ArcGIS feature layer */
+  /**
+   * Make a request to update the ArcGIS feature layer
+   */
   private Future<Void> updateLayers(
       List<String> blockIds, BlockStatus updateTo, Future<String> tokenFuture) {
     logger.info("Making request to update blocks to " + updateTo.name());
@@ -154,9 +172,9 @@ public class MapRequester {
                                           JsonObject responseBody = httpResponse.bodyAsJsonObject();
                                           if (responseBody.containsKey("error")
                                               && responseBody
-                                                      .getJsonObject("error")
-                                                      .getInteger("code")
-                                                  == 498) {
+                                              .getJsonObject("error")
+                                              .getInteger("code")
+                                              == 498) {
                                             // The API token is invalid, reset it and make this call
                                             // again.
                                             logger.info(
@@ -244,17 +262,9 @@ public class MapRequester {
         });
   }
 
-  public Object getPrivateStreets() {
-    try {
-      return new JSONParser()
-          .parse(new FileReader("service/src/main/resources/private_streets_light.geojson"));
-    } catch (Exception e) {
-      logger.error("There was an error loading GeoJSON data", e);
-      return new Object();
-    }
-  }
 
   private class MapRequest {
+
     private StreetUpdate attributes;
 
     public MapRequest(String fid, BlockStatus reserved) {
@@ -266,8 +276,11 @@ public class MapRequester {
     }
   }
 
-  /** DTO for ArcGIS API. Important note: needs to be FID for JSON serialization */
+  /**
+   * DTO for ArcGIS API. Important note: needs to be FID for JSON serialization
+   */
   private class StreetUpdate {
+
     private String FID;
     private String RESERVED;
 
