@@ -1,6 +1,7 @@
 package com.codeforcommunity.requester;
 
 import com.codeforcommunity.enums.BlockStatus;
+import com.codeforcommunity.exceptions.FailedFileLoadException;
 import com.codeforcommunity.logger.SLogger;
 import com.codeforcommunity.propertiesLoader.PropertiesLoader;
 import io.vertx.core.Future;
@@ -68,7 +69,7 @@ public class MapRequester {
       return new JsonObject(privateStreetJson);
     } catch (Exception e) {
       logger.error("There was an error loading private street GeoJSON data", e);
-      return new JsonObject();
+      throw new FailedFileLoadException("service/src/main/resources/private_streets_light.geojson");
     }
   }
 

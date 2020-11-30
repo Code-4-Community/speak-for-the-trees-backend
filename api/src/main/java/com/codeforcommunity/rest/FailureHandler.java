@@ -3,6 +3,7 @@ package com.codeforcommunity.rest;
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
 import com.codeforcommunity.exceptions.ExistingTeamRequestException;
 import com.codeforcommunity.exceptions.ExpiredSecretKeyException;
+import com.codeforcommunity.exceptions.FailedFileLoadException;
 import com.codeforcommunity.exceptions.HandledException;
 import com.codeforcommunity.exceptions.InvalidSecretKeyException;
 import com.codeforcommunity.exceptions.MalformedParameterException;
@@ -167,6 +168,11 @@ public class FailureHandler {
     String message =
         String.format("The user <%d> is not on a team with id <%d>", e.getUserId(), e.getTeamId());
     end(ctx, message, 400);
+  }
+
+  public void handleFailedFileLoad(RoutingContext ctx, FailedFileLoadException e) {
+    String message = String.format("The file <%s> failed to load", e.getFilePath());
+    end(ctx, message, 503);
   }
 
   /** A general handler for all exceptions not explicitly handled above. */
