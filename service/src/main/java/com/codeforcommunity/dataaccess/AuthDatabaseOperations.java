@@ -1,6 +1,8 @@
 package com.codeforcommunity.dataaccess;
 
-import static org.jooq.generated.Tables.*;
+import static org.jooq.generated.Tables.AUDIT;
+import static org.jooq.generated.Tables.USERS;
+import static org.jooq.generated.Tables.VERIFICATION_KEYS;
 
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.auth.Passwords;
