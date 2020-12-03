@@ -136,6 +136,22 @@
                   <includeTypes>.*</includeTypes>
                   <nullability>NOT_NULL</nullability>
                 </forcedType>
+                <forcedType>
+                  <userType>com.codeforcommunity.enums.AuditType</userType>
+                  <enumConverter>true</enumConverter>
+
+                  <includeExpression>.*\.transaction_type</includeExpression>
+                  <includeTypes>.*</includeTypes>
+                  <nullability>NOT_NULL</nullability>
+                </forcedType>
+                <forcedType>
+                  <userType>com.codeforcommunity.enums.Table</userType>
+                  <enumConverter>true</enumConverter>
+
+                  <includeExpression>.*\.table_name</includeExpression>
+                  <includeTypes>.*</includeTypes>
+                  <nullability>NOT_NULL</nullability>
+                </forcedType>
               </forcedTypes>
             </database>
           </generator>

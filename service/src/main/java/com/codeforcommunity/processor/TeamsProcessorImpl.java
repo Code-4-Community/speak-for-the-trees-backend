@@ -1,6 +1,11 @@
 package com.codeforcommunity.processor;
 
-import static org.jooq.generated.Tables.*;
+import static org.jooq.generated.Tables.AUDIT;
+import static org.jooq.generated.Tables.BLOCK;
+import static org.jooq.generated.Tables.DELETED_TEAM;
+import static org.jooq.generated.Tables.TEAM;
+import static org.jooq.generated.Tables.USERS;
+import static org.jooq.generated.Tables.USER_TEAM;
 
 import com.codeforcommunity.api.ITeamsProcessor;
 import com.codeforcommunity.auth.JWTData;
@@ -17,8 +22,10 @@ import com.codeforcommunity.dto.team.TeamResponse;
 import com.codeforcommunity.dto.team.TeamSummary;
 import com.codeforcommunity.dto.team.TeamsExport;
 import com.codeforcommunity.dto.team.TransferOwnershipRequest;
+import com.codeforcommunity.enums.AuditType;
 import com.codeforcommunity.enums.BlockStatus;
 import com.codeforcommunity.enums.PrivilegeLevel;
+import com.codeforcommunity.enums.Table;
 import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.AdminOnlyRouteException;
 import com.codeforcommunity.exceptions.ExistingTeamRequestException;
@@ -69,11 +76,10 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     teamRecord.store();
 
     AuditRecord audit = db.newRecord(AUDIT);
-    audit.setTableName("team");
-    audit.setTransactionType("insert");
+    audit.setTableName(Table.TEAM);
+    audit.setTransactionType(AuditType.INSERT);
     audit.setResult(Integer.toString(teamRecord.getId()));
     audit.setUserId(userData.getUserId());
-    audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
     audit.insert();
 
     Users inviter =
@@ -97,11 +103,10 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     userTeam.store();
 
     AuditRecord audit2 = db.newRecord(AUDIT);
-    audit2.setTableName("user_team");
-    audit2.setTransactionType("insert");
+    audit2.setTableName(Table.USER_TEAM);
+    audit2.setTransactionType(AuditType.INSERT);
     audit2.setResult(userData.getUserId() + ", " + userTeam.getTeamId());
     audit2.setUserId(userData.getUserId());
-    audit2.setTimestamp(new Timestamp(System.currentTimeMillis()));
     audit2.insert();
 
     return getSingleTeam(userData, teamRecord.getId());
@@ -139,11 +144,10 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
         .execute();
 
     AuditRecord audit2 = db.newRecord(AUDIT);
-    audit2.setTableName("user_team");
-    audit2.setTransactionType("insert");
+    audit2.setTableName(Table.USER_TEAM);
+    audit2.setTransactionType(AuditType.INSERT);
     audit2.setResult(userData.getUserId() + ", " + teamId);
     audit2.setUserId(userData.getUserId());
-    audit2.setTimestamp(new Timestamp(System.currentTimeMillis()));
     audit2.insert();
   }
 
@@ -205,8 +209,8 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     }
 
     AuditRecord audit = db.newRecord(AUDIT);
-    audit.setTableName("user_team");
-    audit.setTransactionType("update");
+    audit.setTableName(Table.USER_TEAM);
+    audit.setTransactionType(AuditType.UPDATE);
     audit.setOldValue(applicantRecord.toString());
 
     applicantRecord.setTeamRole(TeamRole.MEMBER);
@@ -214,7 +218,6 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
     audit.setResult(applicantRecord.toString());
     audit.setUserId(userData.getUserId());
-    audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
     audit.insert();
   }
 
@@ -250,11 +253,10 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     }
 
     AuditRecord audit = db.newRecord(AUDIT);
-    audit.setTableName("user_team");
-    audit.setTransactionType("delete");
+    audit.setTableName(Table.USER_TEAM);
+    audit.setTransactionType(AuditType.DELETE);
     audit.setResult(userData.getUserId() + ", " + teamId);
     audit.setUserId(userData.getUserId());
-    audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
     audit.insert();
 
     applicantRecord.delete();
@@ -278,11 +280,10 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     }
 
     AuditRecord audit = db.newRecord(AUDIT);
-    audit.setTableName("user_team");
-    audit.setTransactionType("delete");
+    audit.setTableName(Table.USER_TEAM);
+    audit.setTransactionType(AuditType.DELETE);
     audit.setResult(userData.getUserId() + ", " + teamId);
     audit.setUserId(userData.getUserId());
-    audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
     audit.insert();
 
     db.deleteFrom(USER_TEAM)
@@ -304,24 +305,25 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     }
 
     AuditRecord audit = db.newRecord(AUDIT);
-    audit.setTableName("user_team");
-    audit.setTransactionType("delete");
+    audit.setTableName(Table.USER_TEAM);
+    audit.setTransactionType(AuditType.DELETE);
     audit.setResult(userData.getUserId() + ", " + teamId);
     audit.setUserId(userData.getUserId());
-    audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
     audit.insert();
 
     db.deleteFrom(USER_TEAM).where(USER_TEAM.TEAM_ID.eq(teamId)).execute();
 
     AuditRecord audit2 = db.newRecord(AUDIT);
-    audit2.setTableName("team");
-    audit2.setTransactionType("delete");
+    audit2.setTableName(Table.TEAM);
+    audit2.setTransactionType(AuditType.DELETE);
     audit2.setResult(Integer.toString(teamId));
     audit2.setUserId(userData.getUserId());
-    audit2.setTimestamp(new Timestamp(System.currentTimeMillis()));
     audit2.insert();
 
-    db.deleteFrom(TEAM).where(TEAM.ID.eq(teamId)).execute();
+    TeamRecord team = db.selectFrom(TEAM).where(TEAM.ID.eq(teamId)).fetchOne();
+    db.insertInto(DELETED_TEAM).set(team.intoMap()).execute();
+
+    team.delete();
   }
 
   @Override
@@ -337,11 +339,10 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     }
 
     AuditRecord audit = db.newRecord(AUDIT);
-    audit.setTableName("user_team");
-    audit.setTransactionType("delete");
+    audit.setTableName(Table.USER_TEAM);
+    audit.setTransactionType(AuditType.DELETE);
     audit.setResult(kickUserId + ", " + teamId);
     audit.setUserId(userData.getUserId());
-    audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
     audit.insert();
 
     db.deleteFrom(USER_TEAM)
@@ -607,8 +608,8 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
     }
 
     AuditRecord audit = db.newRecord(AUDIT);
-    audit.setTableName("user_team");
-    audit.setTransactionType("update");
+    audit.setTableName(Table.USER_TEAM);
+    audit.setTransactionType(AuditType.UPDATE);
     audit.setOldValue(currentLeaderTeam.toString());
 
     db.update(USER_TEAM)
@@ -619,12 +620,11 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
     audit.setResult(currentLeaderTeam.toString());
     audit.setUserId(userData.getUserId());
-    audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
     audit.insert();
 
     AuditRecord audit2 = db.newRecord(AUDIT);
-    audit2.setTableName("user_team");
-    audit2.setTransactionType("update");
+    audit2.setTableName(Table.USER_TEAM);
+    audit2.setTransactionType(AuditType.UPDATE);
     audit2.setOldValue(currentLeaderTeam.toString());
 
     db.update(USER_TEAM)
@@ -635,7 +635,6 @@ public class TeamsProcessorImpl implements ITeamsProcessor {
 
     audit2.setResult(currentLeaderTeam.toString());
     audit2.setUserId(userData.getUserId());
-    audit2.setTimestamp(new Timestamp(System.currentTimeMillis()));
     audit2.insert();
   }
 }

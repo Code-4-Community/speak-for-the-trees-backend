@@ -4,7 +4,9 @@ import static org.jooq.generated.Tables.*;
 
 import com.codeforcommunity.auth.JWTData;
 import com.codeforcommunity.auth.Passwords;
+import com.codeforcommunity.enums.AuditType;
 import com.codeforcommunity.enums.PrivilegeLevel;
+import com.codeforcommunity.enums.Table;
 import com.codeforcommunity.enums.VerificationKeyType;
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
 import com.codeforcommunity.exceptions.ExpiredSecretKeyException;
@@ -123,11 +125,10 @@ public class AuthDatabaseOperations {
     newUser.store();
 
     AuditRecord audit = db.newRecord(AUDIT);
-    audit.setTableName("users");
-    audit.setTransactionType("insert");
+    audit.setTableName(Table.USERS);
+    audit.setTransactionType(AuditType.INSERT);
     audit.setResult(newUser.getId().toString());
     audit.setUserId(newUser.getId());
-    audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
     audit.insert();
 
     return newUser;
@@ -137,14 +138,6 @@ public class AuthDatabaseOperations {
   public void addToBlackList(String signature) {
     Timestamp expirationTimestamp = Timestamp.from(Instant.now().plusMillis(msRefreshExpiration));
     db.newRecord(Tables.BLACKLISTED_REFRESHES).values(signature, expirationTimestamp).store();
-
-    AuditRecord audit = db.newRecord(AUDIT);
-    audit.setTableName("blacklisted_refreshes");
-    audit.setTransactionType("insert");
-    audit.setResult(signature);
-    audit.setUserId(-1);
-    audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
-    audit.insert();
   }
 
   /** Given a JWT signature return true if it is stored in the BLACKLISTED_REFRESHES table. */
@@ -167,11 +160,6 @@ public class AuthDatabaseOperations {
             .where(Tables.VERIFICATION_KEYS.ID.eq(secretKey).and(VERIFICATION_KEYS.TYPE.eq(type)))
             .fetchOneInto(VerificationKeysRecord.class);
 
-    AuditRecord audit = db.newRecord(AUDIT);
-    audit.setTableName("verification_keys");
-    audit.setTransactionType("update");
-    audit.setOldValue(verificationKey.toString());
-
     if (verificationKey == null) {
       throw new InvalidSecretKeyException(type);
     }
@@ -186,11 +174,6 @@ public class AuthDatabaseOperations {
 
     verificationKey.setUsed(true);
     verificationKey.store();
-
-    audit.setResult(verificationKey.toString());
-    audit.setUserId(verificationKey.getUserId());
-    audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
-    audit.insert();
 
     return db.selectFrom(USERS).where(USERS.ID.eq(verificationKey.getUserId())).fetchOne();
   }
@@ -207,22 +190,12 @@ public class AuthDatabaseOperations {
             .fetchOne()
             .toString();
 
-    AuditRecord audit = db.newRecord(AUDIT);
-    audit.setTableName("verification_keys");
-    audit.setTransactionType("update");
-    audit.setOldValue(original);
-
     // Maybe add a different column besides used?
     db.update(VERIFICATION_KEYS)
         .set(VERIFICATION_KEYS.USED, true)
         .where(VERIFICATION_KEYS.USER_ID.eq(userId))
         .and(VERIFICATION_KEYS.TYPE.eq(type))
         .execute();
-
-    audit.setResult(original);
-    audit.setUserId(userId);
-    audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
-    audit.insert();
 
     String token = Passwords.generateRandomToken(50);
 
@@ -231,14 +204,6 @@ public class AuthDatabaseOperations {
     keysRecord.setUserId(userId);
     keysRecord.setType(type);
     keysRecord.store();
-
-    AuditRecord audit2 = db.newRecord(AUDIT);
-    audit2.setTableName("verification_keys");
-    audit2.setTransactionType("insert");
-    audit2.setResult(keysRecord.getId());
-    audit2.setUserId(userId);
-    audit2.setTimestamp(new Timestamp(System.currentTimeMillis()));
-    audit2.insert();
 
     return token;
   }

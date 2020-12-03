@@ -81,7 +81,7 @@ public class BlocksRouter implements IRouter {
   }
 
   private void registerResetAllBlocks(Router router) {
-    Route resetAllRoute = router.post("/reset/hard");
+    Route resetAllRoute = router.post("/reset/delete_all_data");
     resetAllRoute.handler(this::handleResetAll);
   }
 

@@ -1,10 +1,1930 @@
 {
 	"info": {
-		"_postman_id": "655d4340-604f-440a-b581-50c85e1bed50",
+		"_postman_id": "e962e93a-947a-4107-9a35-0a0ba409432b",
 		"name": "SFTT",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
+		{
+			"name": "user",
+			"item": [
+				{
+					"name": "log in",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "fc3aee57-cab7-4707-ba40-0b769837efa6",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"let accessToken = pm.response.json().accessToken;",
+									"let refreshToken = pm.response.json().refreshToken;",
+									"",
+									"pm.collectionVariables.set(\"accessToken\", accessToken);",
+									"pm.collectionVariables.set(\"refreshToken\", refreshToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\" : \"test.email@email.com\",\r\n    \"password\" : \"password123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/user/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "log in admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "bfad366a-33a4-4c5b-b4ff-bda7099b17f6",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"let accessToken = pm.response.json().accessToken;",
+									"let refreshToken = pm.response.json().refreshToken;",
+									"",
+									"pm.collectionVariables.set(\"accessToken\", accessToken);",
+									"pm.collectionVariables.set(\"refreshToken\", refreshToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\" : \"admin.email@email.com\",\r\n    \"password\" : \"password123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/user/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "refresh",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "0de5d85b-a7c1-4482-bcad-b1423b6fd602",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"let accessToken = pm.response.json().accessToken;",
+									"let refreshToken = pm.response.json().refreshToken;",
+									"",
+									"pm.collectionVariables.set(\"freshAccessToken\", accessToken);",
+									"pm.collectionVariables.set(\"refreshToken\", refreshToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Refresh-Token",
+								"value": "{{refreshToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\" : \"test.email@email.com\",\r\n    \"password\" : \"password123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/user/login/refresh",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"login",
+								"refresh"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "sign up",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "dd8ed2c7-48b4-431d-944e-36c6f5aca328",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"test.email@email.com\",\r\n  \"username\": \"test\",\r\n  \"password\": \"password123\",\r\n  \"firstName\": \"John\",\r\n  \"lastName\": \"Doe\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/user/signup",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "log out",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "101cf0c9-699b-4daf-97c4-00670f833272",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"value": "{{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Refresh-Token",
+								"value": "{{refreshToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/user/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "forgot password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "45d14708-cf52-4ea5-882a-367b28ce4228",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\" : \"test.email@email.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/user/forgot_password/request",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"forgot_password",
+								"request"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "24f126f2-4b68-4bbf-a9af-1b752c45808e",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "9da9de62-f979-47af-ae09-ac48faf2a745",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "block info",
+			"item": [
+				{
+					"name": "get all blocks",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "659a08d1-f084-4648-85f0-2db9d38d1b67",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/blocks/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"blocks",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get blocks leaderboards",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "6d21116a-f96a-4e64-94e2-999d54d36f45",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/blocks/leaderboard",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"blocks",
+								"leaderboard"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "643d44ac-f00d-4b4d-841b-092fc5b3287a",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "c332d6af-d32a-4ee8-8299-d4ccc1a4e815",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "blocks",
+			"item": [
+				{
+					"name": "reserve block",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "d9d7f32a-72a5-4de0-b296-4a6706a50528",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"value": "{{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"blocks\" : [\"5142\", \"307\", \"306\", \"3040\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/blocks/reserve",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"blocks",
+								"reserve"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "finish block",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "b42012ba-8370-4853-ac8d-0aa4e092966f",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"value": "{{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"blocks\" : [\"5142\", \"307\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/blocks/finish",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"blocks",
+								"finish"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "release block",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c93ede23-cb70-4d49-bcd7-4cf356e83b02",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"value": "{{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"blocks\" : [\"306\", \"3040\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/blocks/release",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"blocks",
+								"release"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reset block",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "6e8e547e-54ec-460b-9f2b-d01d0d9a3f54",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"value": "{{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"blocks\" : [\"5142\", \"307\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/blocks/reset",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"blocks",
+								"reset"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get reserved blocks",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c4c93e15-c768-4b17-8713-f614bd807ada",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"value": "{{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/blocks/reserved",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"blocks",
+								"reserved"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get reserved blocks admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "67f14fab-34a8-4e0f-8572-bd3248513243",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"value": "{{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/blocks/reserved/admin",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"blocks",
+								"reserved",
+								"admin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get completed blocks admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "d057a1e4-1232-4a8d-92bd-c310d9748d4e",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"value": "{{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/blocks/done/admin",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"blocks",
+								"done",
+								"admin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "set map to feature layer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "6beedd88-4d66-451a-a264-c814ce9409e2",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"value": "{{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/blocks/reset/map",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"blocks",
+								"reset",
+								"map"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "register seed block completions",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "b628ef3d-9c47-4b7b-b96c-4c15a3e2159d",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"value": "{{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"blocks\" : [\n        {\n            \"id\" : \"307\",\n            \"dateCompleted\" : \"10/20/2020\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/blocks/seed",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"blocks",
+								"seed"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get blocks csv",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "3fc24186-e6ce-4ca7-93c3-a4a9ef6cd30a",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/blocks/export",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"blocks",
+								"export"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "protected user",
+			"item": [
+				{
+					"name": "delete user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "7ceb9cff-3ed8-434f-a692-2ae17dacd369",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"value": "{{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/user/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"user",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "change user password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "f5a655bd-625e-4c35-965c-bab8d3753035",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"value": "{{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"currentPassword\" : \"password123\",\n    \"newPassword\" : \"password1234\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/user/change_password",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"user",
+								"change_password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get user data",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "883f99db-29c5-4cfd-850d-6d2991869038",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/user/data",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"user",
+								"data"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "change user email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "76b62295-f92e-456e-bfbf-c9308d43c9f1",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"value": "{{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"newEmail\" : \"test2.email@email.com\",\n    \"password\" : \"password1234\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/user/change_email",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"user",
+								"change_email"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "change user username",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "061fb335-bf31-436b-abd9-f79bbf114774",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"value": "{{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"newUsername\" : \"test2\",\n    \"password\" : \"password1234\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/user/change_username",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"user",
+								"change_username"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "teams",
+			"item": [
+				{
+					"name": "get user teams",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "147c930e-f246-4261-8704-46c9cd5f837a",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/teams/user_teams",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"teams",
+								"user_teams"
+							]
+						},
+						"description": "can send as any user"
+					},
+					"response": []
+				},
+				{
+					"name": "get all teams",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "055c895d-89bf-4fc0-8a0b-0b8aea917ffe",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/teams/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"teams",
+								""
+							]
+						},
+						"description": "can send as any user"
+					},
+					"response": []
+				},
+				{
+					"name": "get all teams admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "9c02ca41-88e2-434e-a0e8-639e1710ac68",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/teams/admin",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"teams",
+								"admin"
+							]
+						},
+						"description": "can send as admin"
+					},
+					"response": []
+				},
+				{
+					"name": "get single team",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "bebd4840-d9eb-4ec2-80f7-51b84282f404",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/teams/:team_id",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"teams",
+								":team_id"
+							],
+							"variable": [
+								{
+									"key": "team_id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "can send as any user"
+					},
+					"response": []
+				},
+				{
+					"name": "create team",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "9cc037f9-c1f7-49b7-8810-f3b6eff6cd30",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\" : \"test team\",\n    \"bio\" : \"a test team\",\n    \"goal\" : 5,\n    \"goalCompletionDate\" : 1759276800000,\n    \"invites\" : [\n        {\n            \"name\" : \"John\",\n            \"email\" : \"test.email@email.com\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/teams/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"teams",
+								""
+							]
+						},
+						"description": "can send as any user\n\nfor basic test purposes, send as admin.email@email.com"
+					},
+					"response": []
+				},
+				{
+					"name": "apply to team",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "807db99b-f2a9-45bc-af14-aa4239ac545c",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/teams/:team_id/apply",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"teams",
+								":team_id",
+								"apply"
+							],
+							"variable": [
+								{
+									"key": "team_id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "can send as any user not already in the team\n\nfor basic test purposes, send as test.email@email.com"
+					},
+					"response": []
+				},
+				{
+					"name": "get team applicants",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "8ee297f5-986f-4e34-b90e-158eea97c1e5",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/teams/:team_id/applicants",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"teams",
+								":team_id",
+								"applicants"
+							],
+							"variable": [
+								{
+									"key": "team_id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "can send as team leader"
+					},
+					"response": []
+				},
+				{
+					"name": "approve applicant",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "44c5dd52-6910-488c-b1a9-f47a9c2e5101",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/teams/:team_id/applicants/:request_id/approve",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"teams",
+								":team_id",
+								"applicants",
+								":request_id",
+								"approve"
+							],
+							"variable": [
+								{
+									"key": "team_id",
+									"value": "1"
+								},
+								{
+									"key": "request_id",
+									"value": "2",
+									"description": "user id of applicant"
+								}
+							]
+						},
+						"description": "can send as team leader"
+					},
+					"response": []
+				},
+				{
+					"name": "reject applicant",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "5bbe2ea4-6a0a-4a32-b2c8-10c2e7ff6d97",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/teams/:team_id/applicants/:request_id/reject",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"teams",
+								":team_id",
+								"applicants",
+								":request_id",
+								"reject"
+							],
+							"variable": [
+								{
+									"key": "team_id",
+									"value": "1"
+								},
+								{
+									"description": "user id of applicant",
+									"key": "request_id",
+									"value": "2"
+								}
+							]
+						},
+						"description": "can send as team leader"
+					},
+					"response": []
+				},
+				{
+					"name": "leave team",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "9a2d8d98-97e0-4067-bc19-cdbb53664cce",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/teams/:team_id/leave",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"teams",
+								":team_id",
+								"leave"
+							],
+							"variable": [
+								{
+									"key": "team_id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "can send as any team member, if team leader then transfer team ownership first"
+					},
+					"response": []
+				},
+				{
+					"name": "disband team",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "cc901bde-515e-43d4-8f52-69c3f8b0e053",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/teams/:team_id/disband",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"teams",
+								":team_id",
+								"disband"
+							],
+							"variable": [
+								{
+									"key": "team_id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "can send as team leader"
+					},
+					"response": []
+				},
+				{
+					"name": "kick team member",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "00ff5505-2eb6-43da-a2b3-61973c696f94",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/teams/:team_id/members/:member_id/kick",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"teams",
+								":team_id",
+								"members",
+								":member_id",
+								"kick"
+							],
+							"variable": [
+								{
+									"key": "team_id",
+									"value": "1"
+								},
+								{
+									"key": "member_id",
+									"value": "2",
+									"description": "id of team member"
+								}
+							]
+						},
+						"description": "can send as team leader"
+					},
+					"response": []
+				},
+				{
+					"name": "invite user to team",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "e938b1c3-17e4-4aee-9b4c-a0b58cea355e",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"emails\" : [\"test.email@email.com\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/teams/:team_id/invite",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"teams",
+								":team_id",
+								"invite"
+							],
+							"variable": [
+								{
+									"key": "team_id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "can send as team leader"
+					},
+					"response": []
+				},
+				{
+					"name": "transfer team ownership",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "5b7ff370-44b2-4e16-85f5-4bee5e990e8e",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Access-Token",
+								"type": "text",
+								"value": "{{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"newLeaderId\" : 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/protected/teams/:team_id/transfer_ownership",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"protected",
+								"teams",
+								":team_id",
+								"transfer_ownership"
+							],
+							"variable": [
+								{
+									"key": "team_id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "can send as team leader"
+					},
+					"response": []
+				}
+			],
+			"description": "teams routes",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "2fc97b55-62cd-4e17-8609-8e97d3f55992",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "bb980967-c84c-44bf-a438-f66a4006f1ad",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
 		{
 			"name": "sanity check",
 			"request": {
@@ -20,785 +1940,13 @@
 				}
 			},
 			"response": []
-		},
-		{
-			"name": "sign up",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "a338101f-a6b7-47ad-a58a-aec8aade14d5",
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"email\" : \"test.email@email.com\",\r\n  \"password\" : \"password123\",\r\n  \"firstName\" : \"John\",\r\n  \"lastName\" : \"Doe\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/user/signup",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"user",
-						"signup"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "log in",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "d3ecb381-315e-4850-b628-a4f30194b853",
-						"exec": [
-							"pm.test(\"Status code is 201\", function () {",
-							"    pm.response.to.have.status(201);",
-							"});",
-							"",
-							"let accessToken = pm.response.json().accessToken;",
-							"let refreshToken = pm.response.json().refreshToken;",
-							"",
-							"pm.collectionVariables.set(\"accessToken\", accessToken);",
-							"pm.collectionVariables.set(\"refreshToken\", refreshToken);"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"email\" : \"test.email@email.com\",\r\n    \"password\" : \"password123\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/user/login",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"user",
-						"login"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "log in Copy",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "11ccf474-7da6-4ec6-a6bf-96b9959008a8",
-						"exec": [
-							"pm.test(\"Status code is 201\", function () {",
-							"    pm.response.to.have.status(201);",
-							"});",
-							"",
-							"let accessToken = pm.response.json().accessToken;",
-							"let refreshToken = pm.response.json().refreshToken;",
-							"",
-							"pm.collectionVariables.set(\"accessToken\", accessToken);",
-							"pm.collectionVariables.set(\"refreshToken\", refreshToken);"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"email\" : \"test.email@email.com\",\r\n    \"password\" : \"password123\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/user/login",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"user",
-						"login"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "log out",
-			"request": {
-				"method": "DELETE",
-				"header": [
-					{
-						"key": "X-Access-Token",
-						"value": "{{accessToken}}",
-						"type": "text"
-					},
-					{
-						"key": "X-Refresh-Token",
-						"value": "{{refreshToken}}",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/user/login",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"user",
-						"login"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "log in admin",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "77e9d755-65d1-4340-aa4e-a923790974d9",
-						"exec": [
-							"pm.test(\"Status code is 201\", function () {",
-							"    pm.response.to.have.status(201);",
-							"});",
-							"",
-							"let accessToken = pm.response.json().accessToken;",
-							"let refreshToken = pm.response.json().refreshToken;",
-							"",
-							"pm.collectionVariables.set(\"accessToken\", accessToken);",
-							"pm.collectionVariables.set(\"refreshToken\", refreshToken);"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"email\" : \"admin.email@email.com\",\r\n    \"password\" : \"password123\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/user/login",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"user",
-						"login"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "get all events",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "4fcef417-6ef1-4d6c-bde9-0c3055894488",
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "X-Access-Token",
-						"type": "text",
-						"value": "{{accessToken}}"
-					},
-					{
-						"key": "X-Refresh-Token",
-						"type": "text",
-						"value": "{{refreshToken}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/protected/events/",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"protected",
-						"events",
-						""
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "get all events qualified",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "ade2c4e5-0984-407d-bee6-62b8d5981540",
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "X-Access-Token",
-						"type": "text",
-						"value": "{{accessToken}}"
-					},
-					{
-						"key": "X-Refresh-Token",
-						"type": "text",
-						"value": "{{refreshToken}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/protected/events/qualified",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"protected",
-						"events",
-						"qualified"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "get all events signed up",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "f82ddbcf-597f-4c0b-965d-18cc025edb57",
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "X-Access-Token",
-						"type": "text",
-						"value": "{{accessToken}}"
-					},
-					{
-						"key": "X-Refresh-Token",
-						"type": "text",
-						"value": "{{refreshToken}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/protected/events/signed_up",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"protected",
-						"events",
-						"signed_up"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "get all events ids",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "afd08dea-1f28-4167-93c9-d4863807ee76",
-						"exec": [
-							"// pm.test(\"Status code is 200\", function () {",
-							"//     pm.response.to.have.status(200);",
-							"// });"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "X-Access-Token",
-						"type": "text",
-						"value": "{{accessToken}}"
-					},
-					{
-						"key": "X-Refresh-Token",
-						"type": "text",
-						"value": "{{refreshToken}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/protected/events?ids=1,2,3",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"protected",
-						"events"
-					],
-					"query": [
-						{
-							"key": "ids",
-							"value": "1,2,3"
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "get single event by id",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "77986469-e38d-46be-a5c1-01bc040a731a",
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "X-Access-Token",
-						"type": "text",
-						"value": "{{accessToken}}"
-					},
-					{
-						"key": "X-Refresh-Token",
-						"type": "text",
-						"value": "{{refreshToken}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/protected/events/1",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"protected",
-						"events",
-						"1"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "create new event",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "1393aaa2-e3e4-40c5-9a19-5a922a2a1dae",
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "X-Access-Token",
-						"type": "text",
-						"value": "{{accessToken}}"
-					},
-					{
-						"key": "X-Refresh-Token",
-						"type": "text",
-						"value": "{{refreshToken}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"title\": \"event title\",\r\n  \"spotsAvailable\": 2,\r\n  \"thumbnail\": \"https://i.ytimg.com/vi/bDVZW14fo-4/hqdefault.jpg\",\r\n  \"details\": {\r\n    \"description\": \"event desc\",\r\n    \"location\": \"Place\",\r\n    \"start\": \"2020-01-01\",\r\n    \"end\": \"2020-01-02\"\r\n  }\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/protected/events/",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"protected",
-						"events",
-						""
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "get all announcements",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "dce6b683-0e2e-457a-ba4e-ae27b2f8d733",
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "X-Access-Token",
-						"type": "text",
-						"value": "{{accessToken}}"
-					},
-					{
-						"key": "X-Refresh-Token",
-						"type": "text",
-						"value": "{{refreshToken}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/protected/announcements",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"protected",
-						"announcements"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "create new announcement",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "c983af8e-f3bb-4e72-bd8c-60ef34f91bb5",
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "X-Access-Token",
-						"type": "text",
-						"value": "{{accessToken}}"
-					},
-					{
-						"key": "X-Refresh-Token",
-						"type": "text",
-						"value": "{{refreshToken}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"title\": \"title\",\r\n  \"description\": \"desc\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/protected/announcements",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"protected",
-						"announcements"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "create new announcement with event id",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "b51c750a-845e-4370-b650-79019364582a",
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "X-Access-Token",
-						"type": "text",
-						"value": "{{accessToken}}"
-					},
-					{
-						"key": "X-Refresh-Token",
-						"type": "text",
-						"value": "{{refreshToken}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"title\": \"title\",\r\n  \"description\": \"desc\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/protected/announcements/1",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"protected",
-						"announcements",
-						"1"
-					]
-				}
-			},
-			"response": []
 		}
 	],
 	"event": [
 		{
 			"listen": "prerequest",
 			"script": {
-				"id": "547aa31c-a419-4ee7-8a78-4a3629f8ad03",
+				"id": "29bc0aff-f541-43eb-b5b2-ef88cee95ca4",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -808,7 +1956,7 @@
 		{
 			"listen": "test",
 			"script": {
-				"id": "54c3a29d-a414-4dc6-a7ac-c896acee5962",
+				"id": "ae370923-7c22-4e4d-95af-f8f7002b3404",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -818,16 +1966,19 @@
 	],
 	"variable": [
 		{
-			"id": "5ba7576f-b694-4d39-8b7f-8d0e73eb5d57",
+			"id": "030c582e-77a5-4e05-9677-384eeb47f3f7",
 			"key": "accessToken",
-			"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwcml2aWxlZ2VMZXZlbCI6MiwiaXNzIjoiYzRjIiwiZXhwIjoxNTg5MDA1MDA1LCJ1c2VySWQiOjJ9.TuPIzdEJj6APbkwpIu-TxqdJlDFbVI1LUzx6PHgD2II",
-			"type": "string"
+			"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwcml2aWxlZ2VMZXZlbCI6MiwiaXNzIjoiYzRjIiwiZXhwIjoxNTg5MDA1MDA1LCJ1c2VySWQiOjJ9.TuPIzdEJj6APbkwpIu-TxqdJlDFbVI1LUzx6PHgD2II"
 		},
 		{
-			"id": "9198ee16-1d32-48bf-b730-e5b3e0bc77bf",
+			"id": "5c4e556d-63aa-4c8a-885f-241238d18eb0",
 			"key": "refreshToken",
-			"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwcml2aWxlZ2VMZXZlbCI6MiwiaXNzIjoiYzRjIiwiZXhwIjoxNTg5NjA4MDA1LCJ1c2VySWQiOjJ9.UG81DEsGHXuBDVXNGkLhC45H4sMsQoNwC6aIivERKoo",
-			"type": "string"
+			"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwcml2aWxlZ2VMZXZlbCI6MiwiaXNzIjoiYzRjIiwiZXhwIjoxNTg5NjA4MDA1LCJ1c2VySWQiOjJ9.UG81DEsGHXuBDVXNGkLhC45H4sMsQoNwC6aIivERKoo"
+		},
+		{
+			"id": "95516cdf-25bb-4308-b047-ebf6117b2ca5",
+			"key": "freshAccessToken",
+			"value": ""
 		}
 	],
 	"protocolProfileBehavior": {}

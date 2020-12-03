@@ -1,6 +1,12 @@
 package com.codeforcommunity.processor;
 
-import static org.jooq.generated.Tables.*;
+import static org.jooq.generated.Tables.AUDIT;
+import static org.jooq.generated.Tables.DELETED_TEAM;
+import static org.jooq.generated.Tables.DELETED_USERS;
+import static org.jooq.generated.Tables.TEAM;
+import static org.jooq.generated.Tables.USERS;
+import static org.jooq.generated.Tables.USER_TEAM;
+import static org.jooq.generated.Tables.VERIFICATION_KEYS;
 
 import com.codeforcommunity.api.IProtectedUserProcessor;
 import com.codeforcommunity.auth.JWTData;
@@ -10,18 +16,20 @@ import com.codeforcommunity.dto.user.ChangeEmailRequest;
 import com.codeforcommunity.dto.user.ChangePasswordRequest;
 import com.codeforcommunity.dto.user.ChangeUsernameRequest;
 import com.codeforcommunity.dto.user.UserDataResponse;
+import com.codeforcommunity.enums.AuditType;
+import com.codeforcommunity.enums.Table;
 import com.codeforcommunity.enums.TeamRole;
 import com.codeforcommunity.exceptions.EmailAlreadyInUseException;
 import com.codeforcommunity.exceptions.UserDoesNotExistException;
 import com.codeforcommunity.exceptions.UsernameAlreadyInUseException;
 import com.codeforcommunity.exceptions.WrongPasswordException;
 import com.codeforcommunity.requester.Emailer;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 import org.jooq.DSLContext;
 import org.jooq.generated.tables.pojos.Users;
 import org.jooq.generated.tables.records.AuditRecord;
+import org.jooq.generated.tables.records.TeamRecord;
 import org.jooq.generated.tables.records.UserTeamRecord;
 import org.jooq.generated.tables.records.UsersRecord;
 
@@ -45,14 +53,6 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
             .fetchOne()
             .getId();
 
-    AuditRecord audit = db.newRecord(AUDIT);
-    audit.setTableName("verification_keys");
-    audit.setTransactionType("delete");
-    audit.setResult(id);
-    audit.setUserId(userId);
-    audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
-    audit.insert();
-
     db.deleteFrom(VERIFICATION_KEYS).where(VERIFICATION_KEYS.USER_ID.eq(userId)).executeAsync();
 
     Optional<List<UserTeamRecord>> maybeUserTeamRecords =
@@ -64,11 +64,10 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
         if (userTeamRecord.getTeamRole() == TeamRole.LEADER) {
 
           AuditRecord audit2 = db.newRecord(AUDIT);
-          audit2.setTableName("user_team");
-          audit2.setTransactionType("delete");
+          audit2.setTableName(Table.USER_TEAM);
+          audit2.setTransactionType(AuditType.DELETE);
           audit2.setResult(userId + ", " + userTeamRecord.getTeamId());
           audit2.setUserId(userId);
-          audit2.setTimestamp(new Timestamp(System.currentTimeMillis()));
           audit2.insert();
 
           db.deleteFrom(USER_TEAM)
@@ -76,38 +75,40 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
               .executeAsync();
 
           AuditRecord audit3 = db.newRecord(AUDIT);
-          audit3.setTableName("team");
-          audit3.setTransactionType("delete");
+          audit3.setTableName(Table.TEAM);
+          audit3.setTransactionType(AuditType.DELETE);
           audit3.setResult(Integer.toString(userTeamRecord.getTeamId()));
           audit3.setUserId(userId);
-          audit3.setTimestamp(new Timestamp(System.currentTimeMillis()));
           audit3.insert();
 
-          db.deleteFrom(TEAM).where(TEAM.ID.eq(userTeamRecord.getTeamId())).executeAsync();
+          TeamRecord team =
+              db.selectFrom(TEAM).where(TEAM.ID.eq(userTeamRecord.getTeamId())).fetchOne();
+          db.insertInto(DELETED_TEAM).set(team.intoMap());
+          team.delete();
 
         } else {
           db.executeDelete(userTeamRecord, USER_TEAM.USER_ID.eq(userId));
 
           AuditRecord audit2 = db.newRecord(AUDIT);
-          audit2.setTableName("user_team");
-          audit2.setTransactionType("delete");
+          audit2.setTableName(Table.USER_TEAM);
+          audit2.setTransactionType(AuditType.DELETE);
           audit2.setResult(userId + ", " + userId);
           audit2.setUserId(userId);
-          audit2.setTimestamp(new Timestamp(System.currentTimeMillis()));
           audit2.insert();
         }
       }
     }
 
     UsersRecord user = db.selectFrom(USERS).where(USERS.ID.eq(userId)).fetchOne();
+
+    db.insertInto(DELETED_USERS).set(user.intoMap()).execute();
     user.delete();
 
     AuditRecord audit2 = db.newRecord(AUDIT);
-    audit2.setTableName("users");
-    audit2.setTransactionType("delete");
+    audit2.setTableName(Table.USERS);
+    audit2.setTransactionType(AuditType.DELETE);
     audit2.setResult(Integer.toString(userId));
     audit2.setUserId(userId);
-    audit2.setTimestamp(new Timestamp(System.currentTimeMillis()));
     audit2.insert();
 
     emailer.sendAccountDeactivatedEmail(
@@ -119,8 +120,8 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
     UsersRecord user = db.selectFrom(USERS).where(USERS.ID.eq(userData.getUserId())).fetchOne();
 
     AuditRecord audit = db.newRecord(AUDIT);
-    audit.setTableName("users");
-    audit.setTransactionType("update");
+    audit.setTableName(Table.USERS);
+    audit.setTransactionType(AuditType.UPDATE);
     audit.setOldValue(user.toString());
 
     if (user == null) {
@@ -134,7 +135,6 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
 
       audit.setResult(user.toString());
       audit.setUserId(user.getId());
-      audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
       audit.insert();
 
     } else {
@@ -167,8 +167,8 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
     String previousEmail = user.getEmail();
 
     AuditRecord audit = db.newRecord(AUDIT);
-    audit.setTableName("users");
-    audit.setTransactionType("update");
+    audit.setTableName(Table.USERS);
+    audit.setTransactionType(AuditType.UPDATE);
     audit.setOldValue(user.toString());
 
     if (Passwords.isExpectedPassword(changeEmailRequest.getPassword(), user.getPassHash())) {
@@ -180,7 +180,6 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
 
       audit.setResult(user.toString());
       audit.setUserId(user.getId());
-      audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
       audit.insert();
 
     } else {
@@ -198,8 +197,8 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
     UsersRecord user = db.selectFrom(USERS).where(USERS.ID.eq(userData.getUserId())).fetchOne();
 
     AuditRecord audit = db.newRecord(AUDIT);
-    audit.setTableName("users");
-    audit.setTransactionType("update");
+    audit.setTableName(Table.USERS);
+    audit.setTransactionType(AuditType.UPDATE);
     audit.setOldValue(user.toString());
 
     if (user == null) {
@@ -216,7 +215,6 @@ public class ProtectedUserProcessorImpl implements IProtectedUserProcessor {
 
       audit.setResult(user.toString());
       audit.setUserId(user.getId());
-      audit.setTimestamp(new Timestamp(System.currentTimeMillis()));
       audit.insert();
     } else {
       throw new WrongPasswordException();
