@@ -4,6 +4,6 @@ CREATE TABLE IF NOT EXISTS audit
     table_name       VARCHAR(10)   NOT NULL,
     user_id          INTEGER       NOT NULL,
     old_value        VARCHAR(1000),
-    result           VARCHAR(1000) NOT NULL,
+    result           VARCHAR(1000),
     timestamp        TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
