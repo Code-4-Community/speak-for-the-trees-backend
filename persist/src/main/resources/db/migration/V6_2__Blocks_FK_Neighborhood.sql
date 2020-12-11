@@ -6,7 +6,7 @@ ALTER TABLE block
     FOREIGN KEY (neighborhoodid)
     REFERENCES neighborhood(id);
 
-DELETE FROM block WHERE 1;
+DELETE FROM block WHERE true;
 
 INSERT INTO block (id, neighborhoodid)
 VALUES ('1714', 29),
